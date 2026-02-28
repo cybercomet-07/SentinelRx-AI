@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { Mic, Send, User } from 'lucide-react'
 import api from '../../services/api'
 import { API_BASE } from '../../utils/constants'
 
 const WELCOME = {
   role: 'assistant',
-  content: "Hello! I'm here to help. You can order any medicine from our catalog (type or use the mic) — e.g. 'order 2 Paracetamol' or 'order 1 Vitamin B complex'. I can also answer health questions. How can I help?",
+  content: "Hi! How can I help you today? I'm here to take your medicine order. Just tell me the name of the medicine you need — type it or click the mic button to speak. I'll check our stock and confirm your order.",
   timestamp: Date.now(),
 }
 
@@ -16,9 +17,31 @@ const ORDER_ACTION_ENDPOINT = (id) => `ai-chat/order/${id}/action`
 
 const DEBOUNCE_DELAY = 300
 const MAX_SUGGESTIONS = 5
+const CHAT_STORAGE_KEY = 'sentinelrx_chat'
+
+function getChatStorageKey() {
+  try {
+    const u = JSON.parse(localStorage.getItem('sentinelrx_user') || '{}')
+    return `${CHAT_STORAGE_KEY}_${u?.id || 'default'}`
+  } catch {
+    return `${CHAT_STORAGE_KEY}_default`
+  }
+}
+
+function loadStoredMessages() {
+  try {
+    const raw = localStorage.getItem(getChatStorageKey())
+    if (!raw) return null
+    const arr = JSON.parse(raw)
+    if (!Array.isArray(arr) || arr.length === 0) return null
+    return arr
+  } catch {
+    return null
+  }
+}
 
 export default function ChatShell() {
-  const [messages, setMessages] = useState([WELCOME])
+  const [messages, setMessages] = useState(() => loadStoredMessages() || [WELCOME])
   const [loading, setLoading] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -83,6 +106,16 @@ export default function ChatShell() {
   useEffect(() => {
     sendMessageRef.current = sendMessage
   }, [sendMessage])
+
+  // Persist chat to localStorage so it survives navigation
+  useEffect(() => {
+    if (messages.length === 0) return
+    try {
+      localStorage.setItem(getChatStorageKey(), JSON.stringify(messages))
+    } catch {
+      // ignore quota or parse errors
+    }
+  }, [messages])
 
   // Load medicines for autocomplete
   useEffect(() => {
@@ -178,24 +211,50 @@ export default function ChatShell() {
         })
       }
 
-      const formData = new FormData(form)
       const submitter = e.submitter
-      if (submitter?.name === 'action') {
-        formData.set('action', submitter.value)
+      const action = submitter?.value === 'cancel' ? 'cancel' : 'confirm'
+      let orderId = ''
+      let items = []
+      try {
+        const dataOrder = form.getAttribute('data-order')
+        if (dataOrder) {
+          const parsed = JSON.parse(dataOrder)
+          orderId = parsed.order_id || ''
+          const baseItems = parsed.items || []
+          baseItems.forEach((it) => {
+            const medicineName = String(it.medicine_name || '').trim()
+            if (!medicineName) return
+            const safeId = medicineName.replace(/[^a-zA-Z0-9_]/g, '_')
+            const qtyInput = form.querySelector(`input[name="quantity_${safeId}"]`)
+            const quantity = Math.max(1, Math.min(parseInt(qtyInput?.value, 10) || it.quantity || 1, 10))
+            items.push({ medicine_name: medicineName, quantity })
+          })
+        }
+      } catch (_) {}
+      if (!items.length) {
+        orderId = form.querySelector('input[name="order_id"]')?.value?.trim() || ''
+        form.querySelectorAll('input[name^="quantity_"]').forEach((input) => {
+          const safeId = input.name.replace('quantity_', '')
+          const medicineInput = form.querySelector(`input[name="medicine_${safeId}"]`)
+          const medicineName = medicineInput?.value?.trim()
+          const quantity = parseInt(input.value, 10) || 1
+          if (medicineName) items.push({ medicine_name: medicineName, quantity })
+        })
       }
 
+      const payload = { order_id: orderId, action, items }
+
       try {
-        const res = await api.post(PROCESS_ORDER_ENDPOINT, formData)
+        const res = await api.post(PROCESS_ORDER_ENDPOINT, payload)
         const data = res.data
 
         if (container) container.style.display = 'none'
 
         if (data?.status === 'confirmed') {
-          addMessage('assistant', `✓ Order Confirmed (ID: ${data.order_id})`)
-          addMessage('assistant', '', false, {
+          addMessage('assistant', '✓ Order confirmed! Here are your order details:', false, {
             orderId: data.order_id,
             items: data.items || [],
-            total: data.total,
+            total: data.total ?? 0,
           })
           speak('Order confirmed successfully.')
         } else if (data?.status === 'cancelled') {
@@ -204,8 +263,9 @@ export default function ChatShell() {
         } else {
           addMessage('assistant', data?.message || 'Order processing failed.')
         }
-      } catch {
-        addMessage('assistant', 'Order processing failed. Please try again.')
+      } catch (err) {
+        const msg = err.response?.data?.message || err.response?.data?.detail || 'Order processing failed. Please try again.'
+        addMessage('assistant', msg)
         speak('Order processing failed.')
       }
     }
@@ -284,7 +344,7 @@ export default function ChatShell() {
     } else {
       recognition.start()
       setListening(true)
-      speak('Listening... Say your order, e.g. order 2 Vitamin B complex or any medicine.')
+      speak('Listening... Tell me the medicine name you need.')
     }
   }
 
@@ -336,27 +396,29 @@ export default function ChatShell() {
                     <span className="text-green-600">✓</span>
                     <span className="font-semibold text-gray-900">Order Confirmed</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2">ID: {msg.orderData.orderId}</p>
-                  {msg.orderData.items?.map((it) => (
-                    <div key={it.medicine_name} className="text-sm text-gray-700">
-                      {it.medicine_name} × {it.quantity} = ₹{it.subtotal}
-                    </div>
-                  ))}
-                  <div className="font-semibold mt-2 text-gray-900">Total: ₹{msg.orderData.total}</div>
+                  <p className="text-xs text-gray-600 mb-3">Order ID: {msg.orderData.orderId}</p>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    {msg.orderData.items?.map((it) => (
+                      <div key={it.medicine_name} className="py-1">
+                        <div><strong>Medicine:</strong> {it.medicine_name}</div>
+                        <div><strong>Quantity:</strong> {it.quantity} · <strong>Subtotal:</strong> ₹{it.subtotal}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="font-semibold mt-3 pt-2 border-t border-gray-200 text-gray-900">Total billing amount: ₹{msg.orderData.total}</div>
                   <div className="flex gap-2 mt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleOrderAction(msg.orderData.orderId, 'cancel')}
-                      className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                    <Link
+                      to="/user/orders"
+                      className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
                     >
-                      Cancel Order
-                    </button>
-                    <a
-                      href="/user/orders"
+                      Confirm Order
+                    </Link>
+                    <Link
+                      to="/user/orders"
                       className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
                     >
                       View in Order History
-                    </a>
+                    </Link>
                   </div>
                 </div>
               )}
@@ -404,7 +466,7 @@ export default function ChatShell() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type medicine name, symptoms, or your question..."
+              placeholder="Type or speak the medicine name..."
               className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
               maxLength={500}
               disabled={loading}

@@ -219,6 +219,11 @@ def generate_order_preview(db: Session, entities: list[dict], user_id: str) -> s
         return '<div style="padding:20px;background:#fef3c7;border-radius:12px;">Selected medicines are currently not available.</div>'
 
     order_id = str(uuid.uuid4())
+    order_payload = json.dumps({
+        "order_id": order_id,
+        "items": [{"medicine_name": p["medicine_name"], "quantity": p["quantity"]} for p in preview_items],
+    })
+    order_payload_escaped = html.escape(order_payload)
     html_parts = [
         '<div style="max-width:100%;padding:20px;background:#f3f4f6;border-radius:16px;border:1px solid #e5e7eb;">',
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">',
@@ -226,7 +231,7 @@ def generate_order_preview(db: Session, entities: list[dict], user_id: str) -> s
         '<h2 style="margin:0;font-size:16px;font-weight:700;color:#111827;">Order Preview</h2>',
         '</div>',
         f'<p style="margin:0 0 12px;font-size:13px;color:#6b7280;">Order ID: {order_id}</p>',
-        f'<form method="POST" action="/api/v1/ai-chat/process-order" id="orderForm">',
+        f'<form method="POST" action="/api/v1/ai-chat/process-order" id="orderForm" data-order="{order_payload_escaped}">',
         f'<input type="hidden" name="order_id" value="{order_id}">',
     ]
 
@@ -262,7 +267,8 @@ def process_order_from_chat(
     db: Session, form_data: dict, user_id: uuid.UUID
 ) -> dict[str, Any]:
     """
-    Process order confirm/cancel from chat form. SQL-based, replaces MongoDB orders_collection.
+    Process order confirm/cancel from chat. Expects form_data with order_id, action, and items.
+    items: [{"medicine_name": str, "quantity": int}]
     """
     order_id_str = str(form_data.get("order_id", "")).strip()
     if not order_id_str:
@@ -272,8 +278,6 @@ def process_order_from_chat(
     if action not in ["confirm", "cancel"]:
         return {"status": "error", "order_id": order_id_str, "message": "Invalid action.", "items": []}
 
-    # Check if already processed (by preview order_id - we use it as idempotency key)
-    # For simplicity we don't persist preview orders; we create fresh on confirm
     if action == "cancel":
         return {
             "status": "cancelled",
@@ -283,19 +287,17 @@ def process_order_from_chat(
             "message": "Order cancelled successfully.",
         }
 
-    # Confirm: create Order + OrderItems
+    # Confirm: build order_items from payload
+    raw_items = form_data.get("items") or []
     order_items: list[dict] = []
     total_bill = 0.0
 
-    for key in form_data:
-        if not key.startswith("quantity_"):
-            continue
-        safe_id = key.replace("quantity_", "")
-        medicine_name = form_data.get(f"medicine_{safe_id}")
+    for item in raw_items:
+        medicine_name = str(item.get("medicine_name") or "").strip()
         if not medicine_name:
             continue
         try:
-            quantity = int(form_data.get(key, 1))
+            quantity = int(item.get("quantity", 1))
         except (TypeError, ValueError):
             quantity = 1
         quantity = max(1, min(quantity, MAX_QUANTITY_LIMIT))
@@ -323,37 +325,41 @@ def process_order_from_chat(
             "items": [],
         }
 
-    order = Order(
-        user_id=user_id,
-        total_amount=round(total_bill, 2),
-        status=OrderStatus.CONFIRMED,
-    )
-    db.add(order)
-    db.flush()
+    try:
+        order = Order(
+            user_id=user_id,
+            total_amount=round(total_bill, 2),
+            status=OrderStatus.CONFIRMED,
+        )
+        db.add(order)
+        db.flush()
 
-    for oi in order_items:
-        med = db.query(Medicine).filter(Medicine.name == oi["medicine_name"]).first()
-        if med:
-            db.add(
-                OrderItem(
-                    order_id=order.id,
-                    medicine_id=med.id,
-                    quantity=oi["quantity"],
-                    price=oi["price"],
+        for oi in order_items:
+            med = db.query(Medicine).filter(Medicine.name == oi["medicine_name"]).first()
+            if med:
+                db.add(
+                    OrderItem(
+                        order_id=order.id,
+                        medicine_id=med.id,
+                        quantity=oi["quantity"],
+                        price=oi["price"],
+                    )
                 )
-            )
 
-    notify_order_created(db, user_id=user_id, order_id=order.id, total_amount=order.total_amount)
-    db.commit()
-    db.refresh(order)
+        notify_order_created(db, user_id=user_id, order_id=order.id, total_amount=order.total_amount)
+        db.commit()
+        db.refresh(order)
 
-    return {
-        "status": "confirmed",
-        "order_id": str(order.id),
-        "items": order_items,
-        "total": round(total_bill, 2),
-        "message": "Order confirmed successfully.",
-    }
+        return {
+            "status": "confirmed",
+            "order_id": str(order.id),
+            "items": order_items,
+            "total": round(total_bill, 2),
+            "message": "Order confirmed successfully.",
+        }
+    except Exception:
+        db.rollback()
+        raise
 
 
 def _extract_medicines_via_llm(message: str) -> list[tuple[str, int]]:

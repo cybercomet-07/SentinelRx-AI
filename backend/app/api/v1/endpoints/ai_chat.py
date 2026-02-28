@@ -4,7 +4,7 @@ Text + voice ordering, medicine autocomplete, order processing.
 """
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -47,17 +47,44 @@ def list_medicines_autocomplete(
     return JSONResponse(content={"medicine_list": items})
 
 
+class OrderItemInput(BaseModel):
+    medicine_name: str
+    quantity: int = 1
+
+
+class ProcessOrderRequest(BaseModel):
+    order_id: str = ""
+    action: str = "confirm"
+    items: list[OrderItemInput] = []
+
+
 @router.post("/process-order")
-async def process_order(
-    request: Request,
+def process_order(
+    payload: ProcessOrderRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Process order confirm/cancel from chat form (text or voice)."""
-    form = await request.form()
-    form_data = dict(form)
-    result = process_order_from_chat(db, form_data, current_user.id)
-    return JSONResponse(content=result)
+    """Process order confirm/cancel from chat. Accepts JSON payload."""
+    try:
+        form_data = {
+            "order_id": payload.order_id.strip(),
+            "action": payload.action.strip().lower(),
+            "items": [{"medicine_name": i.medicine_name, "quantity": i.quantity} for i in payload.items],
+        }
+        result = process_order_from_chat(db, form_data, current_user.id)
+        return JSONResponse(content=result)
+    except Exception as e:
+        import logging
+        logging.exception("process-order failed")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "order_id": None,
+                "message": str(e),
+                "items": [],
+            },
+        )
 
 
 class OrderActionRequest(BaseModel):
