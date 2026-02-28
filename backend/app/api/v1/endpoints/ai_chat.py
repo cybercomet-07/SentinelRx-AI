@@ -56,6 +56,10 @@ class ProcessOrderRequest(BaseModel):
     order_id: str = ""
     action: str = "confirm"
     items: list[OrderItemInput] = []
+    delivery_address: str | None = None
+    delivery_latitude: float | None = None
+    delivery_longitude: float | None = None
+    address_source: str | None = None
 
 
 @router.post("/process-order")
@@ -70,6 +74,10 @@ def process_order(
             "order_id": payload.order_id.strip(),
             "action": payload.action.strip().lower(),
             "items": [{"medicine_name": i.medicine_name, "quantity": i.quantity} for i in payload.items],
+            "delivery_address": payload.delivery_address,
+            "delivery_latitude": payload.delivery_latitude,
+            "delivery_longitude": payload.delivery_longitude,
+            "address_source": payload.address_source,
         }
         result = process_order_from_chat(db, form_data, current_user.id)
         return JSONResponse(content=result)

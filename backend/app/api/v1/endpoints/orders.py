@@ -1,12 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Body, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import require_roles
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.schemas.order import OrderListResponse, OrderRead, OrderStatusUpdateRequest
+from app.schemas.order import DeliveryAddressInput, OrderListResponse, OrderRead, OrderStatusUpdateRequest
 from app.services.order_service import (
     create_order_from_cart,
     get_order_or_404,
@@ -20,10 +20,18 @@ router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @router.post("/create-from-cart", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 def create_order_from_cart_endpoint(
+    payload: DeliveryAddressInput = Body(default=DeliveryAddressInput()),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(UserRole.USER)),
 ):
-    return create_order_from_cart(db, current_user)
+    return create_order_from_cart(
+        db,
+        current_user,
+        delivery_address=payload.delivery_address,
+        delivery_latitude=payload.delivery_latitude,
+        delivery_longitude=payload.delivery_longitude,
+        address_source=payload.address_source,
+    )
 
 
 @router.get("/my", response_model=OrderListResponse)

@@ -21,7 +21,7 @@ router = APIRouter(prefix="/refill-alerts", tags=["Refill Alerts"])
 def create_refill_alert_endpoint(
     payload: RefillAlertCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
     return create_refill_alert(db, current_user, payload)
 
@@ -32,7 +32,7 @@ def list_refill_alerts_endpoint(
     limit: int = Query(default=20, ge=1, le=100),
     include_completed: bool = Query(default=False),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
     items, total = list_refill_alerts_for_user(
         db, current_user, page=page, limit=limit, include_completed=include_completed
@@ -44,7 +44,7 @@ def list_refill_alerts_endpoint(
 def mark_completed_endpoint(
     alert_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
     return mark_refill_alert_completed(db, current_user, alert_id)
 
@@ -53,6 +53,6 @@ def mark_completed_endpoint(
 def delete_refill_alert_endpoint(
     alert_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
     delete_refill_alert(db, current_user, alert_id)

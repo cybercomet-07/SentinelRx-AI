@@ -14,11 +14,26 @@ export default function ProfilePage() {
     landmark: '',
     pin_code: '',
     date_of_birth: '',
+    gender: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    // Pre-fill from auth context if available (e.g. right after registration)
+    if (user?.name) {
+      setForm(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone ?? prev.phone,
+        address: user.address ?? prev.address,
+        landmark: user.landmark ?? prev.landmark,
+        pin_code: user.pin_code ?? prev.pin_code,
+        date_of_birth: user.date_of_birth ? String(user.date_of_birth).split('T')[0] : prev.date_of_birth,
+        gender: user.gender || prev.gender || 'prefer_not_to_say',
+      }))
+    }
     authService.me()
       .then((res) => {
         const u = res.data
@@ -29,12 +44,13 @@ export default function ProfilePage() {
           address: u?.address || '',
           landmark: u?.landmark || '',
           pin_code: u?.pin_code || '',
-          date_of_birth: u?.date_of_birth ? u.date_of_birth.split('T')[0] : '',
+          date_of_birth: u?.date_of_birth ? String(u.date_of_birth).split('T')[0] : '',
+          gender: u?.gender || 'prefer_not_to_say',
         })
       })
       .catch(() => toast.error('Failed to load profile'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [user?.id])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -60,9 +76,20 @@ export default function ProfilePage() {
         landmark: form.landmark.trim(),
         pin_code: form.pin_code.trim(),
         date_of_birth: form.date_of_birth,
+        gender: form.gender || 'prefer_not_to_say',
       })
       const updated = res.data
       updateUser({ ...user, ...updated })
+      setForm(prev => ({
+        ...prev,
+        name: updated.name ?? prev.name,
+        phone: updated.phone ?? prev.phone,
+        address: updated.address ?? prev.address,
+        landmark: updated.landmark ?? prev.landmark,
+        pin_code: updated.pin_code ?? prev.pin_code,
+        date_of_birth: updated.date_of_birth ? updated.date_of_birth.split('T')[0] : prev.date_of_birth,
+        gender: updated.gender ?? prev.gender,
+      }))
       toast.success('Profile updated')
     } catch (err) {
       toast.error(err.response?.data?.detail?.[0]?.msg || err.response?.data?.detail || 'Failed to update profile')
@@ -198,6 +225,20 @@ export default function ProfilePage() {
                 required
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Gender</label>
+            <select
+              name="gender"
+              value={form.gender || 'prefer_not_to_say'}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-white"
+            >
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
           </div>
           <button
             type="submit"

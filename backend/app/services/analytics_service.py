@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -5,7 +7,38 @@ from app.models.medicine import Medicine
 from app.models.order import Order, OrderStatus
 from app.models.order_item import OrderItem
 from app.models.user import User
-from app.schemas.analytics import AnalyticsSummary, OrdersByStatusItem, TopMedicineItem
+from app.schemas.analytics import AnalyticsSummary, MonthlyDataItem, OrdersByStatusItem, TopMedicineItem
+
+MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+
+def _get_daily_data(db: Session) -> list:
+    """Aggregate revenue and orders by day for current month (excludes cancelled)."""
+    from sqlalchemy import text
+    import calendar
+    now = datetime.utcnow()
+    year, month = now.year, now.month
+    days_in_month = calendar.monthrange(year, month)[1]
+    rows = db.execute(text("""
+        SELECT date_trunc('day', created_at)::date AS day,
+               count(id)::int AS orders,
+               coalesce(sum(total_amount), 0)::float AS revenue
+        FROM orders
+        WHERE status IN ('PENDING','CONFIRMED','OUT_FOR_DELIVERY','DELIVERED')
+          AND date_trunc('month', created_at) = date_trunc('month', :ref_date::timestamp)
+        GROUP BY date_trunc('day', created_at)::date
+        ORDER BY day
+    """), {"ref_date": datetime(year, month, 1)}).fetchall()
+    data_by_day = {}
+    for r in rows:
+        dt = r[0]
+        day = dt.day if hasattr(dt, 'day') else int(str(dt).split('-')[-1])
+        data_by_day[day] = (int(r[1]), round(float(r[2]), 2))
+    result = []
+    for d in range(1, days_in_month + 1):
+        ords, rev = data_by_day.get(d, (0, 0.0))
+        result.append(MonthlyDataItem(month=str(d), orders=ords, revenue=rev))
+    return result
 
 
 def get_analytics_summary(db: Session) -> AnalyticsSummary:
@@ -51,6 +84,7 @@ def get_analytics_summary(db: Session) -> AnalyticsSummary:
         for r in top_rows
     ]
 
+    monthly_data = _get_daily_data(db)
     return AnalyticsSummary(
         total_orders=total_orders,
         total_revenue=round(float(total_revenue), 2),
@@ -58,4 +92,5 @@ def get_analytics_summary(db: Session) -> AnalyticsSummary:
         low_stock_medicines_count=low_stock,
         orders_by_status=orders_by_status,
         top_medicines=top_medicines,
+        monthly_data=monthly_data,
     )

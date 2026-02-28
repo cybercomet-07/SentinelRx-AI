@@ -15,14 +15,28 @@ class OrderItemRead(BaseModel):
     line_total: float
 
 
+class DeliveryAddressInput(BaseModel):
+    delivery_address: str | None = None
+    delivery_latitude: float | None = None
+    delivery_longitude: float | None = None
+    address_source: str | None = None  # live_location | manual
+
+
 class OrderRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
+    user_name: str | None = None
+    user_email: str | None = None
+    user: dict | None = None  # {name, email} for frontend fallback
     total_amount: float
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
     items: list[OrderItemRead]
+    delivery_address: str | None = None
+    delivery_latitude: float | None = None
+    delivery_longitude: float | None = None
+    address_source: str | None = None
 
 
 class OrderListResponse(BaseModel):

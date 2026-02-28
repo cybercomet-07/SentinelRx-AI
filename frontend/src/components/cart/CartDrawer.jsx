@@ -3,6 +3,7 @@ import { useCart } from '../../hooks/useCart'
 import { useAuthContext } from '../../context/AuthContext'
 import CartItem from './CartItem'
 import OrderSummary from './OrderSummary'
+import DeliveryAddressForm from '../orders/DeliveryAddressForm'
 import { orderService } from '../../services/orderService'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
@@ -11,18 +12,24 @@ export default function CartDrawer() {
   const { user } = useAuthContext()
   const { open, setOpen, items, clearCart } = useCart()
   const [placing, setPlacing] = useState(false)
+  const [showAddress, setShowAddress] = useState(false)
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = () => {
     if (!items.length) return
     if (!user) {
       toast.error('Please login to place order')
       return
     }
+    setShowAddress(true)
+  }
+
+  const handleAddressSubmit = async (delivery) => {
     setPlacing(true)
     try {
-      await orderService.createFromCart()
+      await orderService.createFromCart(delivery)
       toast.success('Order placed successfully!')
       clearCart()
+      setShowAddress(false)
       setOpen(false)
     } catch {
       toast.error('Failed to place order')
@@ -61,14 +68,27 @@ export default function CartDrawer() {
 
         {items.length > 0 && (
           <div className="p-6 border-t border-gray-100 space-y-4">
-            <OrderSummary />
-            <button
-              onClick={handlePlaceOrder}
-              disabled={placing}
-              className="w-full bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
-            >
-              {placing ? 'Placing Order…' : 'Place Order'}
-            </button>
+            {showAddress ? (
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Delivery Address</h3>
+                <DeliveryAddressForm
+                  onSubmit={handleAddressSubmit}
+                  onCancel={() => setShowAddress(false)}
+                  loading={placing}
+                />
+              </div>
+            ) : (
+              <>
+                <OrderSummary />
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={placing}
+                  className="w-full bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
+                >
+                  Place Order
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

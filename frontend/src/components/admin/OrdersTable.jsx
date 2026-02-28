@@ -19,7 +19,7 @@ export default function OrdersTable({ orders, onRefresh }) {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
-            {['Order ID', 'User', 'Medicines', 'Total', 'Status', 'Update'].map(h => (
+            {['Order ID', 'User', 'Address', 'Medicines', 'Total', 'Status', 'Update'].map(h => (
               <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
             ))}
           </tr>
@@ -27,9 +27,17 @@ export default function OrdersTable({ orders, onRefresh }) {
         <tbody className="divide-y divide-gray-50">
           {orders.map(o => (
             <tr key={o.id} className="hover:bg-gray-50/50 transition-colors">
-              <td className="px-4 py-3 font-mono text-xs text-gray-400">#{o.id}</td>
-              <td className="px-4 py-3 text-gray-800">{o.user_name || o.user_email}</td>
-              <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{o.items?.map(i => i.medicine_name).join(', ')}</td>
+              <td className="px-4 py-3 font-mono text-xs text-gray-400">#{String(o.id).slice(0, 8)}…</td>
+              <td className="px-4 py-3 text-gray-800">
+                <span className="font-medium">{(o.user_name || o.userName || o.user?.name || o.customer_name || '').trim() || '—'}</span>
+                {(o.user_email ?? o.user?.email) && <span className="block text-xs text-gray-500">{o.user_email ?? o.user?.email}</span>}
+              </td>
+              <td className="px-4 py-3 text-gray-600 max-w-[180px]" title={o.delivery_address || ''}>
+                <span className="line-clamp-2 text-xs">{(o.delivery_address || '—').slice(0, 50)}{(o.delivery_address?.length > 50 ? '…' : '')}</span>
+              </td>
+              <td className="px-4 py-3 text-gray-600 max-w-[280px]" title={o.items?.map(i => `${i.medicine_name} (×${i.quantity})`).join(', ')}>
+                <span className="line-clamp-2">{o.items?.map(i => `${i.medicine_name} ×${i.quantity}`).join(', ') || '—'}</span>
+              </td>
               <td className="px-4 py-3 font-semibold text-mint-700">₹{o.total}</td>
               <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
               <td className="px-4 py-3">

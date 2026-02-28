@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 import { notificationService } from '../../services/notificationService'
 
 function fetchUnreadCount(setCount) {
@@ -17,6 +18,8 @@ function fetchUnreadCount(setCount) {
 export default function NotificationBell() {
   const [count, setCount] = useState(0)
   const location = useLocation()
+  const { isAdmin } = useAuth()
+  const notificationsPath = isAdmin ? '/admin/notifications' : '/user/notifications'
 
   useEffect(() => {
     fetchUnreadCount(setCount)
@@ -24,7 +27,7 @@ export default function NotificationBell() {
 
   // Refetch when user visits notifications page (they get marked as read there)
   useEffect(() => {
-    if (location.pathname === '/user/notifications') {
+    if (location.pathname === '/user/notifications' || location.pathname === '/admin/notifications') {
       fetchUnreadCount(setCount)
     }
   }, [location.pathname])
@@ -36,9 +39,16 @@ export default function NotificationBell() {
     return () => window.removeEventListener('notifications-updated', handler)
   }, [])
 
+  // Poll for new notifications (e.g. new orders) when admin is on dashboard
+  useEffect(() => {
+    if (!isAdmin) return
+    const interval = setInterval(() => fetchUnreadCount(setCount), 30000)
+    return () => clearInterval(interval)
+  }, [isAdmin])
+
   return (
     <Link
-      to="/user/notifications"
+      to={notificationsPath}
       className="relative p-2.5 hover:bg-slate-100 rounded-xl transition-colors duration-200 inline-flex items-center justify-center cursor-pointer group"
       aria-label="Notifications"
     >

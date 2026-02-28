@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, status
@@ -19,7 +20,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
 
-    user_id = payload.get("sub")
+    user_id_raw = payload.get("sub")
+    if not user_id_raw:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
+    try:
+        user_id = uuid.UUID(user_id_raw) if isinstance(user_id_raw, str) else user_id_raw
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")

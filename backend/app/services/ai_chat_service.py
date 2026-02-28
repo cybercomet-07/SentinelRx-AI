@@ -15,9 +15,10 @@ from app.core.config import get_settings
 from app.models.medicine import Medicine
 from app.models.order import Order, OrderStatus
 from app.models.order_item import OrderItem
+from app.models.user import User
 from app.models.chat_history import ChatHistory
 
-from app.services.notification_service import notify_order_created
+from app.services.notification_service import notify_order_created, notify_admins_new_order
 
 MAX_QUANTITY_LIMIT = 10
 CONFIDENCE_THRESHOLD = 0.6
@@ -59,19 +60,35 @@ def _sql_medicine_search(db: Session, query: str, limit: int = 10) -> list[Medic
     )
 
 
+# Stock/inventory inquiry - user asking about OUR pharmacy's availability (not "how to stock at home")
+_STOCK_INQUIRY_PHRASES = re.compile(
+    r"\b(do you have|can you have|you have|you got|got any|"
+    r"in stock|inventory|available|what medicine|any medicine|"
+    r"what do you have|what's in stock|medicine in stock|have in stock|"
+    r"that in stock|it in stock|have that|have it)\b",
+    re.IGNORECASE,
+)
+# Exclude: "how to stock" = personal advice, not our inventory
+_STOCK_INQUIRY_EXCLUDE = re.compile(r"how to (stock|have|keep)", re.IGNORECASE)
+
 # Question/info phrases - treat as general chat (medical suggestions, health Q&A) -> GROQ
 _QUESTION_PHRASES = re.compile(
     r"\b(what is|tell me about|how does|explain|information about|details about|"
     r"suggest|recommend|advice|advise|symptoms|treatment|cure|benefits|"
     r"side effects|dosage|when to use|how to use|can i take|should i|"
-    r"need to know|want to know|help with|question about)\b",
+    r"need to know|want to know|help with|question about|"
+    r"what tablet|what medicine|which tablet|which medicine|"
+    r"fever|headache|cold|cough|pain|stomach|allergy)\b",
     re.IGNORECASE,
 )
 
 
 def _predict_intent(message: str) -> tuple[str, float]:
-    """Rule-based intent detection. Order vs general chat (medical suggestions, Q&A)."""
+    """Rule-based intent detection. Order vs stock inquiry vs general chat."""
     lower = message.lower().strip()
+    # Stock/inventory inquiry -> check DB and return actual stock (exclude "how to stock" = personal advice)
+    if _STOCK_INQUIRY_PHRASES.search(lower) and not _STOCK_INQUIRY_EXCLUDE.search(lower):
+        return "stock_inquiry", 0.95
     # Medical questions, suggestions, advice -> GROQ general chat
     if _QUESTION_PHRASES.search(lower):
         return "general_chat", 0.5
@@ -326,10 +343,27 @@ def process_order_from_chat(
         }
 
     try:
+        from app.services.geocoding_service import geocode_address
+
+        customer = db.query(User).filter(User.id == user_id).first()
+        customer_name = customer.name if customer else "Customer"
+        addr = form_data.get("delivery_address")
+        lat = form_data.get("delivery_latitude")
+        lng = form_data.get("delivery_longitude")
+        # Geocode manual address if we have address text but no lat/lng
+        if addr and (lat is None or lng is None):
+            geocoded_lat, geocoded_lng = geocode_address(addr)
+            lat = lat or geocoded_lat
+            lng = lng or geocoded_lng
         order = Order(
             user_id=user_id,
+            user_name=customer_name,
             total_amount=round(total_bill, 2),
             status=OrderStatus.CONFIRMED,
+            delivery_address=addr,
+            delivery_latitude=lat,
+            delivery_longitude=lng,
+            address_source=form_data.get("address_source"),
         )
         db.add(order)
         db.flush()
@@ -347,6 +381,13 @@ def process_order_from_chat(
                 )
 
         notify_order_created(db, user_id=user_id, order_id=order.id, total_amount=order.total_amount)
+        notify_admins_new_order(
+            db,
+            order_id=order.id,
+            customer_name=customer_name,
+            total_amount=order.total_amount,
+            source="ai_chat",
+        )
         db.commit()
         db.refresh(order)
 
@@ -389,10 +430,90 @@ JSON array:"""
         return []
 
 
-def invoke_llm(message: str) -> str:
+def _handle_stock_inquiry(db: Session, message: str) -> str:
+    """
+    Handle stock/inventory questions. Fetches from DB and returns actual stock info.
+    - "Do you have paracetamol in stock?" -> search for paracetamol, return if found
+    - "What medicine do you have?" / "Any medicine in stock?" -> list all in-stock medicines
+    """
+    lower = message.lower().strip()
+    # Try to extract a specific medicine name (e.g. "do you have paracetamol in stock?")
+    # Remove common phrases to get potential medicine name
+    search_text = re.sub(
+        r"\b(do you have|can you have|is there|any|in stock|available|medicine|medicines|tablet|tablets|the)\b",
+        "",
+        lower,
+        flags=re.IGNORECASE,
+    )
+    search_text = re.sub(r"\s+", " ", search_text).strip()
+    search_text = search_text.strip("?.,! ")
+
+    medicines_in_stock = (
+        db.query(Medicine)
+        .filter(Medicine.quantity > 0)
+        .order_by(Medicine.name)
+        .limit(100)
+        .all()
+    )
+
+    if not medicines_in_stock:
+        return "We currently have no medicines in stock. Please check back later or browse our catalog."
+
+    # If user seems to ask about a specific medicine, search for it
+    if search_text and len(search_text) >= 2:
+        matched = _sql_medicine_search(db, search_text, limit=5)
+        if matched:
+            parts = []
+            for m in matched[:5]:
+                parts.append(f"• {m.name} — ₹{m.price}, {m.quantity} units in stock")
+            return (
+                f"Yes! We have the following in stock:\n\n"
+                + "\n".join(parts)
+                + "\n\nYou can order any of these by typing the medicine name. Consult a pharmacist for dosage advice."
+            )
+
+    # General "what do you have" / "any medicine in stock" -> list all (or sample)
+    total = len(medicines_in_stock)
+    show_limit = min(25, total)
+    lines = []
+    for m in medicines_in_stock[:show_limit]:
+        lines.append(f"• {m.name} — ₹{m.price} ({m.quantity} in stock)")
+    response = (
+        f"Yes! We have {total} medicine(s) in stock. Here are some:\n\n"
+        + "\n".join(lines)
+    )
+    if total > show_limit:
+        response += f"\n\n...and {total - show_limit} more. Type a medicine name to search or say 'order [name]' to place an order."
+    else:
+        response += "\n\nYou can order any of these by typing the medicine name. Consult a pharmacist for personalized advice."
+    return response
+
+
+def _get_inventory_for_llm(db: Session, limit: int = 80) -> str:
+    """Get medicine inventory as a formatted string for LLM context. Includes stock quantity."""
+    medicines = (
+        db.query(Medicine)
+        .filter(Medicine.quantity > 0)
+        .order_by(Medicine.name)
+        .limit(limit)
+        .all()
+    )
+    if not medicines:
+        return "(No medicines in stock)"
+    lines = []
+    for m in medicines:
+        desc = ""
+        if m.description:
+            desc = f" - {m.description[:80]}..." if len(m.description) > 80 else f" - {m.description}"
+        cat = f" [{m.category}]" if m.category else ""
+        lines.append(f"- {m.name}{cat} | Price: ₹{m.price} | In stock: {m.quantity} units{desc}")
+    return "\n".join(lines)
+
+
+def invoke_llm(db: Session, message: str) -> str:
     """
     Invoke GROQ for general chat: medical suggestions, health questions, general advice.
-    Uses GROQ API directly - answer is returned and displayed on UI.
+    IMPORTANT: For medicine suggestions (e.g. fever, headache), ONLY recommend from our inventory.
     """
     try:
         from langchain_groq import ChatGroq
@@ -404,17 +525,26 @@ def invoke_llm(message: str) -> str:
             temperature=0.5,
             groq_api_key=settings.groq_api_key,
         )
-        prompt = f"""You are an AI Pharmaceutical Assistant. Provide helpful, clear answers.
+        inventory = _get_inventory_for_llm(db)
+        prompt = f"""You are an AI Pharmaceutical Assistant for a pharmacy. Provide helpful, clear answers.
+
+CRITICAL RULES FOR MEDICINE SUGGESTIONS:
+1. ONLY recommend medicines from our inventory below. Every medicine listed is IN STOCK.
+2. When suggesting a medicine, you MUST confirm: "We have [medicine name] in stock" and mention the price (₹) and units available.
+3. Do NOT suggest any medicine not in this list. If no suitable medicine is in our inventory, say "We don't have a specific medicine for that in stock right now. Please browse our medicines or consult a pharmacist."
+
+Our medicine inventory (name | price | stock - all are available):
+{inventory}
 
 For medical questions: explain symptoms, treatments, when to see a doctor.
-For medicine suggestions: recommend OTC options when appropriate; for prescription drugs, advise consulting a doctor.
+For medicine suggestions: pick from the inventory above. ALWAYS say we have it in stock, the price, and units available.
 For general health: give practical, responsible advice.
 Always add a brief disclaimer: "Consult a pharmacist or doctor for personalized advice."
 
 User message:
 {message}
 
-Your response:"""
+Your response (ONLY suggest from our inventory; always confirm stock availability and price):"""
         response = llm.invoke(prompt)
         return response.content if hasattr(response, "content") else str(response)
     except Exception as e:
@@ -450,7 +580,9 @@ def chat(
             predicted_intent = "order_medicine"
             confidence = 0.9
 
-    if predicted_intent == "order_medicine":
+    if predicted_intent == "stock_inquiry":
+        final_response = _handle_stock_inquiry(db, message)
+    elif predicted_intent == "order_medicine":
         if not detected_entities:
             # Fallback: use LLM to extract medicine names, then search DB
             llm_extracted = _extract_medicines_via_llm(message)
@@ -464,8 +596,8 @@ def chat(
         else:
             final_response = generate_order_preview(db, detected_entities, str(uid))
     else:
-        # General chat: only use LLM for non-order questions (info, symptoms, etc.)
-        final_response = invoke_llm(message)
+        # General chat: LLM for medical suggestions, symptoms, etc.
+        final_response = invoke_llm(db, message)
 
     # Log to ChatHistory (SQL)
     try:

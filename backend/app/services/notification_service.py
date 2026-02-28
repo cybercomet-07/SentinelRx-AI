@@ -30,6 +30,28 @@ def notify_order_created(db: Session, *, user_id: uuid.UUID, order_id: uuid.UUID
     )
 
 
+def notify_admins_new_order(
+    db: Session,
+    *,
+    order_id: uuid.UUID,
+    customer_name: str,
+    total_amount: float,
+    source: str = "order",
+) -> None:
+    """Notify all admins when a new order is placed (AI or manual)."""
+    admins = db.query(User).filter(User.role == UserRole.ADMIN, User.is_active.is_(True)).all()
+    src_label = "AI chat" if source == "ai_chat" else "manual"
+    total_str = f"{float(total_amount):.2f}"
+    for admin in admins:
+        create_notification(
+            db,
+            user_id=admin.id,
+            title="New order received",
+            message=f"Order {order_id} placed by {customer_name} via {src_label}. Total: ₹{total_str}.",
+            typ=NotificationType.ORDER,
+        )
+
+
 def notify_order_status_changed(
     db: Session,
     *,

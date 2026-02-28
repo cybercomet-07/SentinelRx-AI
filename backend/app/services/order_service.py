@@ -10,7 +10,8 @@ from app.models.order import Order, OrderStatus
 from app.models.order_item import OrderItem
 from app.models.user import User
 from app.schemas.order import OrderItemRead, OrderRead
-from app.services.notification_service import notify_order_created, notify_order_status_changed
+from app.services.geocoding_service import geocode_address
+from app.services.notification_service import notify_order_created, notify_order_status_changed, notify_admins_new_order
 
 
 STATUS_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
@@ -41,14 +42,24 @@ def _build_order_read(db: Session, order: Order) -> OrderRead:
         )
         for item, medicine in rows
     ]
+    user = db.query(User).filter(User.id == order.user_id).first()
+    name = order.user_name or (user.name if user else None)
+    email = user.email if user else None
     return OrderRead(
         id=order.id,
         user_id=order.user_id,
+        user_name=name,
+        user_email=email,
+        user={"name": name, "email": email} if (name or email) else None,
         total_amount=order.total_amount,
         status=order.status,
         created_at=order.created_at,
         updated_at=order.updated_at,
         items=items,
+        delivery_address=order.delivery_address,
+        delivery_latitude=order.delivery_latitude,
+        delivery_longitude=order.delivery_longitude,
+        address_source=order.address_source,
     )
 
 
@@ -57,6 +68,9 @@ def _build_order_list(db: Session, orders: list[Order]) -> list[OrderRead]:
         return []
 
     order_ids = [order.id for order in orders]
+    user_ids = list({o.user_id for o in orders})
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+
     rows = (
         db.query(OrderItem, Medicine)
         .join(Medicine, Medicine.id == OrderItem.medicine_id)
@@ -76,21 +90,40 @@ def _build_order_list(db: Session, orders: list[Order]) -> list[OrderRead]:
             )
         )
 
-    return [
-        OrderRead(
+    result = []
+    for order in orders:
+        u = users.get(order.user_id)
+        if not u and hasattr(order, "user") and order.user:
+            u = order.user
+        name = order.user_name or (u.name if u else None)
+        email = u.email if u else None
+        result.append(OrderRead(
             id=order.id,
             user_id=order.user_id,
+            user_name=name,
+            user_email=email,
+            user={"name": name, "email": email} if (name or email) else None,
             total_amount=order.total_amount,
             status=order.status,
             created_at=order.created_at,
             updated_at=order.updated_at,
             items=grouped.get(order.id, []),
-        )
-        for order in orders
-    ]
+            delivery_address=order.delivery_address,
+            delivery_latitude=order.delivery_latitude,
+            delivery_longitude=order.delivery_longitude,
+            address_source=order.address_source,
+        ))
+    return result
 
 
-def create_order_from_cart(db: Session, user: User) -> OrderRead:
+def create_order_from_cart(
+    db: Session,
+    user: User,
+    delivery_address: str | None = None,
+    delivery_latitude: float | None = None,
+    delivery_longitude: float | None = None,
+    address_source: str | None = None,
+) -> OrderRead:
     cart_items = db.query(Cart).filter(Cart.user_id == user.id).all()
     if not cart_items:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cart is empty")
@@ -114,7 +147,21 @@ def create_order_from_cart(db: Session, user: User) -> OrderRead:
                 detail=f"Insufficient stock for {medicine.name}. Available: {medicine.quantity}",
             )
 
-    order = Order(user_id=user.id, total_amount=0.0, status=OrderStatus.PENDING)
+    # Geocode address if we have text but no lat/lng (manual address)
+    lat, lng = delivery_latitude, delivery_longitude
+    if delivery_address and (lat is None or lng is None):
+        lat, lng = geocode_address(delivery_address)
+
+    order = Order(
+        user_id=user.id,
+        user_name=user.name,
+        total_amount=0.0,
+        status=OrderStatus.PENDING,
+        delivery_address=delivery_address,
+        delivery_latitude=lat or delivery_latitude,
+        delivery_longitude=lng or delivery_longitude,
+        address_source=address_source,
+    )
     db.add(order)
     db.flush()
 
@@ -137,6 +184,7 @@ def create_order_from_cart(db: Session, user: User) -> OrderRead:
     order.total_amount = round(total_amount, 2)
     db.query(Cart).filter(Cart.user_id == user.id).delete()
     notify_order_created(db, user_id=user.id, order_id=order.id, total_amount=order.total_amount)
+    notify_admins_new_order(db, order_id=order.id, customer_name=user.name, total_amount=order.total_amount, source="manual")
     db.commit()
     db.refresh(order)
 
@@ -150,6 +198,57 @@ def list_orders_for_user(db: Session, user: User, page: int, limit: int) -> tupl
     return _build_order_list(db, orders), total
 
 
+def _build_order_list_with_users(
+    db: Session, orders_with_users: list[tuple[Order, User]]
+) -> list[OrderRead]:
+    if not orders_with_users:
+        return []
+    orders = [o for o, _ in orders_with_users]
+    user_by_order = {o.id: u for o, u in orders_with_users}
+    order_ids = [o.id for o in orders]
+    rows = (
+        db.query(OrderItem, Medicine)
+        .join(Medicine, Medicine.id == OrderItem.medicine_id)
+        .filter(OrderItem.order_id.in_(order_ids))
+        .all()
+    )
+    grouped: dict[uuid.UUID, list[OrderItemRead]] = defaultdict(list)
+    for item, medicine in rows:
+        grouped[item.order_id].append(
+            OrderItemRead(
+                id=item.id,
+                medicine_id=item.medicine_id,
+                medicine_name=medicine.name,
+                quantity=item.quantity,
+                unit_price=item.price,
+                line_total=round(item.price * item.quantity, 2),
+            )
+        )
+    result = []
+    for order in orders:
+        u = user_by_order.get(order.id)
+        # Prefer order.user_name (stored in DB) for new orders; fall back to joined User for old orders
+        name = order.user_name or (u.name if u else None)
+        email = u.email if u else None
+        result.append(OrderRead(
+            id=order.id,
+            user_id=order.user_id,
+            user_name=name,
+            user_email=email,
+            user={"name": name, "email": email} if (name or email) else None,
+            total_amount=order.total_amount,
+            status=order.status,
+            created_at=order.created_at,
+            updated_at=order.updated_at,
+            items=grouped.get(order.id, []),
+            delivery_address=order.delivery_address,
+            delivery_latitude=order.delivery_latitude,
+            delivery_longitude=order.delivery_longitude,
+            address_source=order.address_source,
+        ))
+    return result
+
+
 def list_all_orders(
     db: Session, page: int, limit: int, status_filter: str | None = None
 ) -> tuple[list[OrderRead], int]:
@@ -161,7 +260,10 @@ def list_all_orders(
             pass
     total = query.count()
     orders = query.order_by(Order.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
-    return _build_order_list(db, orders), total
+    user_ids = list({o.user_id for o in orders})
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+    orders_with_users = [(o, users.get(o.user_id)) for o in orders]
+    return _build_order_list_with_users(db, orders_with_users), total
 
 
 def get_order_or_404(db: Session, order_id: uuid.UUID) -> Order:

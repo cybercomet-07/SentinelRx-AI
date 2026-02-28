@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Mic, Plus, Send, User } from 'lucide-react'
 import api from '../../services/api'
+import DeliveryAddressForm from '../orders/DeliveryAddressForm'
 import { API_BASE } from '../../utils/constants'
 
 const WELCOME = {
@@ -50,6 +51,8 @@ export default function ChatShell() {
   const [medicineList, setMedicineList] = useState([])
   const [listening, setListening] = useState(false)
   const [recognition, setRecognition] = useState(null)
+  const [pendingOrder, setPendingOrder] = useState(null)
+  const [orderProcessing, setOrderProcessing] = useState(false)
   const debounceRef = useRef(null)
   const chatContainerRef = useRef(null)
   const suggestionsRef = useRef(null)
@@ -196,6 +199,38 @@ export default function ChatShell() {
     return () => clearTimeout(debounceRef.current)
   }, [prompt, medicineList])
 
+  const processOrderWithPayload = useCallback(
+    async (payload, delivery = null) => {
+      const fullPayload = { ...payload, ...delivery }
+      try {
+        const res = await api.post(PROCESS_ORDER_ENDPOINT, fullPayload)
+        const data = res.data
+        if (data?.status === 'confirmed' || data?.status === 'cancelled') {
+          setMessages((prev) => {
+            const next = [...prev]
+            const lastIdx = next.length - 1
+            if (lastIdx >= 0 && next[lastIdx].isHtml) {
+              next[lastIdx] = { ...next[lastIdx], orderFormHandled: true }
+            }
+            const newMsg = data?.status === 'confirmed'
+              ? { role: 'assistant', content: '✓ Order confirmed! Here are your order details:', isHtml: false, orderData: { orderId: data.order_id, items: data.items || [], total: data.total ?? 0 }, timestamp: Date.now() }
+              : { role: 'assistant', content: `❌ Order Cancelled (ID: ${data.order_id})`, isHtml: false, orderData: null, timestamp: Date.now() }
+            next.push(newMsg)
+            return next
+          })
+          speak(data?.status === 'confirmed' ? 'Order confirmed successfully.' : 'Order cancelled successfully.')
+        } else {
+          addMessage('assistant', data?.message || 'Order processing failed.')
+        }
+      } catch (err) {
+        const msg = err.response?.data?.message || err.response?.data?.detail || 'Order processing failed. Please try again.'
+        addMessage('assistant', msg)
+        speak('Order processing failed.')
+      }
+    },
+    [addMessage, speak]
+  )
+
   // Order form submit handler (delegated)
   useEffect(() => {
     const handleSubmit = async (e) => {
@@ -244,38 +279,24 @@ export default function ChatShell() {
 
       const payload = { order_id: orderId, action, items }
 
-      try {
-        const res = await api.post(PROCESS_ORDER_ENDPOINT, payload)
-        const data = res.data
-
-        if (data?.status === 'confirmed' || data?.status === 'cancelled') {
-          // Mark the previous message (order form) as handled so Confirm/Cancel buttons are hidden
-          setMessages((prev) => {
-            const next = [...prev]
-            const lastIdx = next.length - 1
-            if (lastIdx >= 0 && next[lastIdx].isHtml) {
-              next[lastIdx] = { ...next[lastIdx], orderFormHandled: true }
-            }
-            const newMsg = data?.status === 'confirmed'
-              ? { role: 'assistant', content: '✓ Order confirmed! Here are your order details:', isHtml: false, orderData: { orderId: data.order_id, items: data.items || [], total: data.total ?? 0 }, timestamp: Date.now() }
-              : { role: 'assistant', content: `❌ Order Cancelled (ID: ${data.order_id})`, isHtml: false, orderData: null, timestamp: Date.now() }
-            next.push(newMsg)
-            return next
+      if (action === 'confirm') {
+        setPendingOrder(payload)
+        if (container) {
+          container.querySelectorAll('button').forEach((b) => {
+            b.disabled = false
+            b.style.opacity = '1'
           })
-          speak(data?.status === 'confirmed' ? 'Order confirmed successfully.' : 'Order cancelled successfully.')
-        } else {
-          addMessage('assistant', data?.message || 'Order processing failed.')
         }
-      } catch (err) {
-        const msg = err.response?.data?.message || err.response?.data?.detail || 'Order processing failed. Please try again.'
-        addMessage('assistant', msg)
-        speak('Order processing failed.')
+        return
       }
+
+      setOrderProcessing(true)
+      processOrderWithPayload(payload).finally(() => setOrderProcessing(false))
     }
 
     document.addEventListener('submit', handleSubmit, true)
     return () => document.removeEventListener('submit', handleSubmit, true)
-  }, [addMessage, speak])
+  }, [processOrderWithPayload])
 
   // Order action (cancel/edit) - delegated click handler
   const handleOrderAction = useCallback(
@@ -512,6 +533,26 @@ export default function ChatShell() {
           </div>
         </div>
       </div>
+
+      {/* Delivery address modal for AI order confirm */}
+      {pendingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="font-semibold text-slate-900 mb-3">Delivery Address</h3>
+            <p className="text-sm text-slate-600 mb-4">Please provide where we should deliver your order.</p>
+            <DeliveryAddressForm
+              onSubmit={async (delivery) => {
+                setOrderProcessing(true)
+                await processOrderWithPayload(pendingOrder, delivery)
+                setPendingOrder(null)
+                setOrderProcessing(false)
+              }}
+              onCancel={() => setPendingOrder(null)}
+              loading={orderProcessing}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

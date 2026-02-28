@@ -93,7 +93,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {order.items?.map((i) => i.medicine_name).join(', ') ?? 'Order'}
+                    {order.items?.map((i) => `${i.medicine_name} ×${i.quantity}`).join(', ') ?? 'Order'}
                   </p>
                   <p className="text-xs text-gray-400">
                     {new Date(order.created_at).toLocaleDateString()} · #{order.id}

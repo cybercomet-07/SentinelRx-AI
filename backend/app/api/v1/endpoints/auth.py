@@ -48,7 +48,8 @@ def me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.api_route("/me", methods=["PATCH", "PUT"], response_model=UserProfile)
+@router.patch("/me", response_model=UserProfile)
+@router.put("/me", response_model=UserProfile)
 def update_profile(
     payload: ProfileUpdate,
     current_user: User = Depends(get_current_user),
@@ -58,6 +59,5 @@ def update_profile(
     if updates:
         db.query(User).filter(User.id == current_user.id).update(updates)
         db.commit()
-        # Re-query to return fresh data
-        db.refresh(current_user)
-    return current_user
+    user = db.query(User).filter(User.id == current_user.id).first()
+    return user

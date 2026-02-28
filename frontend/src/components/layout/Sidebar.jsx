@@ -2,7 +2,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
-  Pill, ClipboardList, Users, LogOut, Activity
+  Pill, ClipboardList, Users, LogOut, Activity, MapPin
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -18,6 +18,8 @@ const adminLinks = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/medicines', icon: Pill, label: 'Medicines' },
   { to: '/admin/orders', icon: ClipboardList, label: 'Orders' },
+  { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
+  { to: '/admin/map', icon: MapPin, label: 'Delivery Map' },
   { to: '/admin/users', icon: Users, label: 'Users' },
 ]
 

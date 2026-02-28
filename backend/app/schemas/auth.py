@@ -15,6 +15,7 @@ class RegisterRequest(BaseModel):
     landmark: str = Field(min_length=2, max_length=200, description="Landmark")
     pin_code: str = Field(min_length=5, max_length=10, description="PIN code")
     date_of_birth: date = Field(description="Date of birth")
+    gender: str | None = Field(default=None, max_length=20, description="Gender")
 
 
 class LoginRequest(BaseModel):
@@ -49,6 +50,7 @@ class UserProfile(BaseModel):
     landmark: str | None = None
     pin_code: str | None = None
     date_of_birth: date | None = None
+    gender: str | None = None
 
 
 class ProfileUpdate(BaseModel):
@@ -58,3 +60,4 @@ class ProfileUpdate(BaseModel):
     landmark: str | None = Field(default=None, min_length=2, max_length=200)
     pin_code: str | None = Field(default=None, min_length=5, max_length=10)
     date_of_birth: date | None = None
+    gender: str | None = Field(default=None, max_length=20)

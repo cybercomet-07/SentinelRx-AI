@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     google_client_id: str | None = None
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:3001,http://localhost:3002,http://localhost:3005,http://localhost:3006,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3005,http://127.0.0.1:3006"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:3001,http://localhost:3002,http://localhost:3005,http://localhost:3006,http://localhost:3007,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3005,http://127.0.0.1:3006,http://127.0.0.1:3007"
 
     model_config = SettingsConfigDict(env_file=str(_ENV_PATH), env_file_encoding="utf-8")
 

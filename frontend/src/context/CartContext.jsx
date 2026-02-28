@@ -23,7 +23,7 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(false)
 
   const fetchCart = useCallback(async () => {
-    if (!user) return
+    if (!user || user?.role === 'admin') return
     try {
       const res = await cartService.getCart()
       const data = res.data

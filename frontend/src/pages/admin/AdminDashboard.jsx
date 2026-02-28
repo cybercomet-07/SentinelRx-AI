@@ -20,6 +20,10 @@ export default function AdminDashboard() {
   }
 
   useEffect(load, [])
+  useEffect(() => {
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (loading) return <Loader center />
   if (error) return <ErrorState onRetry={load} />
@@ -27,7 +31,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 space-y-6">
       <DashboardStats stats={stats} />
-      <RevenueChart data={stats?.monthly_data} />
+      <RevenueChart data={stats?.monthly_data ?? []} />
 
       {stats?.top_medicines?.length > 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">

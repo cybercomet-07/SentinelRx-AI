@@ -17,6 +17,7 @@ import AdminLayout from '../pages/admin/AdminLayout'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import AdminMedicines from '../pages/admin/AdminMedicines'
 import AdminOrders from '../pages/admin/AdminOrders'
+import AdminMapPage from '../pages/admin/AdminMapPage'
 import AdminUsers from '../pages/admin/AdminUsers'
 
 export default function AppRouter() {
@@ -41,6 +42,8 @@ export default function AppRouter() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="medicines" element={<AdminMedicines />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="map" element={<AdminMapPage />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

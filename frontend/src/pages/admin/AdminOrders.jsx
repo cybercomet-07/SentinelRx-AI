@@ -25,7 +25,12 @@ export default function AdminOrders() {
     orderService.getAll({ page: p, limit: LIMIT, status: filter || undefined })
       .then(r => {
         const data = r.data?.items ?? r.data
-        setOrders(Array.isArray(data) ? data.map(o => ({ ...o, total: o.total_amount ?? o.total })) : [])
+        setOrders(Array.isArray(data) ? data.map(o => ({
+          ...o,
+          total: o.total_amount ?? o.total,
+          user_name: o.user_name ?? o.userName ?? o.user?.name ?? o.customer_name ?? null,
+          user_email: o.user_email ?? o.userEmail ?? o.user?.email ?? null,
+        })) : [])
         setTotal(r.data?.total ?? 0)
       })
       .catch(() => setError(true))

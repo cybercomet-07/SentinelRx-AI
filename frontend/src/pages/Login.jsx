@@ -43,6 +43,7 @@ export default function Login() {
   const [landmark, setLandmark] = useState('')
   const [pinCode, setPinCode] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
+  const [gender, setGender] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -74,7 +75,7 @@ export default function Login() {
   const switchMode = (m) => {
     setMode(m)
     setName(''); setEmail(''); setPassword(''); setConfirm('')
-    setPhone(''); setAddress(''); setLandmark(''); setPinCode(''); setDateOfBirth('')
+    setPhone(''); setAddress(''); setLandmark(''); setPinCode(''); setDateOfBirth(''); setGender('')
   }
 
   const handleSubmit = async (e) => {
@@ -103,6 +104,7 @@ export default function Login() {
           landmark: landmark.trim(),
           pin_code: pinCode.trim(),
           date_of_birth: dateOfBirth,
+          gender: gender || undefined,
         })
         const token = res.data.access_token
         localStorage.setItem('sentinelrx_token', token)
@@ -313,6 +315,16 @@ export default function Login() {
                   <label htmlFor="signup-dob" className="block text-xs font-semibold text-gray-600 mb-1.5">Date of Birth *</label>
                   <input id="signup-dob" name="date_of_birth" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all" required />
+                </div>
+                <div>
+                  <label htmlFor="signup-gender" className="block text-xs font-semibold text-gray-600 mb-1.5">Gender</label>
+                  <select id="signup-gender" name="gender" value={gender || 'prefer_not_to_say'} onChange={e => setGender(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                  </select>
                 </div>
               </>
             )}

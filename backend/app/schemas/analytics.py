@@ -17,6 +17,12 @@ class TopMedicineItem(BaseModel):
     revenue: float
 
 
+class MonthlyDataItem(BaseModel):
+    month: str
+    orders: int
+    revenue: float
+
+
 class AnalyticsSummary(BaseModel):
     total_orders: int
     total_revenue: float
@@ -24,3 +30,4 @@ class AnalyticsSummary(BaseModel):
     low_stock_medicines_count: int
     orders_by_status: list[OrdersByStatusItem]
     top_medicines: list[TopMedicineItem]
+    monthly_data: list[MonthlyDataItem] = []

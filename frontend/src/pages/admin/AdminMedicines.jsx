@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import InventoryTable from '../../components/admin/InventoryTable'
 import AddMedicineModal from '../../components/admin/AddMedicineModal'
 import EditMedicineModal from '../../components/admin/EditMedicineModal'
@@ -8,18 +8,22 @@ import { medicineService } from '../../services/medicineService'
 import { Plus, Search, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const SEARCH_DEBOUNCE_MS = 400
+
 export default function AdminMedicines() {
   const [medicines, setMedicines] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [editMed, setEditMed] = useState(null)
+  const debounceRef = useRef(null)
 
-  const load = () => {
+  const load = (searchTerm = '') => {
     setError(false)
     setLoading(true)
-    medicineService.getAll({ search })
+    medicineService.getAll({ search: searchTerm || undefined, limit: 100 })
       .then(r => {
         const data = r.data?.items ?? r.data ?? []
         setMedicines(Array.isArray(data) ? data : [])
@@ -28,14 +32,25 @@ export default function AdminMedicines() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [search])
+  const initialLoadRef = useRef(true)
+  useEffect(() => {
+    const searchTerm = searchInput.trim()
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const delay = initialLoadRef.current ? 0 : SEARCH_DEBOUNCE_MS
+    debounceRef.current = setTimeout(() => {
+      setSearch(searchTerm)
+      load(searchTerm)
+      initialLoadRef.current = false
+    }, delay)
+    return () => clearTimeout(debounceRef.current)
+  }, [searchInput])
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this medicine?')) return
     try {
       await medicineService.delete(id)
       toast.success('Deleted')
-      load()
+      load(searchInput.trim())
     } catch {
       toast.error('Failed to delete')
     }
@@ -47,8 +62,7 @@ export default function AdminMedicines() {
 
   const lowStock = medicines.filter(m => m.quantity <= 10).length
 
-  if (loading) return <Loader center />
-  if (error) return <ErrorState onRetry={load} />
+  if (error) return <ErrorState onRetry={() => load(searchInput.trim())} />
 
   return (
     <div className="p-6 space-y-4">
@@ -63,8 +77,8 @@ export default function AdminMedicines() {
         <div className="flex-1 min-w-48 relative">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             placeholder="Search medicines…"
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-mint-300 bg-white"
           />
@@ -78,14 +92,18 @@ export default function AdminMedicines() {
         </button>
       </div>
 
-      <InventoryTable medicines={filtered} onEdit={setEditMed} onDelete={handleDelete} />
+      {loading ? (
+        <div className="py-16 flex justify-center"><Loader center /></div>
+      ) : (
+        <InventoryTable medicines={filtered} onEdit={setEditMed} onDelete={handleDelete} />
+      )}
 
       <AddMedicineModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={() => {
-          setMedicines(prev => [...prev, { id: Date.now(), ...{} }])
-          load()
+          setAddOpen(false)
+          load(searchInput.trim())
         }}
       />
       <EditMedicineModal
@@ -94,7 +112,7 @@ export default function AdminMedicines() {
         medicine={editMed}
         onSuccess={() => {
           setEditMed(null)
-          load()
+          load(searchInput.trim())
         }}
       />
     </div>
