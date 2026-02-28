@@ -1,0 +1,36 @@
+/* Glass morphism cards */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.9);
+}
+
+.glass-muted {
+  background: rgba(245, 245, 240, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+/* Subtle gradient backgrounds */
+.bg-mesh {
+  background-color: #fafaf8;
+  background-image:
+    radial-gradient(at 20% 20%, rgba(204, 251, 239, 0.4) 0px, transparent 50%),
+    radial-gradient(at 80% 10%, rgba(240, 253, 249, 0.5) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(209, 250, 229, 0.3) 0px, transparent 50%);
+}
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+}
+
+/* Accent glow */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.2);
+}

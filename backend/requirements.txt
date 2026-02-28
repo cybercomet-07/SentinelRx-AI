@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg[binary]
+pydantic-settings
+python-dotenv
+alembic
+httpx
+bcrypt
+python-jose[cryptography]
+email-validator
+google-auth
+requests
+pytest
+langchain-groq
+python-multipart

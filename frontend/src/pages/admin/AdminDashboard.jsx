@@ -1,0 +1,54 @@
+import { useState, useEffect } from 'react'
+import DashboardStats from '../../components/admin/DashboardStats'
+import RevenueChart from '../../components/admin/RevenueChart'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
+import { adminService } from '../../services/adminService'
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  const load = () => {
+    setError(false)
+    setLoading(true)
+    adminService.getDashboardStats()
+      .then(r => setStats(r.data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(load, [])
+
+  if (loading) return <Loader center />
+  if (error) return <ErrorState onRetry={load} />
+
+  return (
+    <div className="p-6 space-y-6">
+      <DashboardStats stats={stats} />
+      <RevenueChart data={stats?.monthly_data} />
+
+      {stats?.top_medicines?.length > 0 && (
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
+          <h3 className="font-display font-semibold text-gray-900 mb-4">Top Medicines This Month</h3>
+          <div className="space-y-2">
+            {stats.top_medicines.map((m, i) => (
+              <div key={m.id} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
+                  ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : i === 2 ? 'bg-orange-100 text-orange-600' : 'bg-mint-50 text-mint-700'}`}>
+                  {i + 1}
+                </span>
+                <span className="flex-1 text-sm text-gray-800">{m.name}</span>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{m.orders} orders</span>
+                <div className="w-24 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                  <div className="h-full bg-mint-400 rounded-full" style={{ width: `${(m.orders / stats.top_medicines[0].orders) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

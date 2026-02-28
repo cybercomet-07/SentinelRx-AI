@@ -1,0 +1,48 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import ProtectedRoute from '../components/layout/ProtectedRoute'
+
+import Landing from '../pages/Landing'
+import Login from '../pages/Login'
+
+import UserLayout from '../pages/user/UserLayout'
+import Dashboard from '../pages/user/Dashboard'
+import ChatPage from '../pages/user/ChatPage'
+import ManualOrderPage from '../pages/user/ManualOrderPage'
+import OrderHistoryPage from '../pages/user/OrderHistoryPage'
+import NotificationsPage from '../pages/user/NotificationsPage'
+import PrescriptionsPage from '../pages/user/PrescriptionsPage'
+
+import AdminLayout from '../pages/admin/AdminLayout'
+import AdminDashboard from '../pages/admin/AdminDashboard'
+import AdminMedicines from '../pages/admin/AdminMedicines'
+import AdminOrders from '../pages/admin/AdminOrders'
+import AdminUsers from '../pages/admin/AdminUsers'
+
+export default function AppRouter() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route path="/user" element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
+        <Route index element={<Navigate to="/user/chat" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="medicines" element={<ManualOrderPage />} />
+        <Route path="orders" element={<OrderHistoryPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="prescriptions" element={<PrescriptionsPage />} />
+      </Route>
+
+      <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="medicines" element={<AdminMedicines />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="users" element={<AdminUsers />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
