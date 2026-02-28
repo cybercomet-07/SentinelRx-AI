@@ -35,16 +35,16 @@ frontend/
 │   ├── components/
 │   │   ├── layout/                 # Sidebar, Header, ProtectedRoute
 │   │   ├── chat/                   # ChatShell, MessageBubble, VoiceButton, OrderSuggestionCard
-│   │   ├── medicines/              # MedicineGrid, MedicineCard, AddToCartButton
+│   │   ├── medicines/              # MedicineGrid, MedicineCard
 │   │   ├── cart/                   # CartDrawer, CartItem, OrderSummary
 │   │   ├── orders/                 # OrderHistoryTable, StatusBadge
-│   │   ├── notifications/          # NotificationBell, AlertPanel, RefillAlertCard
+│   │   ├── notifications/          # NotificationBell, AlertPanel
 │   │   ├── admin/                  # InventoryTable, AddMedicineModal, EditMedicineModal, OrdersTable, DashboardStats, RevenueChart, LowStockBadge
-│   │   └── ui/                     # Loader, Modal, ErrorBanner
+│   │   └── ui/                     # Loader, Modal, ErrorState, Pagination
 │   ├── services/                   # All API service functions (axios)
-│   ├── hooks/                      # useAuth, useVoice, useCart, usePagination
+│   ├── hooks/                      # useAuth, useVoice, useCart
 │   ├── context/                    # AuthContext, CartContext
-│   └── utils/                      # constants, errorHandler, languageDetect
+│   └── utils/                      # constants, mockData
 ```
 
 ---
