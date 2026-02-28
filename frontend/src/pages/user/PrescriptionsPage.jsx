@@ -119,13 +119,13 @@ export default function PrescriptionsPage() {
   }
 
   return (
-    <div className="p-6 space-y-8 max-w-2xl">
-      <section>
+    <div className="p-6 space-y-8 max-w-2xl mx-auto">
+      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <FileText size={18} className="text-mint-600" />
           <h2 className="font-display font-semibold text-gray-900">Create Prescription</h2>
         </div>
-        <form onSubmit={handleCreate} className="space-y-4 p-4 bg-mint-50 border border-mint-100 rounded-xl">
+        <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Patient name *</label>
             <input
@@ -226,7 +226,7 @@ export default function PrescriptionsPage() {
         </form>
       </section>
 
-      <section>
+      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <Search size={18} className="text-mint-600" />
           <h2 className="font-display font-semibold text-gray-900">View Prescription</h2>
@@ -254,7 +254,7 @@ export default function PrescriptionsPage() {
           </div>
         )}
         {prescription && !loadingView && (
-          <div className="mt-4 p-4 bg-white border border-gray-100 rounded-xl shadow-soft">
+          <div className="mt-4 p-4 bg-gray-50 border border-gray-100 rounded-xl card-lift shadow-soft">
             <div className="flex flex-wrap gap-2 mb-3">
               <span className="text-xs font-medium text-gray-500">ID: {prescription.id}</span>
               <span className="text-xs text-gray-400">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Send, User } from 'lucide-react'
+import { Mic, Plus, Send, User } from 'lucide-react'
 import api from '../../services/api'
 import { API_BASE } from '../../utils/constants'
 
@@ -248,18 +248,21 @@ export default function ChatShell() {
         const res = await api.post(PROCESS_ORDER_ENDPOINT, payload)
         const data = res.data
 
-        if (container) container.style.display = 'none'
-
-        if (data?.status === 'confirmed') {
-          addMessage('assistant', '✓ Order confirmed! Here are your order details:', false, {
-            orderId: data.order_id,
-            items: data.items || [],
-            total: data.total ?? 0,
+        if (data?.status === 'confirmed' || data?.status === 'cancelled') {
+          // Mark the previous message (order form) as handled so Confirm/Cancel buttons are hidden
+          setMessages((prev) => {
+            const next = [...prev]
+            const lastIdx = next.length - 1
+            if (lastIdx >= 0 && next[lastIdx].isHtml) {
+              next[lastIdx] = { ...next[lastIdx], orderFormHandled: true }
+            }
+            const newMsg = data?.status === 'confirmed'
+              ? { role: 'assistant', content: '✓ Order confirmed! Here are your order details:', isHtml: false, orderData: { orderId: data.order_id, items: data.items || [], total: data.total ?? 0 }, timestamp: Date.now() }
+              : { role: 'assistant', content: `❌ Order Cancelled (ID: ${data.order_id})`, isHtml: false, orderData: null, timestamp: Date.now() }
+            next.push(newMsg)
+            return next
           })
-          speak('Order confirmed successfully.')
-        } else if (data?.status === 'cancelled') {
-          addMessage('assistant', `❌ Order Cancelled (ID: ${data.order_id})`)
-          speak('Order cancelled successfully.')
+          speak(data?.status === 'confirmed' ? 'Order confirmed successfully.' : 'Order cancelled successfully.')
         } else {
           addMessage('assistant', data?.message || 'Order processing failed.')
         }
@@ -351,71 +354,87 @@ export default function ChatShell() {
   const formatTime = (ts) =>
     new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+  const startNewChat = useCallback(() => {
+    setMessages([{ ...WELCOME, timestamp: Date.now() }])
+    try {
+      localStorage.removeItem(getChatStorageKey())
+    } catch {}
+  }, [])
+
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Header - AI Pharmaceutical Assistant style */}
-      <div className="flex items-center gap-3 px-4 py-4 bg-[#1e3a5f] text-white">
-        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-          <span className="text-lg">💊</span>
+    <div className="flex flex-col h-full bg-slate-50/80">
+      {/* Header - Professional pharmaceutical style */}
+      <div className="flex items-center justify-between gap-4 px-6 py-4 bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
+            <span className="text-2xl">💊</span>
+          </div>
+          <div>
+            <p className="text-base font-semibold tracking-tight">AI Pharmaceutical Assistant</p>
+            <p className="text-xs text-blue-100 mt-0.5">Personalized medicine recommendations and professional health guidance.</p>
+          </div>
         </div>
-        <div>
-          <p className="text-base font-semibold">AI Pharmaceutical Assistant</p>
-          <p className="text-xs text-white/80">Personalized medicine recommendations and professional health guidance.</p>
-        </div>
+        <button
+          type="button"
+          onClick={startNewChat}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 transition-all duration-200 text-sm font-medium border border-white/20"
+          title="New chat"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+          New chat
+        </button>
       </div>
 
       {/* Messages */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-white"
+        className="flex-1 overflow-y-auto p-6 space-y-5 bg-white"
         aria-live="polite"
       >
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} msg-animate`}
           >
             <div
-              className={`max-w-[85%] rounded-xl px-4 py-3 ${
+              className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-blue-500 text-white rounded-br-md'
-                  : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                  ? 'bg-blue-600 text-white rounded-br-md'
+                  : 'bg-slate-50 text-slate-800 rounded-bl-md border border-slate-100'
               }`}
             >
               {msg.isHtml ? (
                 <div
                   className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: msg.content }}
+                  dangerouslySetInnerHTML={{
+                    __html: msg.orderFormHandled
+                      ? (msg.content || '').replace(/<div[^>]*id="buttonContainer"[^>]*>[\s\S]*?<\/div>/gi, '')
+                      : (msg.content || ''),
+                  }}
                 />
               ) : msg.content ? (
-                <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
               ) : null}
               {msg.orderData && !msg.orderData.cancelled && (
-                <div className="mt-3 p-4 rounded-xl bg-gray-100 border border-gray-200">
+                <div className="mt-4 p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-green-600">✓</span>
-                    <span className="font-semibold text-gray-900">Order Confirmed</span>
+                    <span className="text-emerald-600 font-semibold">✓</span>
+                    <span className="font-semibold text-slate-900">Order Confirmed</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-3">Order ID: {msg.orderData.orderId}</p>
-                  <div className="space-y-2 text-sm text-gray-700">
+                  <p className="text-xs text-slate-500 mb-3 font-mono">Order ID: {msg.orderData.orderId}</p>
+                  <div className="space-y-2 text-sm text-slate-700">
                     {msg.orderData.items?.map((it) => (
-                      <div key={it.medicine_name} className="py-1">
-                        <div><strong>Medicine:</strong> {it.medicine_name}</div>
-                        <div><strong>Quantity:</strong> {it.quantity} · <strong>Subtotal:</strong> ₹{it.subtotal}</div>
+                      <div key={it.medicine_name} className="py-1.5 border-b border-slate-100 last:border-0">
+                        <div><strong className="text-slate-800">Medicine:</strong> {it.medicine_name}</div>
+                        <div><strong className="text-slate-800">Quantity:</strong> {it.quantity} · <strong>Subtotal:</strong> ₹{it.subtotal}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="font-semibold mt-3 pt-2 border-t border-gray-200 text-gray-900">Total billing amount: ₹{msg.orderData.total}</div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="font-semibold mt-3 pt-3 border-t border-slate-200 text-slate-900">Total billing amount: ₹{msg.orderData.total}</div>
+                  <div className="flex gap-2 mt-4">
                     <Link
                       to="/user/orders"
-                      className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-                    >
-                      Confirm Order
-                    </Link>
-                    <Link
-                      to="/user/orders"
-                      className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                      className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                     >
                       View in Order History
                     </Link>
@@ -428,30 +447,30 @@ export default function ChatShell() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="flex gap-1 px-4 py-3 bg-gray-100 rounded-xl">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" />
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.1s' }} />
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="flex gap-1.5 px-5 py-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" />
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.1s' }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
             </div>
           </div>
         )}
       </div>
 
-      {/* Input - Reference style: light grey bar, person icon, purple mic, green send */}
-      <div className="border-t border-gray-200 bg-gray-100 p-4">
+      {/* Input - Professional pharmaceutical style */}
+      <div className="border-t border-slate-200 bg-slate-50/80 p-5">
         <div className="relative">
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-gray-200 rounded-t-xl shadow-lg max-h-48 overflow-y-auto z-10"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10"
             >
               {suggestions.map((m, idx) => (
                 <button
                   key={m.id || idx}
                   type="button"
                   onClick={() => pickSuggestion(m.product_name || m.name)}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-0 ${
-                    idx === selectedIndex ? 'bg-blue-50 text-blue-700' : ''
+                  className={`w-full text-left px-4 py-3 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors ${
+                    idx === selectedIndex ? 'bg-slate-100 text-slate-900' : ''
                   }`}
                 >
                   {m.product_name || m.name}
@@ -459,15 +478,15 @@ export default function ChatShell() {
               ))}
             </div>
           )}
-          <div className="flex items-center gap-2 bg-white rounded-2xl border border-gray-200 focus-within:border-blue-300 focus-within:shadow-sm transition-all px-4 py-3">
-            <User size={20} className="text-gray-400" />
+          <div className="flex items-center gap-3 bg-white rounded-2xl border border-slate-200 px-5 py-3.5 shadow-sm">
+            <User size={20} className="text-slate-400" strokeWidth={2} />
             <input
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type or speak the medicine name..."
-              className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0"
               maxLength={500}
               disabled={loading}
             />
@@ -475,20 +494,20 @@ export default function ChatShell() {
               type="button"
               onClick={toggleVoice}
               aria-label="Voice input"
-              className={`p-2 rounded-lg transition-colors ${
-                listening ? 'bg-purple-100 text-purple-600' : 'text-purple-500 hover:bg-purple-50'
+              className={`p-2.5 rounded-xl transition-all duration-200 ${
+                listening ? 'bg-blue-100 text-blue-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
               }`}
             >
-              <Mic size={20} />
+              <Mic size={20} strokeWidth={2} />
             </button>
             <button
               type="button"
               onClick={() => sendMessage()}
               disabled={!prompt.trim() || loading}
-              className="p-2 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 transition-colors"
+              className="p-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 shadow-sm"
               aria-label="Send"
             >
-              <Send size={20} />
+              <Send size={20} strokeWidth={2} />
             </button>
           </div>
         </div>

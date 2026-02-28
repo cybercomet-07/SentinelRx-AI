@@ -41,8 +41,14 @@ def register_user(db: Session, payload: RegisterRequest) -> TokenResponse:
         password_hash=hash_password(payload.password),
         role=UserRole.USER,
         is_active=True,
+        phone=payload.phone,
+        address=payload.address,
+        landmark=payload.landmark,
+        pin_code=payload.pin_code,
+        date_of_birth=payload.date_of_birth,
     )
     db.add(user)
+    db.flush()
     db.commit()
     db.refresh(user)
     return _build_token_response(user)

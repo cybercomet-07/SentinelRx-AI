@@ -20,6 +20,11 @@ export function AuthProvider({ children }) {
     setUser(userData)
   }
 
+  const updateUser = (userData) => {
+    localStorage.setItem('sentinelrx_user', JSON.stringify(userData))
+    setUser(userData)
+  }
+
   const logout = () => {
     localStorage.removeItem('sentinelrx_user')
     localStorage.removeItem('sentinelrx_token')
@@ -27,7 +32,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading, isAdmin: user?.role === 'admin' }}>
       {children}
     </AuthContext.Provider>
   )

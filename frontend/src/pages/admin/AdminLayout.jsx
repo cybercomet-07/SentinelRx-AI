@@ -7,6 +7,7 @@ const TITLES = {
   '/admin/medicines': 'Medicine Management',
   '/admin/orders': 'Orders Management',
   '/admin/users': 'User Management',
+  '/admin/profile': 'Profile',
 }
 
 export default function AdminLayout() {

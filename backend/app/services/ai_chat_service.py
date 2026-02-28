@@ -225,12 +225,12 @@ def generate_order_preview(db: Session, entities: list[dict], user_id: str) -> s
     })
     order_payload_escaped = html.escape(order_payload)
     html_parts = [
-        '<div style="max-width:100%;padding:20px;background:#f3f4f6;border-radius:16px;border:1px solid #e5e7eb;">',
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">',
-        '<span style="font-size:18px;">📄</span>',
-        '<h2 style="margin:0;font-size:16px;font-weight:700;color:#111827;">Order Preview</h2>',
+        '<div style="max-width:100%;padding:24px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,0.06);">',
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">',
+        '<span style="font-size:20px;">📄</span>',
+        '<h2 style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">Order Preview</h2>',
         '</div>',
-        f'<p style="margin:0 0 12px;font-size:13px;color:#6b7280;">Order ID: {order_id}</p>',
+        f'<p style="margin:0 0 16px;font-size:12px;color:#64748b;font-family:monospace;">Order ID: {order_id}</p>',
         f'<form method="POST" action="/api/v1/ai-chat/process-order" id="orderForm" data-order="{order_payload_escaped}">',
         f'<input type="hidden" name="order_id" value="{order_id}">',
     ]
@@ -239,22 +239,22 @@ def generate_order_preview(db: Session, entities: list[dict], user_id: str) -> s
         safe_name = html.escape(item["medicine_name"])
         safe_id = _sanitize_field_name(item["medicine_name"])
         html_parts.append(f"""
-        <div style="padding:16px;margin-bottom:12px;border-radius:12px;background:#ffffff;border:1px solid #e5e7eb;">
-            <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:#111827;">{safe_name}</div>
-            <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">Price: ₹ {round(item['price'],2)} | Stock: {item['stock']}</div>
+        <div style="padding:16px;margin-bottom:12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8f0;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:#0f172a;">{safe_name}</div>
+            <div style="font-size:13px;color:#64748b;margin-bottom:10px;">Price: ₹ {round(item['price'],2)} | Stock: {item['stock']}</div>
             <div style="display:flex;align-items:center;gap:10px;">
                 <input type="number" name="quantity_{safe_id}" value="{item['quantity']}" min="1" max="{item['stock']}"
-                    style="width:80px;height:38px;text-align:center;border-radius:8px;border:1px solid #d1d5db;font-size:14px;background:#fff;">
+                    style="width:80px;height:38px;text-align:center;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;background:#fff;">
                 <input type="hidden" name="medicine_{safe_id}" value="{safe_name}">
             </div>
         </div>
         """)
 
     html_parts.append("""
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb;">
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
         <div style="display:flex;gap:12px;flex-wrap:wrap;" id="buttonContainer">
-            <button type="submit" name="action" value="confirm" style="flex:1;min-width:120px;padding:12px 16px;background:#22c55e;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">✅ Confirm Order</button>
-            <button type="submit" name="action" value="cancel" style="flex:1;min-width:120px;padding:12px 16px;background:#dc2626;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">❌ Cancel Order</button>
+            <button type="submit" name="action" value="confirm" style="flex:1;min-width:120px;padding:12px 16px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">✅ Confirm Order</button>
+            <button type="submit" name="action" value="cancel" style="flex:1;min-width:120px;padding:12px 16px;background:#64748b;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">❌ Cancel Order</button>
         </div>
     </div>
     </form>

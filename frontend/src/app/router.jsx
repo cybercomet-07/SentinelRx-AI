@@ -11,6 +11,7 @@ import ManualOrderPage from '../pages/user/ManualOrderPage'
 import OrderHistoryPage from '../pages/user/OrderHistoryPage'
 import NotificationsPage from '../pages/user/NotificationsPage'
 import PrescriptionsPage from '../pages/user/PrescriptionsPage'
+import ProfilePage from '../pages/user/ProfilePage'
 
 import AdminLayout from '../pages/admin/AdminLayout'
 import AdminDashboard from '../pages/admin/AdminDashboard'
@@ -32,6 +33,7 @@ export default function AppRouter() {
         <Route path="orders" element={<OrderHistoryPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prescriptions" element={<PrescriptionsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
@@ -40,6 +42,7 @@ export default function AppRouter() {
         <Route path="medicines" element={<AdminMedicines />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="users" element={<AdminUsers />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

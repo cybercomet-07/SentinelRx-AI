@@ -6,17 +6,17 @@ export default function MedicineCard({ medicine }) {
   const { addItem } = useCart()
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-soft card-lift">
+    <div className="h-full flex flex-col bg-white border border-gray-100 rounded-2xl p-4 shadow-soft card-lift">
       {/* Image */}
-      <div className="w-full h-32 bg-gradient-to-br from-mint-50 to-sage-100 rounded-xl flex items-center justify-center mb-4">
+      <div className="w-full h-32 shrink-0 bg-gradient-to-br from-mint-50 to-sage-100 rounded-xl flex items-center justify-center mb-4">
         {medicine.image_url
           ? <img src={medicine.image_url} alt={medicine.name} className="h-24 w-24 object-contain" />
           : <Package size={36} className="text-mint-300" />
         }
       </div>
 
-      {/* Info */}
-      <div className="mb-3">
+      {/* Info - grows to fill space, pushes price/button to bottom */}
+      <div className="flex-1 min-h-0 mb-3">
         <h3 className="font-semibold text-gray-900 text-sm leading-tight">{medicine.name}</h3>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {medicine.product_id && (
@@ -30,7 +30,7 @@ export default function MedicineCard({ medicine }) {
         <p className="text-xs text-gray-500 mt-1 line-clamp-2">{medicine.description}</p>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between shrink-0 mt-auto">
         <div>
           <p className="font-bold text-mint-700 text-base">₹{medicine.price}</p>
           <LowStockBadge qty={medicine.quantity} />

@@ -9,6 +9,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.db.session import SessionLocal
 from app.models.medicine import Medicine
+from app.models.order_item import OrderItem
 
 CSV_PATH = ROOT_DIR / "data" / "medicines_seed.csv"
 
@@ -38,6 +39,10 @@ def seed_medicines(replace_existing: bool = False) -> None:
         seed_rows = _read_seed_rows()
 
         if replace_existing:
+            # Must delete order_items first (FK restricts medicine delete)
+            deleted_items = db.query(OrderItem).delete()
+            db.flush()
+            print(f"Removed {deleted_items} order items (required for medicine replace).")
             deleted = db.query(Medicine).delete()
             db.flush()
             print(f"Removed {deleted} existing medicines.")

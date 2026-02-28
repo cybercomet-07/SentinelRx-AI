@@ -42,13 +42,21 @@ export default function NotificationsPage() {
     }
   }
 
-  const fetchNotifications = async (page = 1) => {
+  const fetchNotifications = async (page = 1, markUnreadAsRead = false) => {
     try {
       setNotificationsError(false)
       const res = await notificationService.getAll({ page, limit: NOTIF_LIMIT })
       const nData = res.data?.items ?? res.data ?? []
-      setNotifications(Array.isArray(nData) ? nData.map(n => ({ ...n, read: n.is_read ?? n.read })) : [])
+      const list = Array.isArray(nData) ? nData.map(n => ({ ...n, read: n.is_read ?? n.read })) : []
+      setNotifications(list)
       setNotifTotal(res.data?.total ?? 0)
+      // Mark all unread notifications as read when user opens the page
+      if (markUnreadAsRead) {
+        const unread = list.filter((n) => !(n.read ?? n.is_read))
+        await Promise.all(unread.map((n) => notificationService.markRead(n.id).catch(() => {})))
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+        window.dispatchEvent(new CustomEvent('notifications-updated'))
+      }
     } catch {
       setNotifications([])
       setNotificationsError(true)
@@ -71,7 +79,7 @@ export default function NotificationsPage() {
     setLoading(true)
     Promise.all([
       fetchAlerts(),
-      fetchNotifications(notifPage),
+      fetchNotifications(notifPage, true), // mark unread as read when opening page
       fetchMedicines(),
     ]).finally(() => setLoading(false))
   }
@@ -84,7 +92,7 @@ export default function NotificationsPage() {
       notifPageInitialized.current = true
       return
     }
-    fetchNotifications(notifPage)
+    fetchNotifications(notifPage, true)
   }, [notifPage])
 
   const handleCreate = async (e) => {
@@ -138,8 +146,8 @@ export default function NotificationsPage() {
   if (loading) return <Loader center />
 
   return (
-    <div className="p-6 space-y-8 max-w-2xl">
-      <section>
+    <div className="p-6 space-y-8 max-w-2xl mx-auto">
+      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <RefreshCw size={16} className="text-orange-500" />
@@ -228,7 +236,7 @@ export default function NotificationsPage() {
         )}
       </section>
 
-      <section>
+      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <Bell size={16} className="text-mint-600" />
           <h2 className="font-display font-semibold text-gray-900">Notifications</h2>
@@ -248,7 +256,7 @@ export default function NotificationsPage() {
               {notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 p-4 rounded-xl border ${
+                  className={`flex items-start gap-3 p-4 rounded-xl border card-lift ${
                     n.read ?? n.is_read ? 'border-gray-100 bg-white' : 'border-mint-200 bg-mint-50'
                   }`}
                 >

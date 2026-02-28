@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   Activity, MessageSquare, ShieldCheck, Bell, BarChart3,
-  Package, ArrowRight, ChevronDown, Zap, Brain, Clock
+  Package, ArrowRight, Zap, Brain, Clock
 } from 'lucide-react'
 
 const FEATURES = [
@@ -59,7 +59,6 @@ const HOW_IT_WORKS = [
 // ── Navbar ────────────────────────────────────────────────────────────────
 function Navbar() {
   const [scrolled, setScrolled] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20)
@@ -71,7 +70,7 @@ function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled ? 'bg-white/90 backdrop-blur-md shadow-soft border-b border-gray-100' : 'bg-transparent'
     }`}>
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center shadow-sm">
             <Activity size={16} className="text-white" />
@@ -80,19 +79,6 @@ function Navbar() {
             Sentinel<span className="text-teal-600">Rx</span> AI
           </span>
         </div>
-
-        <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 font-medium">
-          <a href="#features" className="hover:text-teal-600 transition-colors">Features</a>
-          <a href="#how" className="hover:text-teal-600 transition-colors">How it Works</a>
-        </div>
-
-        <button
-          onClick={() => navigate('/login')}
-          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md"
-        >
-          Get Started
-          <ArrowRight size={15} />
-        </button>
       </div>
     </nav>
   )
@@ -119,18 +105,7 @@ function Hero() {
         <h1 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] mb-6 animate-slide-up"
           style={{ animationDelay: '0.1s', opacity: 0, animationFillMode: 'forwards' }}>
           Your Pharmacy,<br />
-          <span className="relative">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-cyan-500">Intelligently</span>
-            <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-              <path d="M2 9C50 3 100 1 150 5C200 9 250 3 298 6" stroke="url(#u1)" strokeWidth="3" strokeLinecap="round"/>
-              <defs>
-                <linearGradient id="u1" x1="0" y1="0" x2="300" y2="0">
-                  <stop offset="0%" stopColor="#14b8a6"/>
-                  <stop offset="100%" stopColor="#06b6d4"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>{' '}Managed
+          Intelligently Managed
         </h1>
 
         <p className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10 animate-slide-up"
@@ -152,10 +127,6 @@ function Hero() {
           </a>
         </div>
 
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-400 animate-bounce">
-          <span className="text-xs font-medium tracking-wide">Scroll</span>
-          <ChevronDown size={16} />
-        </div>
       </div>
     </section>
   )
@@ -277,13 +248,13 @@ function CTA() {
             <p className="text-teal-100 text-lg mb-10 max-w-lg mx-auto">Join the platform. Order smarter. Manage better.</p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/login', { state: { mode: 'signup' } })}
                 className="flex items-center gap-2.5 bg-white text-teal-700 font-bold px-8 py-4 rounded-2xl hover:bg-teal-50 transition-all shadow-lg hover:-translate-y-0.5 text-base"
               >
                 Create Account <ArrowRight size={18} />
               </button>
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/login', { state: { mode: 'signin' } })}
                 className="text-white/90 hover:text-white font-medium text-base border border-white/30 hover:border-white/60 px-8 py-4 rounded-2xl transition-all"
               >
                 Already have an account? Sign in

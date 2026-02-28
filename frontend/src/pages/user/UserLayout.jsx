@@ -8,6 +8,7 @@ const TITLES = {
   '/user/medicines': 'Browse Medicines',
   '/user/orders': 'Order History',
   '/user/notifications': 'Notifications',
+  '/user/profile': 'Profile',
 }
 
 export default function UserLayout() {
@@ -15,7 +16,7 @@ export default function UserLayout() {
   const title = TITLES[pathname] || 'Dashboard'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-warm-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={title} />

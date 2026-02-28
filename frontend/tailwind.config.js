@@ -4,8 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
-        body: ['"DM Sans"', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       colors: {
@@ -35,9 +36,10 @@ export default {
         }
       },
       boxShadow: {
-        'soft': '0 2px 20px rgba(0,0,0,0.06)',
-        'card': '0 4px 40px rgba(0,0,0,0.08)',
-        'float': '0 8px 60px rgba(0,0,0,0.12)',
+        'soft': '0 2px 12px rgba(15,23,42,0.06)',
+        'card': '0 4px 24px rgba(15,23,42,0.08)',
+        'float': '0 12px 40px rgba(15,23,42,0.1)',
+        'pharma': '0 2px 8px rgba(30,64,175,0.06)',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease forwards',

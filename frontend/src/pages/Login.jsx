@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Eye, EyeOff, Activity, Shield, User, Info, ArrowLeft, UserPlus, LogIn } from 'lucide-react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { Eye, EyeOff, Activity, Shield, User, ArrowLeft, UserPlus, LogIn } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
+
+// my.spline.design scenes embed via iframe (prod.spline.design/scene.splinecode is for Code export only)
+const SPLINE_EMBED_URL = 'https://my.spline.design/genkubgreetingrobot-ZifrhwRHpj4D389o6wERaW9o/'
 
 const ROLES = [
   {
@@ -35,12 +38,25 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [landmark, setLandmark] = useState('')
+  const [pinCode, setPinCode] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [backendOk, setBackendOk] = useState(null)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    const modeFromState = location.state?.mode
+    if (modeFromState === 'signup' || modeFromState === 'signin') {
+      setMode(modeFromState)
+    }
+  }, [location.state])
 
   useEffect(() => {
     // Use relative URL so Vite proxy forwards to backend (avoids CORS)
@@ -55,16 +71,10 @@ export default function Login() {
 
   const selectedRole = ROLES.find(r => r.value === role)
 
-  const fillDemo = (r) => {
-    setRole(r)
-    setMode('signin')
-    setEmail(r === 'admin' ? 'admin@example.com' : 'user@sentinelrx.ai')
-    setPassword(r === 'admin' ? 'AdminPass123!' : 'User1234')
-  }
-
   const switchMode = (m) => {
     setMode(m)
     setName(''); setEmail(''); setPassword(''); setConfirm('')
+    setPhone(''); setAddress(''); setLandmark(''); setPinCode(''); setDateOfBirth('')
   }
 
   const handleSubmit = async (e) => {
@@ -72,12 +82,28 @@ export default function Login() {
     if (!email || !password) { toast.error('Please fill all fields'); return }
 
     if (mode === 'signup') {
-      if (!name.trim()) { toast.error('Please enter your full name'); return }
+      if (!name.trim()) { toast.error('Please enter your full legal name'); return }
       if (password.length < 8) { toast.error('Password must be at least 8 characters'); return }
       if (password !== confirm) { toast.error('Passwords do not match'); return }
+      if (!phone.trim()) { toast.error('Please enter your phone number'); return }
+      if (phone.replace(/\D/g, '').length < 10) { toast.error('Please enter a valid phone number'); return }
+      if (!address.trim()) { toast.error('Please enter your full address'); return }
+      if (!landmark.trim()) { toast.error('Please enter landmark'); return }
+      if (!pinCode.trim()) { toast.error('Please enter PIN code'); return }
+      if (pinCode.replace(/\D/g, '').length < 5) { toast.error('Please enter a valid PIN code'); return }
+      if (!dateOfBirth) { toast.error('Please enter your date of birth'); return }
       setLoading(true)
       try {
-        const res = await authService.register(name, email, password)
+        const res = await authService.register({
+          name: name.trim(),
+          email,
+          password,
+          phone: phone.trim(),
+          address: address.trim(),
+          landmark: landmark.trim(),
+          pin_code: pinCode.trim(),
+          date_of_birth: dateOfBirth,
+        })
         const token = res.data.access_token
         localStorage.setItem('sentinelrx_token', token)
         const meRes = await authService.me()
@@ -128,17 +154,27 @@ export default function Login() {
 
       {/* ── Left decorative panel ── */}
       <div className="hidden lg:flex w-[42%] bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-500 flex-col p-12 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10" />
-        <div className="absolute top-1/2 -left-16 w-56 h-56 rounded-full bg-white/10" />
-        <div className="absolute -bottom-16 right-16 w-80 h-80 rounded-full bg-white/5" />
-        <div className="absolute bottom-40 -right-10 w-40 h-40 rounded-full bg-cyan-400/20" />
+        {/* Spline 3D robot background - my.spline.design embeds via iframe */}
+        <div className="absolute inset-0 z-0">
+          <iframe
+            src={SPLINE_EMBED_URL}
+            title="GENKUB Greeting Robot"
+            className="w-full h-full border-0"
+            style={{ pointerEvents: 'none' }}
+          />
+        </div>
+        {/* Gradient overlay for readability - keeps robot visible */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-teal-600/70 via-teal-500/60 to-cyan-500/70" />
 
-        <div className="relative flex flex-col h-full">
+        {/* Black block at bottom of welcome section - covers Spline watermark */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-black z-[2]" />
+
+        <div className="relative z-10 flex flex-col h-full">
           <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors w-fit mb-12">
             <ArrowLeft size={14} /> Back to home
           </Link>
 
-          <div className="flex items-center gap-3 mb-12">
+          <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
               <Activity size={22} className="text-white" />
             </div>
@@ -146,26 +182,6 @@ export default function Login() {
               <p className="font-display font-bold text-white text-xl leading-none">SentinelRx AI</p>
               <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
             </div>
-          </div>
-
-          <div className="flex-1">
-            <h2 className="font-display text-white text-4xl font-bold leading-tight mb-4">
-              {mode === 'signup' ? 'Join the platform' : 'Welcome back'}
-            </h2>
-            <p className="text-white/75 text-base leading-relaxed max-w-xs">
-              {mode === 'signup'
-                ? 'Create your account and start ordering medicines powered by AI.'
-                : 'Order medicines with AI-powered chat, track orders, and get smart refill reminders.'}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {['AI-powered ordering via chat & voice', 'Smart refill alerts from order history', 'Real-time inventory tracking'].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 text-white/85 text-sm">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-xs">✓</div>
-                {f}
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -245,37 +261,15 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Demo credentials */}
-          {mode === 'signin' && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Info size={13} className="text-amber-600 shrink-0" />
-                <p className="text-xs font-semibold text-amber-700">Demo credentials — click to auto-fill</p>
-              </div>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => fillDemo('user')}
-                  className="flex-1 bg-white border border-amber-200 text-left px-2.5 py-2 rounded-lg hover:bg-amber-50 transition-colors">
-                  <p className="text-xs font-semibold text-gray-700">👤 User</p>
-                  <p className="text-xs text-gray-400 mt-0.5">user@sentinelrx.ai / User1234</p>
-                </button>
-                <button type="button" onClick={() => fillDemo('admin')}
-                  className="flex-1 bg-white border border-amber-200 text-left px-2.5 py-2 rounded-lg hover:bg-amber-50 transition-colors">
-                  <p className="text-xs font-semibold text-gray-700">🛡️ Admin</p>
-                  <p className="text-xs text-gray-400 mt-0.5">admin@example.com / AdminPass123!</p>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
 
             {mode === 'signup' && (
               <div>
-                <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-600 mb-1.5">Full Name</label>
+                <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-600 mb-1.5">Full Legal Name *</label>
                 <input id="signup-name" name="name" type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" />
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
               </div>
             )}
 
@@ -283,8 +277,45 @@ export default function Login() {
               <label htmlFor="login-email" className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address</label>
               <input id="login-email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="you@email.com"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" />
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
             </div>
+
+            {mode === 'signup' && (
+              <>
+                <div>
+                  <label htmlFor="signup-phone" className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number *</label>
+                  <input id="signup-phone" name="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
+                </div>
+                <div>
+                  <label htmlFor="signup-address" className="block text-xs font-semibold text-gray-600 mb-1.5">Full Address *</label>
+                  <input id="signup-address" name="address" type="text" value={address} onChange={e => setAddress(e.target.value)}
+                    placeholder="Street, area, city"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="signup-landmark" className="block text-xs font-semibold text-gray-600 mb-1.5">Landmark *</label>
+                    <input id="signup-landmark" name="landmark" type="text" value={landmark} onChange={e => setLandmark(e.target.value)}
+                      placeholder="e.g. Near temple"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
+                  </div>
+                  <div>
+                    <label htmlFor="signup-pincode" className="block text-xs font-semibold text-gray-600 mb-1.5">PIN Code *</label>
+                    <input id="signup-pincode" name="pin_code" type="text" value={pinCode} onChange={e => setPinCode(e.target.value)}
+                      placeholder="e.g. 400001"
+                      maxLength={10}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="signup-dob" className="block text-xs font-semibold text-gray-600 mb-1.5">Date of Birth *</label>
+                  <input id="signup-dob" name="date_of_birth" type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all" required />
+                </div>
+              </>
+            )}
 
             <div>
               <label htmlFor="login-password" className="block text-xs font-semibold text-gray-600 mb-1.5">Password</label>
@@ -297,7 +328,7 @@ export default function Login() {
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {mode === 'signup' && <p className="text-xs text-gray-400 mt-1.5">Minimum 6 characters</p>}
+              {mode === 'signup' && <p className="text-xs text-gray-400 mt-1.5">Minimum 8 characters</p>}
             </div>
 
             {mode === 'signup' && (

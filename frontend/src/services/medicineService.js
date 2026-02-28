@@ -5,6 +5,7 @@ export const medicineService = {
     const { search, category, ...rest } = params || {}
     return api.get('/medicines', { params: { q: search, category, ...rest } })
   },
+  getCategories: () => api.get('/medicines/categories'),
   getOne: (id) => api.get(`/medicines/${id}`),
   search: (q) => api.get('/medicines', { params: { q } }),
 

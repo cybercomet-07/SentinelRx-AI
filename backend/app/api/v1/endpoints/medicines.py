@@ -13,6 +13,7 @@ from app.schemas.medicine import (
     MedicineStockUpdate,
     MedicineUpdate,
 )
+from app.models.medicine import Medicine
 from app.services.medicine_service import (
     create_medicine,
     delete_medicine,
@@ -22,6 +23,16 @@ from app.services.medicine_service import (
 )
 
 router = APIRouter(prefix="/medicines", tags=["Medicines"])
+
+
+@router.get("/categories")
+def list_categories(
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
+):
+    """Return distinct categories from all medicines (for dropdown, independent of filters)."""
+    categories = db.query(Medicine.category).filter(Medicine.category.isnot(None)).distinct().order_by(Medicine.category).all()
+    return {"categories": [c[0] for c in categories]}
 
 
 @router.get("", response_model=MedicineListResponse)

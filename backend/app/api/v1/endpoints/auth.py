@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.auth import (
     GoogleLoginRequest,
     LoginRequest,
+    ProfileUpdate,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -44,4 +45,19 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserProfile)
 def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.api_route("/me", methods=["PATCH", "PUT"], response_model=UserProfile)
+def update_profile(
+    payload: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    updates = payload.model_dump(exclude_unset=True)
+    if updates:
+        db.query(User).filter(User.id == current_user.id).update(updates)
+        db.commit()
+        # Re-query to return fresh data
+        db.refresh(current_user)
     return current_user
