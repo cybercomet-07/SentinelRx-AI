@@ -19,16 +19,17 @@ def _get_daily_data(db: Session) -> list:
     now = datetime.utcnow()
     year, month = now.year, now.month
     days_in_month = calendar.monthrange(year, month)[1]
+    ref_date = datetime(year, month, 1)
     rows = db.execute(text("""
         SELECT date_trunc('day', created_at)::date AS day,
                count(id)::int AS orders,
                coalesce(sum(total_amount), 0)::float AS revenue
         FROM orders
         WHERE status IN ('PENDING','CONFIRMED','OUT_FOR_DELIVERY','DELIVERED')
-          AND date_trunc('month', created_at) = date_trunc('month', :ref_date::timestamp)
+          AND date_trunc('month', created_at) = date_trunc('month', CAST(:ref_date AS timestamp))
         GROUP BY date_trunc('day', created_at)::date
         ORDER BY day
-    """), {"ref_date": datetime(year, month, 1)}).fetchall()
+    """), {"ref_date": ref_date}).fetchall()
     data_by_day = {}
     for r in rows:
         dt = r[0]

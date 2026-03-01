@@ -350,11 +350,18 @@ def process_order_from_chat(
         addr = form_data.get("delivery_address")
         lat = form_data.get("delivery_latitude")
         lng = form_data.get("delivery_longitude")
-        # Geocode manual address if we have address text but no lat/lng
+        # Resolve lat/lng: use provided, else parse "Location: lat, lng" from address, else geocode
         if addr and (lat is None or lng is None):
-            geocoded_lat, geocoded_lng = geocode_address(addr)
-            lat = lat or geocoded_lat
-            lng = lng or geocoded_lng
+            m = re.search(r"Location:\s*([+-]?\d+\.?\d*)\s*,\s*([+-]?\d+\.?\d*)", str(addr).strip(), re.I)
+            if m:
+                try:
+                    lat, lng = float(m.group(1)), float(m.group(2))
+                except (ValueError, TypeError):
+                    geocoded_lat, geocoded_lng = geocode_address(addr)
+                    lat, lng = lat or geocoded_lat, lng or geocoded_lng
+            else:
+                geocoded_lat, geocoded_lng = geocode_address(addr)
+                lat, lng = lat or geocoded_lat, lng or geocoded_lng
         order = Order(
             user_id=user_id,
             user_name=customer_name,

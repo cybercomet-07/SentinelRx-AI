@@ -38,7 +38,7 @@ export default function OrdersTable({ orders, onRefresh }) {
               <td className="px-4 py-3 text-gray-600 max-w-[280px]" title={o.items?.map(i => `${i.medicine_name} (×${i.quantity})`).join(', ')}>
                 <span className="line-clamp-2">{o.items?.map(i => `${i.medicine_name} ×${i.quantity}`).join(', ') || '—'}</span>
               </td>
-              <td className="px-4 py-3 font-semibold text-mint-700">₹{o.total}</td>
+              <td className="px-4 py-3 font-semibold text-mint-700">₹{o.total_amount ?? o.total ?? 0}</td>
               <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
               <td className="px-4 py-3">
                 <select

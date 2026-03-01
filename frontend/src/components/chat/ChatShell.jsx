@@ -384,24 +384,24 @@ export default function ChatShell() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/80">
-      {/* Header - Professional pharmaceutical style */}
-      <div className="flex items-center justify-between gap-4 px-6 py-4 bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
-            <span className="text-2xl">💊</span>
+      {/* Compact header bar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-sm shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center border border-white/20">
+            <span className="text-lg">💊</span>
           </div>
           <div>
-            <p className="text-base font-semibold tracking-tight">AI Pharmaceutical Assistant</p>
-            <p className="text-xs text-blue-100 mt-0.5">Personalized medicine recommendations and professional health guidance.</p>
+            <p className="text-sm font-semibold leading-tight">AI Pharmaceutical Assistant</p>
+            <p className="text-[10px] text-blue-100 mt-0.5 leading-tight">Order medicines by name. Voice & text supported.</p>
           </div>
         </div>
         <button
           type="button"
           onClick={startNewChat}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 transition-all duration-200 text-sm font-medium border border-white/20"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition-all text-xs font-medium border border-white/20"
           title="New chat"
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus size={14} strokeWidth={2.5} />
           New chat
         </button>
       </div>
@@ -477,20 +477,20 @@ export default function ChatShell() {
         )}
       </div>
 
-      {/* Input - Professional pharmaceutical style */}
-      <div className="border-t border-slate-200 bg-slate-50/80 p-5">
+      {/* Compact input */}
+      <div className="border-t border-slate-200 bg-slate-50/80 p-3 shrink-0">
         <div className="relative">
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10"
+              className="absolute bottom-full left-0 right-0 mb-1.5 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10"
             >
               {suggestions.map((m, idx) => (
                 <button
                   key={m.id || idx}
                   type="button"
                   onClick={() => pickSuggestion(m.product_name || m.name)}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors ${
                     idx === selectedIndex ? 'bg-slate-100 text-slate-900' : ''
                   }`}
                 >
@@ -499,15 +499,15 @@ export default function ChatShell() {
               ))}
             </div>
           )}
-          <div className="flex items-center gap-3 bg-white rounded-2xl border border-slate-200 px-5 py-3.5 shadow-sm">
-            <User size={20} className="text-slate-400" strokeWidth={2} />
+          <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-sm">
+            <User size={16} className="text-slate-400 shrink-0" strokeWidth={2} />
             <input
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type or speak the medicine name..."
-              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0"
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0 min-w-0"
               maxLength={500}
               disabled={loading}
             />
@@ -515,20 +515,20 @@ export default function ChatShell() {
               type="button"
               onClick={toggleVoice}
               aria-label="Voice input"
-              className={`p-2.5 rounded-xl transition-all duration-200 ${
+              className={`p-2 rounded-lg transition-all ${
                 listening ? 'bg-blue-100 text-blue-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
               }`}
             >
-              <Mic size={20} strokeWidth={2} />
+              <Mic size={16} strokeWidth={2} />
             </button>
             <button
               type="button"
               onClick={() => sendMessage()}
               disabled={!prompt.trim() || loading}
-              className="p-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 shadow-sm"
+              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm"
               aria-label="Send"
             >
-              <Send size={20} strokeWidth={2} />
+              <Send size={16} strokeWidth={2} />
             </button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import re
 import uuid
 from collections import defaultdict
 
@@ -147,10 +148,17 @@ def create_order_from_cart(
                 detail=f"Insufficient stock for {medicine.name}. Available: {medicine.quantity}",
             )
 
-    # Geocode address if we have text but no lat/lng (manual address)
+    # Resolve lat/lng: use provided coords, else parse "Location: lat, lng" from address, else geocode
     lat, lng = delivery_latitude, delivery_longitude
-    if delivery_address and (lat is None or lng is None):
-        lat, lng = geocode_address(delivery_address)
+    if (lat is None or lng is None) and delivery_address:
+        m = re.search(r"Location:\s*([+-]?\d+\.?\d*)\s*,\s*([+-]?\d+\.?\d*)", delivery_address.strip(), re.I)
+        if m:
+            try:
+                lat, lng = float(m.group(1)), float(m.group(2))
+            except (ValueError, TypeError):
+                lat, lng = geocode_address(delivery_address)
+        else:
+            lat, lng = geocode_address(delivery_address)
 
     order = Order(
         user_id=user.id,

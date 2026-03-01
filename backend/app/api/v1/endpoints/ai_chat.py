@@ -17,6 +17,7 @@ from app.services.ai_chat_service import (
     get_medicines_for_autocomplete,
     process_order_from_chat,
 )
+from app.services.symptom_chat_service import symptom_chat
 from app.services.order_service import cancel_order_for_user, get_order_or_404
 
 router = APIRouter(prefix="/ai-chat", tags=["AI Chat"])
@@ -35,6 +36,29 @@ def ai_chat(
     """Chat with AI - order medicines by text or get health answers."""
     result = chat(db, data.message.strip(), current_user.id)
     return JSONResponse(content=result)
+
+
+class SymptomChatRequest(BaseModel):
+    message: str
+
+
+@router.post("/symptom-chat")
+def symptom_chat_endpoint(
+    data: SymptomChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """SentinelRX-AI: symptom-based medicine recommendation using Cohere. Recommends only from DB inventory."""
+    try:
+        result = symptom_chat(db, data.message.strip())
+        return JSONResponse(content={"response": result})
+    except Exception as e:
+        import logging
+        logging.exception("symptom-chat failed")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(e)[:200], "response": f"Sorry, something went wrong. Please try again. (Error: {str(e)[:80]})"},
+        )
 
 
 @router.get("/medicines")

@@ -112,7 +112,7 @@ export default function Login() {
         const userData = { ...meRes.data, role: meRes.data.role?.toLowerCase() || 'user' }
         login(userData, token)
         toast.success('Account created! Welcome.')
-        navigate(role === 'admin' ? '/admin/dashboard' : '/user/chat')
+        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/user/chat')
       } catch (err) {
         const msg = err.response?.data?.error?.message || err.message || 'Registration failed'
         toast.error(msg)

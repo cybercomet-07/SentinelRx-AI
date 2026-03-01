@@ -9,13 +9,22 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const load = () => {
     setError(false)
+    setErrorMsg('')
     setLoading(true)
     adminService.getDashboardStats()
       .then(r => setStats(r.data))
-      .catch(() => setError(true))
+      .catch((err) => {
+        setError(true)
+        const detail = err?.response?.data?.detail
+        const msg = err?.code === 'ERR_NETWORK' || !err?.response
+          ? 'Cannot connect. Make sure the backend is running on port 8000.'
+          : (typeof detail === 'string' ? detail : 'Unable to load.')
+        setErrorMsg(msg)
+      })
       .finally(() => setLoading(false))
   }
 
@@ -26,7 +35,7 @@ export default function AdminDashboard() {
   }, [])
 
   if (loading) return <Loader center />
-  if (error) return <ErrorState onRetry={load} />
+  if (error) return <ErrorState message={errorMsg} onRetry={load} />
 
   return (
     <div className="p-6 space-y-6">

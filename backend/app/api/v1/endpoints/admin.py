@@ -1,5 +1,7 @@
 """Admin endpoints matching frontend expectations."""
-from fastapi import APIRouter, Depends
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import require_roles
@@ -10,6 +12,7 @@ from app.models.user import User, UserRole
 from app.services.analytics_service import get_analytics_summary
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/dashboard")
@@ -18,7 +21,11 @@ def get_admin_dashboard(
     _current_user: User = Depends(require_roles(UserRole.ADMIN)),
 ):
     """Dashboard stats in frontend format (total_users, total_orders, total_revenue, low_stock_count, top_medicines)."""
-    summary = get_analytics_summary(db)
+    try:
+        summary = get_analytics_summary(db)
+    except Exception as e:
+        logger.exception("Dashboard analytics failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
     top_medicines = [
         {"id": str(m.medicine_id), "name": m.medicine_name, "orders": m.units_sold}
         for m in summary.top_medicines

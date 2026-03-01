@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { MapPin, Navigation } from 'lucide-react'
 
 export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
@@ -8,6 +8,7 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
   const [lng, setLng] = useState(null)
   const [error, setError] = useState('')
   const [gettingLocation, setGettingLocation] = useState(false)
+  const coordsRef = useRef({ lat: null, lng: null })
 
   const handleUseLocation = () => {
     setError('')
@@ -19,9 +20,12 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
     setGettingLocation(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLat(pos.coords.latitude)
-        setLng(pos.coords.longitude)
-        setAddress(`Location: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`)
+        const latitude = pos.coords.latitude
+        const longitude = pos.coords.longitude
+        coordsRef.current = { lat: latitude, lng: longitude }
+        setLat(latitude)
+        setLng(longitude)
+        setAddress(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
         setGettingLocation(false)
       },
       (err) => {
@@ -39,12 +43,18 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
       setError('Please provide your delivery address.')
       return
     }
-    onSubmit({
+    const { lat: refLat, lng: refLng } = coordsRef.current
+    const finalLat = typeof refLat === 'number' ? refLat : (typeof lat === 'number' ? lat : null)
+    const finalLng = typeof refLng === 'number' ? refLng : (typeof lng === 'number' ? lng : null)
+    const payload = {
       delivery_address: address.trim(),
-      delivery_latitude: lat ?? undefined,
-      delivery_longitude: lng ?? undefined,
       address_source: mode === 'live' ? 'live_location' : 'manual',
-    })
+    }
+    if (finalLat != null && finalLng != null) {
+      payload.delivery_latitude = finalLat
+      payload.delivery_longitude = finalLng
+    }
+    onSubmit(payload)
   }
 
   return (
@@ -65,7 +75,7 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
         <label className="block text-xs font-medium text-gray-500 mb-1.5">Or enter address manually</label>
         <textarea
           value={address}
-          onChange={(e) => { setAddress(e.target.value); setMode('manual'); setLat(null); setLng(null) }}
+          onChange={(e) => { setAddress(e.target.value); setMode('manual'); setLat(null); setLng(null); coordsRef.current = { lat: null, lng: null } }}
           placeholder="Street, city, pincode..."
           rows={3}
           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-mint-300 resize-none"

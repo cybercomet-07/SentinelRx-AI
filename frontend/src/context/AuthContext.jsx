@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { authService } from '../services/authService'
 
 const AuthContext = createContext(null)
 
@@ -7,11 +8,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const token = localStorage.getItem('sentinelrx_token')
     const stored = localStorage.getItem('sentinelrx_user')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch {}
+    if (!token) {
+      if (stored) {
+        localStorage.removeItem('sentinelrx_user')
+      }
+      setLoading(false)
+      return
     }
-    setLoading(false)
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch {}
+    }
+    authService.me()
+      .then((r) => {
+        const fresh = { ...r.data, role: r.data.role?.toLowerCase() || 'user' }
+        setUser(fresh)
+        localStorage.setItem('sentinelrx_user', JSON.stringify(fresh))
+      })
+      .catch(() => {
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const login = (userData, token) => {

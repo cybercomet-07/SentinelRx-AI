@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     groq_api_key: str | None = None
+    cohere_api_key: str | None = None
     openrouter_api_key: str | None = None
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None

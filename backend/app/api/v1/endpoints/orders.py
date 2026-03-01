@@ -1,6 +1,7 @@
+import logging
 import uuid
 
-from fastapi import APIRouter, Body, Depends, Query, status
+from fastapi import APIRouter, Body, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import require_roles
@@ -16,14 +17,39 @@ from app.services.order_service import (
 )
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/create-from-cart", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-def create_order_from_cart_endpoint(
-    payload: DeliveryAddressInput = Body(default=DeliveryAddressInput()),
+async def create_order_from_cart_endpoint(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(UserRole.USER)),
 ):
+    try:
+        body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    except Exception:
+        body = {}
+    lat = body.get("delivery_latitude")
+    lng = body.get("delivery_longitude")
+    if lat is not None and not isinstance(lat, (int, float)):
+        try:
+            lat = float(lat)
+        except (TypeError, ValueError):
+            lat = None
+    if lng is not None and not isinstance(lng, (int, float)):
+        try:
+            lng = float(lng)
+        except (TypeError, ValueError):
+            lng = None
+    payload = DeliveryAddressInput(
+        delivery_address=body.get("delivery_address") or None,
+        delivery_latitude=lat,
+        delivery_longitude=lng,
+        address_source=body.get("address_source") or None,
+    )
+    logger.debug("create-from-cart payload: addr=%s lat=%s lng=%s source=%s",
+                 payload.delivery_address, payload.delivery_latitude, payload.delivery_longitude, payload.address_source)
     return create_order_from_cart(
         db,
         current_user,
