@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.order import OrderItemRead, OrderRead
 from app.services.geocoding_service import geocode_address
 from app.services.notification_service import notify_order_created, notify_order_status_changed, notify_admins_new_order
+from app.invoice.invoice_service import try_send_order_confirmation_email
 
 
 STATUS_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
@@ -196,6 +197,8 @@ def create_order_from_cart(
     db.commit()
     db.refresh(order)
 
+    try_send_order_confirmation_email(db, order.id)
+
     return _build_order_read(db, order)
 
 
@@ -207,7 +210,7 @@ def list_orders_for_user(db: Session, user: User, page: int, limit: int) -> tupl
 
 
 def _build_order_list_with_users(
-    db: Session, orders_with_users: list[tuple[Order, User]]
+    db: Session, orders_with_users: list[tuple[Order, User | None]]
 ) -> list[OrderRead]:
     if not orders_with_users:
         return []

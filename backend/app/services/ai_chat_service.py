@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.chat_history import ChatHistory
 
 from app.services.notification_service import notify_order_created, notify_admins_new_order
+from app.invoice.invoice_service import try_send_order_confirmation_email
 
 MAX_QUANTITY_LIMIT = 10
 CONFIDENCE_THRESHOLD = 0.6
@@ -397,6 +398,8 @@ def process_order_from_chat(
         )
         db.commit()
         db.refresh(order)
+
+        try_send_order_confirmation_email(db, order.id)
 
         return {
             "status": "confirmed",

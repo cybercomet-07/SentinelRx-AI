@@ -15,3 +15,4 @@ pytest
 langchain-groq
 python-multipart
 cohere
+reportlab

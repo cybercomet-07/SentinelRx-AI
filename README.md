@@ -34,7 +34,7 @@ cd frontend
 npm install
 npm run dev
 ```
-→ http://localhost:5173
+→ http://localhost:3005
 
 ### Environment
 
@@ -50,17 +50,14 @@ npm run dev
 
 ```
 SentinelRx-AI/
-├── backend/          # FastAPI, SQLAlchemy
+├── backend/          # FastAPI, SQLAlchemy, PostgreSQL
 ├── frontend/         # React, Vite, Tailwind
 ├── run-backend.ps1   # Start backend
 ├── run-frontend.ps1  # Start frontend
-├── architecture.md
-├── FRONTEND_BACKEND_OVERVIEW.md
-└── STEP_BY_STEP.md
+├── run-all.bat       # Start both servers
+└── PROJECT_OVERVIEW.md  # Full project documentation
 ```
 
 ## Docs
 
-- `STEP_BY_STEP.md` — Detailed run instructions
-- `FRONTEND_BACKEND_OVERVIEW.md` — API & features
-- `architecture.md` — System architecture
+- `PROJECT_OVERVIEW.md` — Full project overview, features, API, architecture
