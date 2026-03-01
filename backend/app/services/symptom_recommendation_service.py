@@ -25,6 +25,12 @@ PROHIBITED_KEYWORDS = [
 
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
+LANG_NAMES = {
+    "hi-IN": "Hindi", "mr-IN": "Marathi", "ta-IN": "Tamil", "te-IN": "Telugu",
+    "bn-IN": "Bengali", "kn-IN": "Kannada", "ml-IN": "Malayalam", "pa-IN": "Punjabi",
+    "gu-IN": "Gujarati", "ur-IN": "Urdu", "en-IN": "English", "en-US": "English", "en-GB": "English",
+}
+
 
 def _search_medicines_by_symptom(db: Session, symptom_text: str) -> list[dict]:
     """Search medicine_indications by keyword match. Excludes requires_prescription."""
@@ -99,6 +105,7 @@ def get_symptom_recommendation(
     user_message: str,
     user_id: uuid.UUID | None = None,
     user_email: str | None = None,
+    response_lang: str | None = None,
 ) -> str:
     """
     Get AI-powered medicine recommendation for symptom (no prescription).
@@ -136,7 +143,10 @@ def get_symptom_recommendation(
         for m in matches
     ])
 
-    system_prompt = """You are a pharmacy assistant. The user has described symptoms but does NOT have a doctor's prescription.
+    lang_instruction = ""
+    if response_lang and response_lang in LANG_NAMES:
+        lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+    system_prompt = f"""You are a pharmacy assistant. The user has described symptoms but does NOT have a doctor's prescription.{lang_instruction}
 You MUST only recommend medicines from the list below. Include:
 1. Medicine name(s) that may help
 2. Dosage instructions

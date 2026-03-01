@@ -17,6 +17,7 @@ from app.models import (
     OrderItem,
     OrderMedicineAiChatHistory,
     Prescription,
+    PrescriptionMedicine,
     RefillAlert,
     SymptomSuggestionChatHistory,
     User,

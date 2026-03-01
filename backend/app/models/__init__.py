@@ -8,7 +8,7 @@ from app.models.medicine import Medicine
 from app.models.notification import Notification
 from app.models.order import Order
 from app.models.order_item import OrderItem
-from app.models.prescription import Prescription
+from app.models.prescription import Prescription, PrescriptionMedicine
 from app.models.refill_alert import RefillAlert
 from app.models.user import User
 from app.models.contact_message import ContactMessage

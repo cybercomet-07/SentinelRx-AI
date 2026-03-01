@@ -520,7 +520,14 @@ def _get_inventory_for_llm(db: Session, limit: int = 80) -> str:
     return "\n".join(lines)
 
 
-def invoke_llm(db: Session, message: str) -> str:
+LANG_NAMES = {
+    "hi-IN": "Hindi", "mr-IN": "Marathi", "ta-IN": "Tamil", "te-IN": "Telugu",
+    "bn-IN": "Bengali", "kn-IN": "Kannada", "ml-IN": "Malayalam", "pa-IN": "Punjabi",
+    "gu-IN": "Gujarati", "ur-IN": "Urdu", "en-IN": "English", "en-US": "English", "en-GB": "English",
+}
+
+
+def invoke_llm(db: Session, message: str, response_lang: str | None = None) -> str:
     """
     Invoke GROQ for general chat: medical suggestions, health questions, general advice.
     IMPORTANT: For medicine suggestions (e.g. fever, headache), ONLY recommend from our inventory.
@@ -536,7 +543,10 @@ def invoke_llm(db: Session, message: str) -> str:
             groq_api_key=settings.groq_api_key,
         )
         inventory = _get_inventory_for_llm(db)
-        prompt = f"""You are an AI Pharmaceutical Assistant for a pharmacy. Provide helpful, clear answers.
+        lang_instruction = ""
+        if response_lang and response_lang in LANG_NAMES:
+            lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+        prompt = f"""You are an AI Pharmaceutical Assistant for a pharmacy. Provide helpful, clear answers.{lang_instruction}
 
 CRITICAL RULES FOR MEDICINE SUGGESTIONS:
 1. ONLY recommend medicines from our inventory below. Every medicine listed is IN STOCK.
@@ -562,7 +572,7 @@ Your response (ONLY suggest from our inventory; always confirm stock availabilit
 
 
 def chat(
-    db: Session, message: str, user_id: uuid.UUID | None
+    db: Session, message: str, user_id: uuid.UUID | None, response_lang: str | None = None
 ) -> dict[str, Any]:
     """
     Main chat handler. Intent + medicine detection + order preview or LLM.
@@ -607,7 +617,7 @@ def chat(
             final_response = generate_order_preview(db, detected_entities, str(uid))
     else:
         # General chat: LLM for medical suggestions, symptoms, etc.
-        final_response = invoke_llm(db, message)
+        final_response = invoke_llm(db, message, response_lang)
 
     # Log to appropriate chat history table based on intent
     try:

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Plus, Send, User } from 'lucide-react'
+import { Mic, Plus, Send, User, Volume2, VolumeX } from 'lucide-react'
 import api from '../../services/api'
+import { useVoice } from '../../hooks/useVoice'
+import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
 import { API_BASE } from '../../utils/constants'
 
@@ -19,6 +21,36 @@ const ORDER_ACTION_ENDPOINT = (id) => `ai-chat/order/${id}/action`
 const DEBOUNCE_DELAY = 300
 const MAX_SUGGESTIONS = 5
 const CHAT_STORAGE_KEY = 'sentinelrx_chat'
+
+// Detect voice/text "confirm order" or "cancel order" so we trigger the form instead of sending to AI
+const CONFIRM_PHRASES = /^(confirm\s*(the\s*)?order|yes\s*confirm|confirm|ok\s*confirm|order\s*confirm|confirm\s*order\.?)$/i
+const CANCEL_PHRASES = /^(cancel\s*(the\s*)?order|no\s*cancel|cancel|don'?t\s*confirm|cancel\s*order\.?)$/i
+
+function isConfirmOrderIntent(text) {
+  const t = (text || '').trim().toLowerCase()
+  return CONFIRM_PHRASES.test(t)
+}
+
+function isCancelOrderIntent(text) {
+  const t = (text || '').trim().toLowerCase()
+  return CANCEL_PHRASES.test(t) || t === 'no' || t === 'cancel'
+}
+
+/** Programmatically submit the last order form (for voice "confirm order" / "cancel order") */
+function tryTriggerOrderForm(containerEl, action) {
+  if (!containerEl) return false
+  const forms = containerEl.querySelectorAll('form#orderForm')
+  const lastForm = forms[forms.length - 1]
+  if (!lastForm) return false
+  const btn = lastForm.querySelector(`button[value="${action}"]`)
+  if (!btn) return false
+  try {
+    lastForm.requestSubmit(btn)
+    return true
+  } catch {
+    return false
+  }
+}
 
 function getChatStorageKey() {
   try {
@@ -49,9 +81,14 @@ export default function ChatShell() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [medicineList, setMedicineList] = useState([])
-  const [listening, setListening] = useState(false)
-  const [recognition, setRecognition] = useState(null)
   const [pendingOrder, setPendingOrder] = useState(null)
+  const voice = useVoice({
+    onTranscript: (text) => {
+      setPrompt(text)
+      setTimeout(() => sendMessageRef.current?.(text), 100)
+    },
+  })
+  const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
   const [orderProcessing, setOrderProcessing] = useState(false)
   const debounceRef = useRef(null)
   const chatContainerRef = useRef(null)
@@ -75,6 +112,11 @@ export default function ChatShell() {
     })
   }, [])
 
+  // Speak AI response in user's selected language (Text-to-Speech) - must be before sendMessage
+  const speakResponse = useCallback((text) => {
+    voice.speak(text, lang)
+  }, [voice, lang])
+
   const sendMessage = useCallback(
     async (customText = null) => {
       const text = (customText || prompt).trim()
@@ -84,26 +126,33 @@ export default function ChatShell() {
       setPrompt('')
       setShowSuggestions(false)
 
+      // Voice/text "confirm order" or "cancel order" → trigger the order form instead of sending to AI
+      if (isConfirmOrderIntent(text) && tryTriggerOrderForm(chatContainerRef.current, 'confirm')) return
+      if (isCancelOrderIntent(text) && tryTriggerOrderForm(chatContainerRef.current, 'cancel')) return
+
       setLoading(true)
       try {
-        const res = await api.post(CHAT_ENDPOINT, { message: text })
+        const res = await api.post(CHAT_ENDPOINT, { message: text, lang })
         const data = res.data
         const response = data?.response ?? ''
         if (typeof response === 'string' && response.startsWith('<')) {
           addMessage('assistant', response, true)
+          speakResponse(response.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300))
         } else {
           addMessage('assistant', response)
+          speakResponse(response)
         }
       } catch (err) {
         const msg = err.code === 'ERR_NETWORK' || !err.response
           ? 'Connection error. Make sure the backend is running on port 8000 (run run-backend.bat).'
           : 'Connection error. Please try again.'
         addMessage('assistant', msg)
+        speakResponse(msg)
       } finally {
         setLoading(false)
       }
     },
-    [prompt, loading, addMessage]
+    [prompt, loading, addMessage, speakResponse, lang]
   )
 
   useEffect(() => {
@@ -133,34 +182,6 @@ export default function ChatShell() {
       }
     }
     load()
-  }, [])
-
-  // Voice recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) return
-    const rec = new SpeechRecognition()
-    rec.continuous = true
-    rec.interimResults = false
-    rec.lang = 'en-IN'
-    rec.onresult = (e) => {
-      const text = e.results[e.results.length - 1][0].transcript?.trim()
-      if (text) {
-        setPrompt(text)
-        // Auto-send voice command (like agentic)
-        setTimeout(() => sendMessageRef.current?.(text), 100)
-      }
-    }
-    setRecognition(rec)
-    return () => rec?.abort()
-  }, [])
-
-  const speak = useCallback((text) => {
-    if (!window.speechSynthesis) return
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'en-IN'
-    window.speechSynthesis.speak(u)
   }, [])
 
   const scrollToBottom = useCallback(() => {
@@ -218,17 +239,18 @@ export default function ChatShell() {
             next.push(newMsg)
             return next
           })
-          speak(data?.status === 'confirmed' ? 'Order confirmed successfully.' : 'Order cancelled successfully.')
+          speakResponse(data?.status === 'confirmed' ? 'Order confirmed successfully.' : 'Order cancelled successfully.')
         } else {
           addMessage('assistant', data?.message || 'Order processing failed.')
+          speakResponse(data?.message || 'Order processing failed.')
         }
       } catch (err) {
         const msg = err.response?.data?.message || err.response?.data?.detail || 'Order processing failed. Please try again.'
         addMessage('assistant', msg)
-        speak('Order processing failed.')
+        speakResponse('Order processing failed.')
       }
     },
-    [addMessage, speak]
+    [addMessage, speakResponse]
   )
 
   // Order form submit handler (delegated)
@@ -307,7 +329,7 @@ export default function ChatShell() {
         const data = res.data
         if (data?.status === 'cancelled') {
           addMessage('assistant', `❌ Order ${orderId} cancelled successfully.`)
-          speak('Order cancelled.')
+          speakResponse('Order cancelled.')
           setMessages((prev) =>
             prev.map((m) =>
               m.orderData?.orderId === orderId ? { ...m, orderData: { ...m.orderData, cancelled: true } } : m
@@ -318,7 +340,7 @@ export default function ChatShell() {
         addMessage('assistant', err.response?.data?.detail || 'Failed to cancel order.')
       }
     },
-    [addMessage, speak]
+    [addMessage, speakResponse]
   )
 
   const handleKeyDown = (e) => {
@@ -357,18 +379,13 @@ export default function ChatShell() {
   }
 
   const toggleVoice = () => {
-    if (!recognition) {
+    if (!voiceSupported) {
       addMessage('assistant', 'Voice input is not supported in this browser. Use Chrome or Edge.')
       return
     }
-    if (listening) {
-      recognition.stop()
-      setListening(false)
-      speak('Voice stopped.')
-    } else {
-      recognition.start()
-      setListening(true)
-      speak('Listening... Tell me the medicine name you need.')
+    const wasListening = listening
+    if (voiceToggle()) {
+      speakResponse(wasListening ? 'Voice stopped.' : 'Listening... Tell me the medicine name you need.')
     }
   }
 
@@ -479,6 +496,26 @@ export default function ChatShell() {
 
       {/* Compact input */}
       <div className="border-t border-slate-200 bg-slate-50/80 p-3 shrink-0">
+        <div className="flex items-center gap-2 mb-2">
+          <select
+            value={lang}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-700"
+            title="Speech language"
+          >
+            {VOICE_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setTtsEnabled((v) => !v)}
+            className={`p-1.5 rounded-lg transition-all ${ttsEnabled ? 'text-blue-600 bg-blue-50' : 'text-slate-400'}`}
+            title={ttsEnabled ? 'AI speech on' : 'AI speech off'}
+          >
+            {ttsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          </button>
+        </div>
         <div className="relative">
           {showSuggestions && suggestions.length > 0 && (
             <div

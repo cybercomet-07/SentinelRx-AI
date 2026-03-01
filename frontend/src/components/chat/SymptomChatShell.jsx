@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Mic, Plus, Send, User } from 'lucide-react'
+import { Mic, Plus, Send, User, Volume2, VolumeX } from 'lucide-react'
 import api from '../../services/api'
+import { useVoice } from '../../hooks/useVoice'
+import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 
 const WELCOME = {
   role: 'assistant',
@@ -36,9 +38,14 @@ export default function SymptomChatShell() {
   const [messages, setMessages] = useState(() => loadStoredMessages() || [WELCOME])
   const [loading, setLoading] = useState(false)
   const [prompt, setPrompt] = useState('')
-  const [listening, setListening] = useState(false)
-  const [recognition, setRecognition] = useState(null)
   const chatContainerRef = useRef(null)
+  const voice = useVoice({
+    onTranscript: (text) => {
+      setPrompt(text)
+      setTimeout(() => sendMessageRef.current?.(text), 100)
+    },
+  })
+  const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
   const sendMessageRef = useRef(null)
 
   const addMessage = useCallback((role, content) => {
@@ -62,9 +69,10 @@ export default function SymptomChatShell() {
 
       setLoading(true)
       try {
-        const res = await api.post(SYMPTOM_CHAT_ENDPOINT, { message: text }, { timeout: 45000 })
+        const res = await api.post(SYMPTOM_CHAT_ENDPOINT, { message: text, lang }, { timeout: 45000 })
         const response = res.data?.response ?? 'No response.'
         addMessage('assistant', response)
+        speak(response, lang)
       } catch (err) {
         let msg = 'Something went wrong. Please try again.'
         if (err.code === 'ECONNABORTED') {
@@ -81,11 +89,12 @@ export default function SymptomChatShell() {
           msg = err.response.data.message
         }
         addMessage('assistant', msg)
+        speak(msg, lang)
       } finally {
         setLoading(false)
       }
     },
-    [prompt, loading, addMessage]
+    [prompt, loading, addMessage, speak, lang]
   )
 
   useEffect(() => {
@@ -100,24 +109,6 @@ export default function SymptomChatShell() {
   }, [messages])
 
   useEffect(() => {
-    const rec = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!rec) return
-    const r = new rec()
-    r.continuous = true
-    r.interimResults = false
-    r.lang = 'en-IN'
-    r.onresult = (e) => {
-      const t = e.results[e.results.length - 1][0].transcript?.trim()
-      if (t) {
-        setPrompt(t)
-        setTimeout(() => sendMessageRef.current?.(t), 100)
-      }
-    }
-    setRecognition(r)
-    return () => r?.abort()
-  }, [])
-
-  useEffect(() => {
     chatContainerRef.current?.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
@@ -129,17 +120,11 @@ export default function SymptomChatShell() {
   }, [])
 
   const toggleVoice = () => {
-    if (!recognition) {
+    if (!voiceSupported) {
       addMessage('assistant', 'Voice input is not supported. Use Chrome or Edge.')
       return
     }
-    if (listening) {
-      recognition.stop()
-      setListening(false)
-    } else {
-      recognition.start()
-      setListening(true)
-    }
+    voiceToggle()
   }
 
   const formatTime = (ts) =>
@@ -205,6 +190,26 @@ export default function SymptomChatShell() {
 
       {/* Compact input */}
       <div className="border-t border-slate-200 bg-slate-50/80 p-3 shrink-0">
+        <div className="flex items-center gap-2 mb-2">
+          <select
+            value={lang}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-700"
+            title="Speech language"
+          >
+            {VOICE_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setTtsEnabled((v) => !v)}
+            className={`p-1.5 rounded-lg transition-all ${ttsEnabled ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400'}`}
+            title={ttsEnabled ? 'AI speech on' : 'AI speech off'}
+          >
+            {ttsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          </button>
+        </div>
         <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-sm">
           <User size={16} className="text-slate-400 shrink-0" strokeWidth={2} />
           <input

@@ -6,6 +6,7 @@ const TITLES = {
   '/admin/dashboard': 'Dashboard',
   '/admin/medicines': 'Medicine Management',
   '/admin/orders': 'Orders Management',
+  '/admin/prescriptions': 'Prescription Management',
   '/admin/notifications': 'Notifications',
   '/admin/map': 'Delivery Map',
   '/admin/users': 'User Management',

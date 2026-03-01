@@ -25,6 +25,7 @@ router = APIRouter(prefix="/ai-chat", tags=["AI Chat"])
 
 class ChatRequest(BaseModel):
     message: str
+    lang: str | None = None  # e.g. hi-IN, en-IN - for AI to respond in user's language
 
 
 @router.post("/chat")
@@ -34,12 +35,13 @@ def ai_chat(
     current_user: User = Depends(get_current_user),
 ):
     """Chat with AI - order medicines by text or get health answers."""
-    result = chat(db, data.message.strip(), current_user.id)
+    result = chat(db, data.message.strip(), current_user.id, response_lang=data.lang)
     return JSONResponse(content=result)
 
 
 class SymptomChatRequest(BaseModel):
     message: str
+    lang: str | None = None  # e.g. hi-IN - for AI to respond in user's language
 
 
 @router.post("/symptom-chat")
@@ -55,6 +57,7 @@ def symptom_chat_endpoint(
             data.message.strip(),
             user_id=current_user.id,
             user_email=current_user.email,
+            response_lang=data.lang,
         )
         return JSONResponse(content={"response": result})
     except Exception as e:

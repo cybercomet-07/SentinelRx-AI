@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { prescriptionService } from '../../services/prescriptionService'
-import { MessageCircle, Send, Loader2, Mic } from 'lucide-react'
+import { MessageCircle, Send, Loader2, Mic, Volume2, VolumeX } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useVoice } from '../../hooks/useVoice'
+import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 
 const PLACEHOLDER = "e.g. I have fever but I don't have a doctor's prescription"
 
@@ -9,34 +11,19 @@ export default function SymptomRecommendChat() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [listening, setListening] = useState(false)
-  const [recognition, setRecognition] = useState(null)
   const bottomRef = useRef(null)
   const handleSubmitRef = useRef(null)
+  const voice = useVoice({
+    onTranscript: (text) => {
+      setInput(text)
+      setTimeout(() => handleSubmitRef.current?.(text), 100)
+    },
+  })
+  const { listening, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  // Voice recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) return
-    const rec = new SpeechRecognition()
-    rec.continuous = true
-    rec.interimResults = false
-    rec.lang = 'en-IN'
-    rec.onresult = (e) => {
-      const text = e.results[e.results.length - 1][0].transcript?.trim()
-      if (text) {
-        setInput(text)
-        setTimeout(() => handleSubmitRef.current?.(text), 100)
-      }
-    }
-    rec.onend = () => setListening(false)
-    setRecognition(rec)
-    return () => rec?.abort()
-  }, [])
 
   const submitWithText = useCallback(async (textToSend) => {
     const text = (textToSend ?? input).trim()
@@ -47,23 +34,26 @@ export default function SymptomRecommendChat() {
     setLoading(true)
 
     try {
-      const res = await prescriptionService.getSymptomRecommendation(text)
+      const res = await prescriptionService.getSymptomRecommendation(text, lang)
       const recommendation = res.data?.recommendation || 'Unable to get recommendation.'
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: recommendation },
       ])
+      speak(recommendation, lang)
     } catch (err) {
       const msg = err.response?.data?.detail || err.message || 'Failed to get recommendation'
       toast.error(typeof msg === 'string' ? msg : 'Request failed')
+      const errContent = 'Sorry, we could not process your request. Please try again.'
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, we could not process your request. Please try again.' },
+        { role: 'assistant', content: errContent },
       ])
+      speak(errContent, lang)
     } finally {
       setLoading(false)
     }
-  }, [input, loading])
+  }, [input, loading, speak, lang])
 
   useEffect(() => {
     handleSubmitRef.current = submitWithText
@@ -75,17 +65,11 @@ export default function SymptomRecommendChat() {
   }
 
   const toggleVoice = () => {
-    if (!recognition) {
+    if (!voiceSupported) {
       toast.error('Voice input is not supported. Use Chrome or Edge.')
       return
     }
-    if (listening) {
-      recognition.stop()
-      setListening(false)
-    } else {
-      recognition.start()
-      setListening(true)
-    }
+    voiceToggle()
   }
 
   return (
@@ -131,6 +115,26 @@ export default function SymptomRecommendChat() {
       </div>
 
       <form onSubmit={handleSubmit} className="shrink-0 p-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center gap-2 mb-2">
+          <select
+            value={lang}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white text-gray-700"
+            title="Speech language"
+          >
+            {VOICE_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setTtsEnabled((v) => !v)}
+            className={`p-1.5 rounded-lg transition-all ${ttsEnabled ? 'text-teal-600 bg-teal-50' : 'text-gray-400'}`}
+            title={ttsEnabled ? 'AI speech on' : 'AI speech off'}
+          >
+            {ttsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="text"

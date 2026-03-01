@@ -44,7 +44,14 @@ def _is_medicine_recommendation_query(message: str) -> bool:
     return any(p in lower for p in symptom_phrases) or len(lower.split()) <= 15
 
 
-def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, user_email: str | None = None) -> str:
+LANG_NAMES = {
+    "hi-IN": "Hindi", "mr-IN": "Marathi", "ta-IN": "Tamil", "te-IN": "Telugu",
+    "bn-IN": "Bengali", "kn-IN": "Kannada", "ml-IN": "Malayalam", "pa-IN": "Punjabi",
+    "gu-IN": "Gujarati", "ur-IN": "Urdu", "en-IN": "English", "en-US": "English", "en-GB": "English",
+}
+
+
+def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, user_email: str | None = None, response_lang: str | None = None) -> str:
     """
     Handle symptom-based chat using Cohere.
     - General health questions: Cohere gives advice
@@ -58,7 +65,10 @@ def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, us
     inventory = _get_inventory_for_cohere(db)
     is_medicine_query = _is_medicine_recommendation_query(message)
 
-    system_prompt = """You are SentinelRX-AI, a helpful pharmacy assistant. You help users with:
+    lang_instruction = ""
+    if response_lang and response_lang in LANG_NAMES:
+        lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+    system_prompt = f"""You are SentinelRX-AI, a helpful pharmacy assistant. You help users with:{lang_instruction}
 1. General health advice (symptoms, when to see a doctor, self-care tips)
 2. Medicine recommendations FROM OUR INVENTORY ONLY
 

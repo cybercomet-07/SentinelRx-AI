@@ -19,6 +19,7 @@ const adminLinks = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/medicines', icon: Pill, label: 'Medicines' },
   { to: '/admin/orders', icon: ClipboardList, label: 'Orders' },
+  { to: '/admin/prescriptions', icon: FileText, label: 'Prescriptions' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/map', icon: MapPin, label: 'Delivery Map' },
   { to: '/admin/users', icon: Users, label: 'Users' },
