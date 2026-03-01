@@ -18,6 +18,7 @@ export default function SymptomRecommendChat() {
       setInput(text)
       setTimeout(() => handleSubmitRef.current?.(text), 100)
     },
+    onError: (msg) => toast.error(msg),
   })
   const { listening, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
 

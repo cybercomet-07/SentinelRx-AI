@@ -82,19 +82,7 @@ export default function ChatShell() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [medicineList, setMedicineList] = useState([])
   const [pendingOrder, setPendingOrder] = useState(null)
-  const voice = useVoice({
-    onTranscript: (text) => {
-      setPrompt(text)
-      setTimeout(() => sendMessageRef.current?.(text), 100)
-    },
-  })
-  const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
-  const [orderProcessing, setOrderProcessing] = useState(false)
-  const debounceRef = useRef(null)
-  const chatContainerRef = useRef(null)
-  const suggestionsRef = useRef(null)
-  const sendMessageRef = useRef(null)
-
+  const addMessageRef = useRef(null)
   const addMessage = useCallback((role, content, isHtml = false, orderData = null) => {
     setMessages((prev) => {
       const next = [...prev]
@@ -111,6 +99,21 @@ export default function ChatShell() {
       return next
     })
   }, [])
+  addMessageRef.current = addMessage
+
+  const voice = useVoice({
+    onTranscript: (text) => {
+      setPrompt(text)
+      setTimeout(() => sendMessageRef.current?.(text), 100)
+    },
+    onError: (msg) => addMessageRef.current?.('assistant', msg),
+  })
+  const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
+  const [orderProcessing, setOrderProcessing] = useState(false)
+  const debounceRef = useRef(null)
+  const chatContainerRef = useRef(null)
+  const suggestionsRef = useRef(null)
+  const sendMessageRef = useRef(null)
 
   // Speak AI response in user's selected language (Text-to-Speech) - must be before sendMessage
   const speakResponse = useCallback((text) => {

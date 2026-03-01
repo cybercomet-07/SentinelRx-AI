@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Mic, Plus, Send, User, Volume2, VolumeX } from 'lucide-react'
+import toast from 'react-hot-toast'
 import api from '../../services/api'
 import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
@@ -44,6 +45,7 @@ export default function SymptomChatShell() {
       setPrompt(text)
       setTimeout(() => sendMessageRef.current?.(text), 100)
     },
+    onError: (msg) => toast.error(msg),
   })
   const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
   const sendMessageRef = useRef(null)

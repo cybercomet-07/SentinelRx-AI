@@ -8,10 +8,19 @@ let activeRecognition = null
  * Web Speech API hook: Speech-to-Text (mic) + Text-to-Speech (AI speaks).
  * Supports multi-language - user speaks in any language, AI speaks back in same language.
  */
+const VOICE_ERROR_MESSAGES = {
+  'not-allowed': 'Microphone access denied. Allow mic in browser settings and try again.',
+  'no-speech': 'No speech detected. Please speak clearly and try again.',
+  'audio-capture': 'No microphone found. Connect a mic and try again.',
+  'network': 'Network error. Check your connection and try again.',
+  'aborted': 'Voice input was interrupted.',
+}
+
 export function useVoice(options = {}) {
   const {
     lang: initialLang = getDefaultVoiceLang(),
     onTranscript,
+    onError,
   } = options
 
   const [listening, setListening] = useState(false)
@@ -19,10 +28,12 @@ export function useVoice(options = {}) {
   const [lang, setLang] = useState(initialLang)
   const [ttsEnabled, setTtsEnabled] = useState(true)
   const onTranscriptRef = useRef(onTranscript)
+  const onErrorRef = useRef(onError)
   const listeningRef = useRef(false)
   const isTogglingRef = useRef(false)
 
   onTranscriptRef.current = onTranscript
+  onErrorRef.current = onError
   listeningRef.current = listening
 
   // Speech-to-Text: SpeechRecognition - converts user speech to text in selected language
@@ -37,13 +48,16 @@ export function useVoice(options = {}) {
       return
     }
     rec.continuous = false
-    rec.interimResults = false
+    rec.interimResults = true
     rec.lang = lang
 
     rec.onresult = (e) => {
       try {
-        const text = e.results[e.results.length - 1][0]?.transcript?.trim()
-        if (text) onTranscriptRef.current?.(text)
+        const last = e.results[e.results.length - 1]
+        if (last?.isFinal) {
+          const text = last[0]?.transcript?.trim()
+          if (text) onTranscriptRef.current?.(text)
+        }
       } catch (_) {}
     }
     rec.onend = () => {
@@ -51,9 +65,11 @@ export function useVoice(options = {}) {
       listeningRef.current = false
       setListening(false)
     }
-    rec.onerror = () => {
+    rec.onerror = (e) => {
       listeningRef.current = false
       setListening(false)
+      const msg = VOICE_ERROR_MESSAGES[e?.error] || 'Voice input failed. Try again or type your message.'
+      onErrorRef.current?.(msg)
     }
 
     setRecognition(rec)
@@ -85,7 +101,11 @@ export function useVoice(options = {}) {
   }, [])
 
   const toggleVoice = useCallback(() => {
-    if (!recognition || isTogglingRef.current) return false
+    if (isTogglingRef.current) return false
+    if (!recognition) {
+      onErrorRef.current?.('Voice is starting up. Please try again in a moment.')
+      return false
+    }
     isTogglingRef.current = true
     try {
       if (listeningRef.current) {
@@ -112,6 +132,7 @@ export function useVoice(options = {}) {
         if (activeRecognition === recognition) activeRecognition = null
         listeningRef.current = false
         setListening(false)
+        onErrorRef.current?.('Could not start microphone. Check permissions and try again.')
       }
     } finally {
       setTimeout(() => { isTogglingRef.current = false }, 300)
