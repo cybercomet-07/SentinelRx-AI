@@ -152,10 +152,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex bg-gray-50">
 
       {/* ── Left decorative panel ── */}
-      <div className="hidden lg:flex w-[42%] bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-500 flex-col p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:h-screen lg:min-h-0 lg:shrink-0 w-[42%] bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-500 flex-col p-12 relative overflow-hidden">
         {/* Spline 3D robot background - my.spline.design embeds via iframe */}
         <div className="absolute inset-0 z-0">
           <iframe
@@ -165,32 +165,41 @@ export default function Login() {
             style={{ pointerEvents: 'none' }}
           />
         </div>
-        {/* Gradient overlay for readability - keeps robot visible */}
-        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-teal-600/70 via-teal-500/60 to-cyan-500/70" />
+        {/* Gradient overlay - low opacity so robot stays visible */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-teal-600/40 via-teal-500/35 to-cyan-500/40" />
 
-        {/* Black block at bottom of welcome section - covers Spline watermark */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-black z-[2]" />
+        {/* Gradient bar at bottom with info - covers Spline watermark */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 z-[2] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-6">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <p className="text-white/90 text-sm font-medium">AI-Powered Pharmacy Platform</p>
+            <a href="mailto:ainpharmacyofficial@gmail.com" className="text-teal-400 hover:text-teal-300 text-xs transition-colors">
+              ainpharmacyofficial@gmail.com
+            </a>
+          </div>
+        </div>
 
         <div className="relative z-10 flex flex-col h-full">
-          <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors w-fit mb-12">
-            <ArrowLeft size={14} /> Back to home
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-              <Activity size={22} className="text-white" />
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                <Activity size={22} className="text-white" />
+              </div>
+              <div>
+                <p className="font-display font-bold text-white text-xl leading-none">SentinelRx AI</p>
+                <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
+              </div>
             </div>
-            <div>
-              <p className="font-display font-bold text-white text-xl leading-none">SentinelRx AI</p>
-              <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
-            </div>
+            <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
+              <ArrowLeft size={14} /> Back to home
+            </Link>
           </div>
         </div>
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div className="flex-1 min-h-0 h-full overflow-y-auto overflow-x-hidden bg-white">
+        <div className="flex min-h-full items-center justify-center p-8 lg:px-12 lg:py-12">
+          <div className="w-full max-w-md lg:max-w-lg pb-8">
 
           {/* Mobile header */}
           <div className="lg:hidden mb-8">
@@ -377,6 +386,7 @@ export default function Login() {
           <p className="text-xs text-gray-300 text-center mt-5">
             By continuing, you agree to our Terms of Service and Privacy Policy.
           </p>
+        </div>
         </div>
       </div>
     </div>

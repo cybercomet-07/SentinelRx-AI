@@ -1,8 +1,11 @@
 import uuid
+from datetime import date, datetime, timedelta
 
 from fastapi import HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.models.medicine import Medicine
 from app.models.notification import Notification, NotificationType
 from app.models.order import OrderStatus
 from app.models.user import User, UserRole
@@ -66,6 +69,46 @@ def notify_order_status_changed(
         message=f"Order {order_id} is now {new_status.value}.",
         typ=NotificationType.ORDER,
     )
+
+
+def notify_expiring_medicines_to_admins(db: Session, *, days_ahead: int = 7) -> None:
+    """Create notifications for admins about medicines expiring soon. Avoids duplicates within 7 days."""
+    expiry_cutoff = date.today() + timedelta(days=days_ahead)
+    expiring = (
+        db.query(Medicine)
+        .filter(
+            Medicine.expiry_date.isnot(None),
+            Medicine.expiry_date <= expiry_cutoff,
+            Medicine.expiry_date >= date.today(),
+        )
+        .all()
+    )
+    if not expiring:
+        return
+    cutoff_ts = datetime.utcnow() - timedelta(days=7)
+    for m in expiring:
+        exists = db.execute(
+            text(
+                "SELECT 1 FROM medicine_expiry_notification WHERE medicine_id = :mid AND notified_at > :cutoff LIMIT 1"
+            ),
+            {"mid": str(m.id), "cutoff": cutoff_ts},
+        ).scalar()
+        if exists:
+            continue
+        db.execute(
+            text("INSERT INTO medicine_expiry_notification (id, medicine_id, notified_at) VALUES (:uid, :mid, :now)"),
+            {"uid": str(uuid.uuid4()), "mid": str(m.id), "now": datetime.utcnow()},
+        )
+        admins = db.query(User).filter(User.role == UserRole.ADMIN, User.is_active.is_(True)).all()
+        for admin in admins:
+            create_notification(
+                db,
+                user_id=admin.id,
+                title="Medicine expiring soon",
+                message=f"{m.name} expires on {m.expiry_date.isoformat()}. Current stock: {m.quantity}.",
+                typ=NotificationType.EXPIRING_MEDICINE,
+            )
+    db.commit()
 
 
 def notify_low_stock_to_admins(

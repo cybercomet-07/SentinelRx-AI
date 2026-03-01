@@ -6,7 +6,7 @@ from alembic import context
 
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models import Cart, ChatHistory, Medicine, Notification, Order, OrderItem, Prescription, RefillAlert, User
+from app.models import Cart, ChatHistory, ContactMessage, Medicine, Notification, Order, OrderItem, Prescription, RefillAlert, User
 
 config = context.config
 

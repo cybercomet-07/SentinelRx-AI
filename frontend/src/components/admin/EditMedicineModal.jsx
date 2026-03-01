@@ -20,6 +20,8 @@ export default function EditMedicineModal({ open, onClose, medicine, onSuccess }
         quantity: +form.quantity,
         product_id: form.product_id || undefined,
         pin: form.pin || undefined,
+        manufacturing_date: form.manufacturing_date || undefined,
+        expiry_date: form.expiry_date || undefined,
       })
       toast.success('Updated!')
       onSuccess?.()
@@ -35,6 +37,8 @@ export default function EditMedicineModal({ open, onClose, medicine, onSuccess }
     { k: 'category', label: 'Category' },
     { k: 'price', label: 'Price (₹)', type: 'number' },
     { k: 'quantity', label: 'Quantity', type: 'number' },
+    { k: 'manufacturing_date', label: 'Manufacturing Date', type: 'date' },
+    { k: 'expiry_date', label: 'Expiry Date', type: 'date' },
   ]
 
   return (

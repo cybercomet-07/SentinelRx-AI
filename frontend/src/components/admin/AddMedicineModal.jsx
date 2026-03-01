@@ -3,7 +3,7 @@ import Modal from '../ui/Modal'
 import { medicineService } from '../../services/medicineService'
 import toast from 'react-hot-toast'
 
-const EMPTY = { name: '', category: '', price: '', quantity: '', description: '', image_url: '', product_id: '', pin: '' }
+const EMPTY = { name: '', category: '', price: '', quantity: '', description: '', image_url: '', product_id: '', pin: '', manufacturing_date: '', expiry_date: '' }
 
 export default function AddMedicineModal({ open, onClose, onSuccess }) {
   const [form, setForm] = useState(EMPTY)
@@ -21,6 +21,8 @@ export default function AddMedicineModal({ open, onClose, onSuccess }) {
         quantity: +form.quantity,
         product_id: form.product_id || undefined,
         pin: form.pin || undefined,
+        manufacturing_date: form.manufacturing_date || undefined,
+        expiry_date: form.expiry_date || undefined,
       })
       toast.success('Medicine added!')
       onSuccess?.()
@@ -37,6 +39,8 @@ export default function AddMedicineModal({ open, onClose, onSuccess }) {
     { k: 'category', label: 'Category', placeholder: 'e.g. Pain Relief' },
     { k: 'price', label: 'Price (₹) *', placeholder: '20', type: 'number' },
     { k: 'quantity', label: 'Quantity *', placeholder: '100', type: 'number' },
+    { k: 'manufacturing_date', label: 'Manufacturing Date', type: 'date' },
+    { k: 'expiry_date', label: 'Expiry Date', type: 'date' },
     { k: 'image_url', label: 'Image URL', placeholder: 'https://...' },
   ]
 

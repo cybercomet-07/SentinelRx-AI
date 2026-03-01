@@ -28,6 +28,7 @@ class AnalyticsSummary(BaseModel):
     total_revenue: float
     total_users: int
     low_stock_medicines_count: int
+    expiring_medicines_count: int = 0
     orders_by_status: list[OrdersByStatusItem]
     top_medicines: list[TopMedicineItem]
     monthly_data: list[MonthlyDataItem] = []

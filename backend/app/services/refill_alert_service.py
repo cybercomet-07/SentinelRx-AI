@@ -8,6 +8,7 @@ from app.models.medicine import Medicine
 from app.models.refill_alert import RefillAlert
 from app.models.user import User
 from app.schemas.refill_alert import RefillAlertCreate, RefillAlertRead
+from app.services.refill_alert_email_service import try_send_refill_confirmation
 
 
 def _build_refill_read(alert: RefillAlert, medicine_name: str) -> RefillAlertRead:
@@ -43,6 +44,13 @@ def create_refill_alert(db: Session, user: User, payload: RefillAlertCreate) -> 
     db.add(alert)
     db.commit()
     db.refresh(alert)
+    if user.email:
+        try_send_refill_confirmation(
+            user_name=user.name or "User",
+            user_email=user.email,
+            medicine_name=medicine.name,
+            refill_date=str(payload.suggested_refill_date),
+        )
     return _build_refill_read(alert, medicine.name)
 
 

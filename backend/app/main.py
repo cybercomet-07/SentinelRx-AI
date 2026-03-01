@@ -37,6 +37,12 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
     except Exception as exc:  # pragma: no cover
         logger.warning("Database initialization skipped at startup: %s", exc)
+    # Start refill reminder background thread (sends emails 5 days before refill date)
+    try:
+        from app.tasks.refill_reminder_task import start_refill_reminder_thread
+        start_refill_reminder_thread()
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Refill reminder thread not started: %s", exc)
     yield
     # Shutdown (if needed)
 

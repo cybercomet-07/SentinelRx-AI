@@ -1,7 +1,7 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, ForeignKey
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -21,3 +21,4 @@ class RefillAlert(Base):
     last_purchase_date: Mapped[date] = mapped_column(Date, nullable=False)
     suggested_refill_date: Mapped[date] = mapped_column(Date, nullable=False)
     is_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

@@ -1,5 +1,6 @@
 import argparse
 import csv
+from datetime import date, timedelta
 from pathlib import Path
 import sys
 
@@ -14,11 +15,38 @@ from app.models.order_item import OrderItem
 CSV_PATH = ROOT_DIR / "data" / "medicines_seed.csv"
 
 
+def _parse_expiry(val: str | None) -> date | None:
+    if not val or not val.strip():
+        return None
+    v = val.strip().upper()
+    today = date.today()
+    if v == "EXPIRY_2_DAYS":
+        return today + timedelta(days=2)
+    if v == "EXPIRY_3_DAYS":
+        return today + timedelta(days=3)
+    if v == "EXPIRY_4_DAYS":
+        return today + timedelta(days=4)
+    return None
+
+
+def _parse_date(val: str | None) -> date | None:
+    if not val or not val.strip():
+        return None
+    try:
+        return date.fromisoformat(val.strip())
+    except ValueError:
+        return None
+
+
 def _read_seed_rows() -> list[dict]:
     rows: list[dict] = []
     with CSV_PATH.open("r", encoding="utf-8", newline="") as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
+            expiry_raw = row.get("expiry_date") or ""
+            expiry = _parse_expiry(expiry_raw) if "EXPIRY_" in expiry_raw.upper() else _parse_date(expiry_raw)
+            mfg_raw = row.get("manufacturing_date") or ""
+            mfg = _parse_date(mfg_raw)
             rows.append(
                 {
                     "name": row["name"].strip(),
@@ -28,6 +56,8 @@ def _read_seed_rows() -> list[dict]:
                     "category": (row.get("category") or "General").strip(),
                     "image_url": (row.get("image_url") or "").strip() or None,
                     "low_stock_threshold": int(row.get("low_stock_threshold") or 10),
+                    "manufacturing_date": mfg,
+                    "expiry_date": expiry,
                 }
             )
     return rows
@@ -59,6 +89,8 @@ def seed_medicines(replace_existing: bool = False) -> None:
                 existing.category = row["category"]
                 existing.image_url = row["image_url"]
                 existing.low_stock_threshold = row["low_stock_threshold"]
+                existing.manufacturing_date = row["manufacturing_date"]
+                existing.expiry_date = row["expiry_date"]
                 updated += 1
             else:
                 db.add(Medicine(**row))

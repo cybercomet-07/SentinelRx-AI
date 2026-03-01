@@ -59,10 +59,13 @@ def create_medicine(db: Session, payload: MedicineCreate) -> Medicine:
         pin=payload.pin,
         name=payload.name.strip(),
         description=payload.description,
+        price=payload.price,
         quantity=payload.quantity,
         category=payload.category,
         image_url=payload.image_url,
         low_stock_threshold=payload.low_stock_threshold,
+        manufacturing_date=payload.manufacturing_date,
+        expiry_date=payload.expiry_date,
     )
     db.add(medicine)
     if medicine.quantity <= medicine.low_stock_threshold:

@@ -1,5 +1,6 @@
 """Admin endpoints matching frontend expectations."""
 import logging
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -10,6 +11,7 @@ from app.models.medicine import Medicine
 from app.models.order import Order, OrderStatus
 from app.models.user import User, UserRole
 from app.services.analytics_service import get_analytics_summary
+from app.services.notification_service import notify_expiring_medicines_to_admins
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 logger = logging.getLogger(__name__)
@@ -20,8 +22,9 @@ def get_admin_dashboard(
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_roles(UserRole.ADMIN)),
 ):
-    """Dashboard stats in frontend format (total_users, total_orders, total_revenue, low_stock_count, top_medicines)."""
+    """Dashboard stats in frontend format (total_users, total_orders, total_revenue, low_stock_count, expiring_medicines_count, top_medicines)."""
     try:
+        notify_expiring_medicines_to_admins(db, days_ahead=7)
         summary = get_analytics_summary(db)
     except Exception as e:
         logger.exception("Dashboard analytics failed")
@@ -36,6 +39,7 @@ def get_admin_dashboard(
         "total_orders": summary.total_orders,
         "total_revenue": summary.total_revenue,
         "low_stock_count": summary.low_stock_medicines_count,
+        "expiring_medicines_count": summary.expiring_medicines_count,
         "monthly_data": monthly_data,
         "top_medicines": top_medicines,
     }
@@ -101,6 +105,35 @@ def list_orders_for_map(
             "address_source": o.address_source,
         }
         for o in orders
+    ]
+
+
+@router.get("/medicines/expiring-soon")
+def list_expiring_medicines(
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_roles(UserRole.ADMIN)),
+):
+    """List medicines expiring within the next 7 days."""
+    expiry_cutoff = date.today() + timedelta(days=7)
+    items = (
+        db.query(Medicine)
+        .filter(
+            Medicine.expiry_date.isnot(None),
+            Medicine.expiry_date <= expiry_cutoff,
+            Medicine.expiry_date >= date.today(),
+        )
+        .order_by(Medicine.expiry_date.asc())
+        .all()
+    )
+    return [
+        {
+            "id": str(m.id),
+            "name": m.name,
+            "quantity": m.quantity,
+            "expiry_date": m.expiry_date.isoformat() if m.expiry_date else None,
+            "manufacturing_date": m.manufacturing_date.isoformat() if m.manufacturing_date else None,
+        }
+        for m in items
     ]
 
 

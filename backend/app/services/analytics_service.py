@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -49,6 +49,16 @@ def get_analytics_summary(db: Session) -> AnalyticsSummary:
     low_stock = (
         db.query(Medicine).filter(Medicine.quantity <= Medicine.low_stock_threshold).count()
     )
+    expiry_cutoff = date.today() + timedelta(days=7)
+    expiring = (
+        db.query(Medicine)
+        .filter(
+            Medicine.expiry_date.isnot(None),
+            Medicine.expiry_date <= expiry_cutoff,
+            Medicine.expiry_date >= date.today(),
+        )
+        .count()
+    )
 
     status_counts = (
         db.query(Order.status, func.count(Order.id))
@@ -91,6 +101,7 @@ def get_analytics_summary(db: Session) -> AnalyticsSummary:
         total_revenue=round(float(total_revenue), 2),
         total_users=total_users,
         low_stock_medicines_count=low_stock,
+        expiring_medicines_count=expiring,
         orders_by_status=orders_by_status,
         top_medicines=top_medicines,
         monthly_data=monthly_data,

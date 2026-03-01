@@ -14,6 +14,7 @@ class NotificationType(str, enum.Enum):
     ORDER = "ORDER"
     REFILL = "REFILL"
     LOW_STOCK = "LOW_STOCK"
+    EXPIRING_MEDICINE = "EXPIRING_MEDICINE"
 
 
 class Notification(Base):

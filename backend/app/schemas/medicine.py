@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,6 +14,8 @@ class MedicineCreate(BaseModel):
     category: str | None = Field(default=None, max_length=100)
     image_url: str | None = Field(default=None, max_length=500)
     low_stock_threshold: int = Field(default=10, ge=0)
+    manufacturing_date: date | None = None
+    expiry_date: date | None = None
 
 
 class MedicineUpdate(BaseModel):
@@ -26,6 +28,8 @@ class MedicineUpdate(BaseModel):
     category: str | None = Field(default=None, max_length=100)
     image_url: str | None = Field(default=None, max_length=500)
     low_stock_threshold: int | None = Field(default=None, ge=0)
+    manufacturing_date: date | None = None
+    expiry_date: date | None = None
 
 
 class MedicineStockUpdate(BaseModel):
@@ -45,6 +49,8 @@ class MedicineRead(BaseModel):
     category: str | None
     image_url: str | None
     low_stock_threshold: int
+    manufacturing_date: date | None
+    expiry_date: date | None
     created_at: datetime
     updated_at: datetime
 

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   Activity, MessageSquare, ShieldCheck, Bell, BarChart3,
-  Package, ArrowRight, Zap, Brain, Clock
+  Package, ArrowRight, Zap, Brain, Clock, Mail
 } from 'lucide-react'
 
 const FEATURES = [
@@ -70,7 +70,7 @@ function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled ? 'bg-white/90 backdrop-blur-md shadow-soft border-b border-gray-100' : 'bg-transparent'
     }`}>
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center shadow-sm">
             <Activity size={16} className="text-white" />
@@ -79,6 +79,10 @@ function Navbar() {
             Sentinel<span className="text-teal-600">Rx</span> AI
           </span>
         </div>
+        <a href="#contact" className="flex items-center gap-2 text-gray-600 hover:text-teal-600 font-medium text-sm transition-colors">
+          <Mail size={16} />
+          Contact Us
+        </a>
       </div>
     </nav>
   )
@@ -89,7 +93,7 @@ function Hero() {
   const navigate = useNavigate()
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 -mt-8">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-teal-50/40 to-cyan-50/60" />
       <div className="absolute top-20 right-20 w-96 h-96 rounded-full bg-teal-200/20 blur-3xl" />
       <div className="absolute bottom-20 left-10 w-80 h-80 rounded-full bg-cyan-200/20 blur-3xl" />
@@ -97,24 +101,39 @@ function Hero() {
         style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       <div className="relative max-w-5xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 bg-white border border-teal-100 text-teal-700 text-xs font-semibold px-4 py-2 rounded-full shadow-soft mb-8 animate-fade-in">
-          <Zap size={12} className="fill-teal-500 text-teal-500" />
-          AI-Powered Pharmacy Platform
+        <div
+          className="inline-flex items-center gap-4 mb-8 opacity-0 animate-hero-title"
+          style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}
+        >
+          <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <Activity size={32} className="text-white" strokeWidth={2.5} />
+          </div>
+          <h1 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight">
+            Sentinel<span className="text-teal-600">Rx</span> AI
+          </h1>
         </div>
 
-        <h1 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] mb-6 animate-slide-up"
-          style={{ animationDelay: '0.1s', opacity: 0, animationFillMode: 'forwards' }}>
+        <div className="flex justify-center mb-8 animate-slide-up"
+          style={{ animationDelay: '0.4s', opacity: 0, animationFillMode: 'forwards' }}>
+          <div className="inline-flex items-center gap-2 bg-white border border-teal-100 text-teal-700 text-xs font-semibold px-4 py-2 rounded-full shadow-soft">
+            <Zap size={12} className="fill-teal-500 text-teal-500" />
+            AI-Powered Pharmacy Platform
+          </div>
+        </div>
+
+        <h2 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] mb-6 animate-slide-up"
+          style={{ animationDelay: '0.5s', opacity: 0, animationFillMode: 'forwards' }}>
           Your Pharmacy,<br />
           Intelligently Managed
-        </h1>
+        </h2>
 
         <p className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10 animate-slide-up"
-          style={{ animationDelay: '0.2s', opacity: 0, animationFillMode: 'forwards' }}>
+          style={{ animationDelay: '0.6s', opacity: 0, animationFillMode: 'forwards' }}>
           Order medicines with voice or chat, get smart refill reminders, and let AI handle the entire pharmacy workflow — from intent to delivery.
         </p>
 
         <div className="flex items-center justify-center gap-4 flex-wrap animate-slide-up"
-          style={{ animationDelay: '0.3s', opacity: 0, animationFillMode: 'forwards' }}>
+          style={{ animationDelay: '0.7s', opacity: 0, animationFillMode: 'forwards' }}>
           <button
             onClick={() => navigate('/login')}
             className="flex items-center gap-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-4 rounded-2xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-base"
@@ -231,6 +250,37 @@ function HowItWorks() {
   )
 }
 
+// ── Contact Us ─────────────────────────────────────────────────────────────
+function ContactSection() {
+  return (
+    <section id="contact" className="py-24 bg-white">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <p className="text-teal-600 text-sm font-semibold tracking-widest uppercase mb-3">Contact Us</p>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Get in touch
+          </h2>
+          <p className="text-gray-500 text-lg max-w-lg mx-auto">
+            AI-Powered Pharmacy Platform. We&apos;re here to help.
+          </p>
+        </div>
+        <div className="bg-slate-50 rounded-3xl border border-teal-100 p-10 max-w-2xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
+              <Activity size={24} className="text-white" />
+            </div>
+            <h3 className="font-display font-bold text-gray-900 text-xl">AI Pharmacy</h3>
+          </div>
+          <a href="mailto:ainpharmacyofficial@gmail.com" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-semibold text-lg transition-colors">
+            <Mail size={20} />
+            ainpharmacyofficial@gmail.com
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ── CTA ───────────────────────────────────────────────────────────────────
 function CTA() {
   const navigate = useNavigate()
@@ -280,7 +330,12 @@ function Footer() {
             Sentinel<span className="text-teal-400">Rx</span> AI
           </span>
         </div>
-        <p className="text-sm">AI-Powered Pharmacy Platform · Built with FastAPI + React</p>
+        <div className="flex flex-col items-center text-center">
+          <p className="text-sm font-medium text-slate-300">AI-Powered Pharmacy Platform</p>
+          <a href="mailto:ainpharmacyofficial@gmail.com" className="text-sm text-teal-400 hover:text-teal-300 transition-colors mt-1">
+            ainpharmacyofficial@gmail.com
+          </a>
+        </div>
         <div className="flex items-center gap-1.5 text-sm">
           <Clock size={13} className="text-teal-400" />
           <span>Available 24/7</span>
@@ -298,6 +353,7 @@ export default function Landing() {
       <Hero />
       <Features />
       <HowItWorks />
+      <ContactSection />
       <CTA />
       <Footer />
     </div>

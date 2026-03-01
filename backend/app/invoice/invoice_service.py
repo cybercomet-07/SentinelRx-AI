@@ -144,18 +144,95 @@ def generate_and_send_invoice(db: Session, order_id: uuid.UUID) -> None:
     # 6️⃣ Build Email HTML
     # -----------------------------------------------------
     html_content = f"""
-    <html>
-      <body style="font-family:Arial;">
-        <h2>Order Confirmed ✅</h2>
-        <p>Dear {user.name},</p>
-        <p>Your order <strong>{order.id}</strong> has been confirmed.</p>
-        <p>Total Amount: <strong>₹ {order.total_amount}</strong></p>
-        <p>Please find your invoice attached.</p>
+   <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Order Confirmation</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family: Arial, Helvetica, sans-serif;">
+
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:40px auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+
+    <!-- Header -->
+    <tr>
+      <td style="background:linear-gradient(135deg, #0f172a, #1e3a8a); padding:25px; text-align:center;">
+        <h1 style="color:#ffffff; margin:0; font-size:22px; letter-spacing:0.5px;">
+          SentinelRx-AI
+        </h1>
+        <p style="color:#cbd5e1; margin:5px 0 0; font-size:13px;">
+          Intelligent Pharmacy Management
+        </p>
+      </td>
+    </tr>
+
+    <!-- Body Content -->
+    <tr>
+      <td style="padding:30px; color:#1f2937;">
+
+        <h2 style="margin-top:0; color:#16a34a;">
+          ✅ Order Confirmed
+        </h2>
+
+        <p style="font-size:15px;">
+          Dear <strong>{user.name}</strong>,
+        </p>
+
+        <p style="font-size:15px; line-height:1.6;">
+          Thank you for choosing <strong>SentinelRx-AI</strong>.  
+          Your order has been successfully confirmed and is now being processed.
+        </p>
+
+        <!-- Order Details Box -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+          <tr>
+            <td style="padding:15px;">
+
+              <p style="margin:5px 0; font-size:14px;">
+                <strong>Order ID:</strong> 
+                <span style="color:#1e3a8a;">{order.id}</span>
+              </p>
+
+              <p style="margin:5px 0; font-size:14px;">
+                <strong>Total Amount:</strong> 
+                <span style="color:#16a34a; font-size:16px;">₹ {order.total_amount}</span>
+              </p>
+
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size:14px; line-height:1.6;">
+          📎 Your invoice has been attached to this email for your records.
+        </p>
+
+        <p style="font-size:14px; line-height:1.6;">
+          If you have any questions regarding your order, please feel free to contact our support team.
+        </p>
+
         <br>
-        <p>Regards,<br>SentinelRx-AI Team</p>
-      </body>
-    </html>
-    """
+
+        <p style="font-size:14px;">
+          Best Regards,<br>
+          <strong style="color:#1e3a8a;">SentinelRx-AI Team</strong>
+        </p>
+
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background:#f1f5f9; padding:20px; text-align:center; font-size:12px; color:#64748b;">
+        © 2026 SentinelRx-AI. All rights reserved.<br>
+        AI-Powered Secure Pharmacy System
+      </td>
+    </tr>
+
+  </table>
+
+</body>
+</html>"""
 
     # -----------------------------------------------------
     # 7️⃣ Send Email

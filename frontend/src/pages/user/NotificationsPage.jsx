@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import AlertPanel from '../../components/notifications/AlertPanel'
 import Loader from '../../components/ui/Loader'
 import ErrorState from '../../components/ui/ErrorState'
@@ -12,6 +13,8 @@ import toast from 'react-hot-toast'
 const NOTIF_LIMIT = 10
 
 export default function NotificationsPage() {
+  const location = useLocation()
+  const isAdmin = location.pathname.startsWith('/admin')
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
   const [notifPage, setNotifPage] = useState(1)
@@ -77,15 +80,15 @@ export default function NotificationsPage() {
 
   const loadAll = () => {
     setLoading(true)
-    Promise.all([
-      fetchAlerts(),
-      fetchNotifications(notifPage, true), // mark unread as read when opening page
-      fetchMedicines(),
-    ]).finally(() => setLoading(false))
+    const promises = [fetchNotifications(notifPage, true)]
+    if (!isAdmin) {
+      promises.push(fetchAlerts(), fetchMedicines())
+    }
+    Promise.all(promises).finally(() => setLoading(false))
   }
 
   const notifPageInitialized = useRef(false)
-  useEffect(loadAll, [])
+  useEffect(() => { loadAll() }, [isAdmin])
 
   useEffect(() => {
     if (!notifPageInitialized.current) {
@@ -147,94 +150,96 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-6 space-y-8 max-w-2xl mx-auto">
-      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <RefreshCw size={16} className="text-orange-500" />
-            <h2 className="font-display font-semibold text-gray-900">Refill Alerts</h2>
-            {alerts.length > 0 && (
-              <span className="ml-1 bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                {alerts.length}
-              </span>
-            )}
+      {!isAdmin && (
+        <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={16} className="text-orange-500" />
+              <h2 className="font-display font-semibold text-gray-900">Refill Alerts</h2>
+              {alerts.length > 0 && (
+                <span className="ml-1 bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                  {alerts.length}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="flex items-center gap-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
+            >
+              <Plus size={14} />
+              {showCreateForm ? 'Cancel' : 'Create'}
+            </button>
           </div>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
-          >
-            <Plus size={14} />
-            {showCreateForm ? 'Cancel' : 'Create'}
-          </button>
-        </div>
 
-        {showCreateForm && (
-          <form onSubmit={handleCreate} className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Medicine</label>
-              <select
-                value={form.medicine_id}
-                onChange={(e) => setForm((f) => ({ ...f, medicine_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                required
-              >
-                <option value="">Select medicine</option>
-                {medicines.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Last purchase date</label>
-              <input
-                type="date"
-                value={form.last_purchase_date}
-                onChange={(e) => setForm((f) => ({ ...f, last_purchase_date: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Suggested refill date</label>
-              <input
-                type="date"
-                value={form.suggested_refill_date}
-                onChange={(e) => setForm((f) => ({ ...f, suggested_refill_date: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                required
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={creating}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg"
-              >
-                {creating ? 'Creating…' : 'Create'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
+          {showCreateForm && (
+            <form onSubmit={handleCreate} className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Medicine</label>
+                <select
+                  value={form.medicine_id}
+                  onChange={(e) => setForm((f) => ({ ...f, medicine_id: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  required
+                >
+                  <option value="">Select medicine</option>
+                  {medicines.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Last purchase date</label>
+                <input
+                  type="date"
+                  value={form.last_purchase_date}
+                  onChange={(e) => setForm((f) => ({ ...f, last_purchase_date: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Suggested refill date</label>
+                <input
+                  type="date"
+                  value={form.suggested_refill_date}
+                  onChange={(e) => setForm((f) => ({ ...f, suggested_refill_date: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg"
+                >
+                  {creating ? 'Creating…' : 'Create'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
 
-        {alertsError ? (
-          <ErrorState message="Unable to load refill alerts." onRetry={loadAll} />
-        ) : (
-          <AlertPanel
-            alerts={alerts}
-            onReorder={handleReorder}
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-          />
-        )}
-      </section>
+          {alertsError ? (
+            <ErrorState message="Unable to load refill alerts." onRetry={loadAll} />
+          ) : (
+            <AlertPanel
+              alerts={alerts}
+              onReorder={handleReorder}
+              onComplete={handleComplete}
+              onDelete={handleDelete}
+            />
+          )}
+        </section>
+      )}
 
       <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">

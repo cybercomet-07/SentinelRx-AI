@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DashboardStats from '../../components/admin/DashboardStats'
+import ExpiringMedicinesAlert from '../../components/admin/ExpiringMedicinesAlert'
 import RevenueChart from '../../components/admin/RevenueChart'
 import Loader from '../../components/ui/Loader'
 import ErrorState from '../../components/ui/ErrorState'
@@ -41,6 +42,10 @@ export default function AdminDashboard() {
     <div className="p-6 space-y-6">
       <DashboardStats stats={stats} />
       <RevenueChart data={stats?.monthly_data ?? []} />
+
+      {stats?.expiring_medicines_count > 0 && (
+        <ExpiringMedicinesAlert count={stats.expiring_medicines_count} />
+      )}
 
       {stats?.top_medicines?.length > 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">

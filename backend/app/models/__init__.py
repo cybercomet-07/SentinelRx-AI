@@ -7,3 +7,4 @@ from app.models.order_item import OrderItem
 from app.models.prescription import Prescription
 from app.models.refill_alert import RefillAlert
 from app.models.user import User
+from app.models.contact_message import ContactMessage

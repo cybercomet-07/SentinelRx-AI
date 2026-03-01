@@ -2,7 +2,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
-  Pill, ClipboardList, Users, LogOut, Activity, MapPin
+  Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -12,6 +12,7 @@ const userLinks = [
   { to: '/user/orders', icon: History, label: 'Order History' },
   { to: '/user/notifications', icon: Bell, label: 'Notifications' },
   { to: '/user/prescriptions', icon: FileText, label: 'Prescriptions' },
+  { to: '/user/contact', icon: Mail, label: 'Contact Us' },
 ]
 
 const adminLinks = [
@@ -21,6 +22,7 @@ const adminLinks = [
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/map', icon: MapPin, label: 'Delivery Map' },
   { to: '/admin/users', icon: Users, label: 'Users' },
+  { to: '/admin/contact', icon: Mail, label: 'Contact Submissions' },
 ]
 
 export default function Sidebar() {
