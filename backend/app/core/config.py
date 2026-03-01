@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     langfuse_secret_key: str | None = None
     langfuse_base_url: str = "https://cloud.langfuse.com"
     brevo_api_key: str | None = None
+    deepseek_api_key: str | None = None
     razorpay_key_id: str | None = None
     razorpay_key_secret: str | None = None
     jwt_secret_key: str = "change-me"

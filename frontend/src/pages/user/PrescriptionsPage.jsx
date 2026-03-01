@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import { prescriptionService } from '../../services/prescriptionService'
-import { FileText, Plus, Search, Upload, Camera, X } from 'lucide-react'
+import { FileText, Plus, Upload, Camera, X, Stethoscope } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Loader from '../../components/ui/Loader'
+import SymptomRecommendChat from '../../components/prescription/SymptomRecommendChat'
 
 const MAX_IMAGE_SIZE_MB = 2
 const MAX_IMAGE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
@@ -24,10 +24,6 @@ export default function PrescriptionsPage() {
   })
   const [image, setImage] = useState(null)
   const [creating, setCreating] = useState(false)
-  const [viewId, setViewId] = useState('')
-  const [prescription, setPrescription] = useState(null)
-  const [loadingView, setLoadingView] = useState(false)
-
   const galleryInputRef = useRef(null)
   const cameraInputRef = useRef(null)
 
@@ -85,8 +81,6 @@ export default function PrescriptionsPage() {
       toast.success('Prescription created')
       setForm({ patient_name: '', doctor_name: '', prescription_text: '' })
       setImage(null)
-      setViewId(String(created.id))
-      setPrescription(created)
     } catch (err) {
       toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? 'Failed to create prescription')
     } finally {
@@ -94,32 +88,11 @@ export default function PrescriptionsPage() {
     }
   }
 
-  const handleView = async (e) => {
-    e.preventDefault()
-    const id = viewId.trim()
-    if (!id) {
-      toast.error('Enter prescription ID')
-      return
-    }
-    setLoadingView(true)
-    setPrescription(null)
-    try {
-      const res = await prescriptionService.getOne(id)
-      setPrescription(res.data)
-    } catch (err) {
-      if (err.response?.status === 404) {
-        toast.error('Prescription not found')
-      } else {
-        toast.error(err.response?.data?.error?.message ?? 'Failed to load prescription')
-      }
-      setPrescription(null)
-    } finally {
-      setLoadingView(false)
-    }
-  }
-
   return (
-    <div className="p-6 space-y-8 max-w-2xl mx-auto">
+    <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+      {/* Left: Create Prescription */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 lg:border-r lg:border-gray-200 lg:max-w-md">
+        <div className="space-y-8 max-w-2xl mx-auto">
       <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <FileText size={18} className="text-mint-600" />
@@ -225,62 +198,19 @@ export default function PrescriptionsPage() {
           </button>
         </form>
       </section>
-
-      <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
-        <div className="flex items-center gap-2 mb-4">
-          <Search size={18} className="text-mint-600" />
-          <h2 className="font-display font-semibold text-gray-900">View Prescription</h2>
         </div>
-        <form onSubmit={handleView} className="flex gap-2">
-          <input
-            type="text"
-            value={viewId}
-            onChange={(e) => setViewId(e.target.value)}
-            placeholder="Enter prescription ID"
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          />
-          <button
-            type="submit"
-            disabled={loadingView}
-            className="px-4 py-2 bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg"
-          >
-            {loadingView ? 'Loading…' : 'View'}
-          </button>
-        </form>
+      </div>
 
-        {loadingView && (
-          <div className="py-8">
-            <Loader center />
-          </div>
-        )}
-        {prescription && !loadingView && (
-          <div className="mt-4 p-4 bg-gray-50 border border-gray-100 rounded-xl card-lift shadow-soft">
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className="text-xs font-medium text-gray-500">ID: {prescription.id}</span>
-              <span className="text-xs text-gray-400">
-                {new Date(prescription.created_at).toLocaleString()}
-              </span>
-            </div>
-            <p className="text-sm font-medium text-gray-900">Patient: {prescription.patient_name}</p>
-            {prescription.doctor_name && (
-              <p className="text-sm text-gray-600 mt-1">Doctor: {prescription.doctor_name}</p>
-            )}
-            {prescription.extra_data?.image && (
-              <div className="mt-3">
-                <p className="text-xs font-medium text-gray-600 mb-1">Prescription image</p>
-                <img
-                  src={prescription.extra_data.image}
-                  alt="Prescription"
-                  className="max-h-64 rounded-lg border border-gray-200 object-contain"
-                />
-              </div>
-            )}
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">{prescription.prescription_text}</p>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* Right: Symptom Recommendation (No Prescription) */}
+      <div className="flex-1 min-h-[400px] lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 bg-white">
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-slate-50">
+          <Stethoscope size={18} className="text-teal-600" strokeWidth={2} />
+          <span className="font-semibold text-slate-800">Symptom Suggestions (No Prescription)</span>
+        </div>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <SymptomRecommendChat />
+        </div>
+      </div>
     </div>
   )
 }

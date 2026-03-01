@@ -8,6 +8,7 @@ const TITLES = {
   '/user/medicines': 'Browse Medicines',
   '/user/orders': 'Order History',
   '/user/notifications': 'Notifications',
+  '/user/prescriptions': 'Prescriptions',
   '/user/profile': 'Profile',
 }
 

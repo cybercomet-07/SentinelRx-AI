@@ -10,4 +10,7 @@ export const prescriptionService = {
     }),
 
   getOne: (id) => api.get(`/prescriptions/${id}`),
+
+  getSymptomRecommendation: (message) =>
+    api.post('/prescriptions/symptom-recommendation', { message }),
 }

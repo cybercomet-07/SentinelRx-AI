@@ -16,7 +16,7 @@ from app.models.medicine import Medicine
 from app.models.order import Order, OrderStatus
 from app.models.order_item import OrderItem
 from app.models.user import User
-from app.models.chat_history import ChatHistory
+from app.models.chat_history import GeneralTalkChatHistory, OrderMedicineAiChatHistory
 
 from app.services.notification_service import notify_order_created, notify_admins_new_order
 from app.invoice.invoice_service import try_send_order_confirmation_email
@@ -566,7 +566,7 @@ def chat(
 ) -> dict[str, Any]:
     """
     Main chat handler. Intent + medicine detection + order preview or LLM.
-    Logs to ChatHistory (SQL).
+    Logs to order_medicine_ai_chat_history or general_talk_chat_history based on intent.
     """
     message = (message or "").strip()
     if not message:
@@ -609,19 +609,35 @@ def chat(
         # General chat: LLM for medical suggestions, symptoms, etc.
         final_response = invoke_llm(db, message)
 
-    # Log to ChatHistory (SQL)
+    # Log to appropriate chat history table based on intent
     try:
-        db.add(
-            ChatHistory(
-                user_id=uid,
-                user_message=message,
-                ai_response={
-                    "response": final_response[:500] if isinstance(final_response, str) else "[HTML]",
-                    "intent": predicted_intent,
-                    "confidence": confidence,
-                },
+        from app.models.user import User
+        user = db.query(User).filter(User.id == uid).first()
+        user_email = user.email if user else None
+        ai_resp = {
+            "response": final_response[:500] if isinstance(final_response, str) else "[HTML]",
+            "intent": predicted_intent,
+            "confidence": confidence,
+        }
+        if predicted_intent == "general_chat":
+            db.add(
+                GeneralTalkChatHistory(
+                    user_id=uid,
+                    user_email=user_email,
+                    user_message=message,
+                    ai_response=ai_resp,
+                )
             )
-        )
+        else:
+            # order_medicine, stock_inquiry, etc.
+            db.add(
+                OrderMedicineAiChatHistory(
+                    user_id=uid,
+                    user_email=user_email,
+                    user_message=message,
+                    ai_response=ai_resp,
+                )
+            )
         db.commit()
     except Exception:
         db.rollback()

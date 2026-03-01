@@ -50,7 +50,12 @@ def symptom_chat_endpoint(
 ):
     """SentinelRX-AI: symptom-based medicine recommendation using Cohere. Recommends only from DB inventory."""
     try:
-        result = symptom_chat(db, data.message.strip())
+        result = symptom_chat(
+            db,
+            data.message.strip(),
+            user_id=current_user.id,
+            user_email=current_user.email,
+        )
         return JSONResponse(content={"response": result})
     except Exception as e:
         import logging

@@ -1,5 +1,9 @@
 from app.models.cart import Cart
-from app.models.chat_history import ChatHistory
+from app.models.chat_history import (
+    OrderMedicineAiChatHistory,
+    GeneralTalkChatHistory,
+    SymptomSuggestionChatHistory,
+)
 from app.models.medicine import Medicine
 from app.models.notification import Notification
 from app.models.order import Order
@@ -8,3 +12,4 @@ from app.models.prescription import Prescription
 from app.models.refill_alert import RefillAlert
 from app.models.user import User
 from app.models.contact_message import ContactMessage
+from app.models.medicine_indication import MedicineIndication

@@ -16,13 +16,15 @@ from app.db.base import Base
 from app.db.session import engine 
 from app.models import (
     Cart,
-    ChatHistory,
+    GeneralTalkChatHistory,
     Medicine,
     Notification,
     Order,
     OrderItem,
+    OrderMedicineAiChatHistory,
     Prescription,
     RefillAlert,
+    SymptomSuggestionChatHistory,
     User,
 )  # noqa: F401
 
@@ -37,6 +39,13 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
     except Exception as exc:  # pragma: no cover
         logger.warning("Database initialization skipped at startup: %s", exc)
+    # Seed medicine indications (keyword-based uses for symptom recommendations)
+    try:
+        from app.db.seed_medicine_indications import seed_indications
+        seed_indications()
+        logger.info("Medicine indications seeded")
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Medicine indications seed skipped: %s", exc)
     # Start refill reminder background thread (sends emails 5 days before refill date)
     try:
         from app.tasks.refill_reminder_task import start_refill_reminder_thread

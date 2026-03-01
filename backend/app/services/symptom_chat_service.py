@@ -3,9 +3,12 @@ SentinelRX-AI Symptom Chat Service - Cohere-powered medicine recommendation.
 Uses DB inventory + Cohere to suggest medicines for user's symptoms/disease.
 Only recommends medicines that exist in our DB. If none match, advises doctor consultation.
 """
+import uuid
+
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.models.chat_history import GeneralTalkChatHistory
 from app.models.medicine import Medicine
 
 
@@ -41,7 +44,7 @@ def _is_medicine_recommendation_query(message: str) -> bool:
     return any(p in lower for p in symptom_phrases) or len(lower.split()) <= 15
 
 
-def symptom_chat(db: Session, message: str) -> str:
+def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, user_email: str | None = None) -> str:
     """
     Handle symptom-based chat using Cohere.
     - General health questions: Cohere gives advice
@@ -92,6 +95,37 @@ Be concise and helpful."""
             text = getattr(first, "text", str(first))
         if not text:
             text = str(response)
-        return text.strip()
+        result = text.strip()
+
+        # Log to general_talk_chat_history
+        if user_id:
+            try:
+                db.add(
+                    GeneralTalkChatHistory(
+                        user_id=user_id,
+                        user_email=user_email,
+                        user_message=message,
+                        ai_response={"response": result[:500]},
+                    )
+                )
+                db.commit()
+            except Exception:
+                db.rollback()
+
+        return result
     except Exception as e:
-        return f"Sorry, I couldn't process your request. Please try again. (Error: {str(e)[:80]})"
+        err_msg = f"Sorry, I couldn't process your request. Please try again. (Error: {str(e)[:80]})"
+        if user_id:
+            try:
+                db.add(
+                    GeneralTalkChatHistory(
+                        user_id=user_id,
+                        user_email=user_email,
+                        user_message=message,
+                        ai_response={"response": err_msg[:500], "error": True},
+                    )
+                )
+                db.commit()
+            except Exception:
+                db.rollback()
+        return err_msg

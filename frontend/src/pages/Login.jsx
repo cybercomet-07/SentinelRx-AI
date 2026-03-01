@@ -165,8 +165,8 @@ export default function Login() {
             style={{ pointerEvents: 'none' }}
           />
         </div>
-        {/* Gradient overlay - low opacity so robot stays visible */}
-        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-teal-600/40 via-teal-500/35 to-cyan-500/40" />
+        {/* Gradient overlay - 25% opacity so robot is 75% visible */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-teal-600/25 via-teal-500/25 to-cyan-500/25" />
 
         {/* Gradient bar at bottom with info - covers Spline watermark */}
         <div className="absolute bottom-0 left-0 right-0 h-24 z-[2] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-6">
