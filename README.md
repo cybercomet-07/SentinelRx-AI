@@ -38,7 +38,7 @@ npm run dev
 
 ### Environment
 
-- **Backend:** Set `DATABASE_URL` in `backend/.env` (or use default PostgreSQL)
+- **Backend:** Copy `backend/.env.example` to `backend/.env`, set `DATABASE_URL`, `GROQ_API_KEY`, `COHERE_API_KEY`, `BREVO_API_KEY`
 - **Frontend:** Copy `frontend/.env.example` to `frontend/.env`, set `VITE_API_URL=http://127.0.0.1:8000`
 
 ### Demo users
@@ -55,9 +55,13 @@ SentinelRx-AI/
 ├── run-backend.ps1   # Start backend
 ├── run-frontend.ps1  # Start frontend
 ├── run-all.bat       # Start both servers
+├── architecture.md   # Architecture overview
+├── decision.md       # Architecture decision records
 └── PROJECT_OVERVIEW.md  # Full project documentation
 ```
 
 ## Docs
 
-- `PROJECT_OVERVIEW.md` — Full project overview, features, API, architecture
+- `PROJECT_OVERVIEW.md` — Features, API, routes, environment
+- `architecture.md` — System architecture
+- `decision.md` — Architecture decisions

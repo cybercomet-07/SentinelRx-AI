@@ -1,187 +1,88 @@
-# 🏥 AI-Powered Medicine Refill & Order Automation System
-Hackathon Architecture Documentation
+# SentinelRx-AI — Architecture
+
+AI-powered pharmacy platform with medicine ordering, symptom-based recommendations, and admin management.
 
 ---
 
-## 1️⃣ High-Level System Overview
+## 1. High-Level Overview
 
-This system enables patients to request medicine refills using chat/voice.  
-An AI agent validates the order, checks stock, confirms execution, and triggers automation for warehouse simulation and notifications.
+Patients order medicines via chat (text + voice), browse the catalogue, manage prescriptions, and receive refill alerts. An AI agent validates orders, checks stock, and confirms execution. Admins manage inventory, orders, and users.
 
-The system consists of:
-
-- Frontend (React)
-- Backend (FastAPI)
-- AI Agent Layer (LangChain)
-- Database (SQLite via SQLAlchemy)
-- Automation (n8n)
-- Observability (Langfuse)
+**Stack:**
+- **Frontend:** React 18, Vite, Tailwind CSS
+- **Backend:** FastAPI, SQLAlchemy, Pydantic
+- **Database:** PostgreSQL
+- **AI:** Groq (Order Agent), Cohere (SentinelRX-AI symptom agent)
+- **Email:** Brevo (order confirmation + invoice PDF)
+- **Auth:** JWT (no Firebase)
 
 ---
 
-## 2️⃣ Architecture Layers
+## 2. Architecture Layers
 
-### 🔹 1. USER LAYER
-- Patient interacts via:
-  - Chat UI
-  - Voice Input
-- Requests medicine refill or new order.
+### User Layer
+- Chat UI (text + voice via Web Speech API)
+- Browse Medicines, Cart, Checkout
+- Order History, Refill Alerts, Prescriptions
+- Quick Start (onboarding roadmap)
+- Contact Us
 
----
-
-### 🔹 2. FRONTEND LAYER (React)
-
-Responsibilities:
-- Chat Interface
-- Voice Input Integration
-- User Dashboard
-- Admin Dashboard
+### Frontend Layer (React + Vite)
+- Chat interface with two agents: Order Agent + SentinelRX-AI
+- Voice input with TTS and multilingual prompts
+- User and Admin dashboards
 - Axios API communication
-- Environment-based API configuration
+- Environment-based API URL (`VITE_API_URL`)
 
-Flow:
-User → React → Backend API
+### Backend Layer (FastAPI)
+- FastAPI, SQLAlchemy ORM, Pydantic schemas
+- CORS middleware
+- JWT authentication
+- Environment variables (`.env`)
+- Structured error handling
 
----
+### AI Agent Layer
+- **Order Agent (Groq):** Extract medicine names and quantities from chat, validate stock, confirm orders
+- **SentinelRX-AI (Cohere):** Symptom-based medicine recommendations from inventory
+- **Symptom Recommendation:** Prescription upload flow with OTC suggestions
+- Multilingual support (Hindi, Marathi, Tamil, etc.)
 
-### 🔹 3. BACKEND LAYER (FastAPI)
+### Database Layer (PostgreSQL)
+- Users, Medicines, Orders, Order Items
+- Cart, Refill Alerts, Notifications
+- Prescriptions, Contact submissions
+- Chat history (separate tables per agent)
 
-Core Architecture:
-- FastAPI framework
-- SQLAlchemy ORM
-- Pydantic Schemas
-- CORS Middleware
-- Firebase Authentication
-- Environment Variables (.env)
-- Proper Error Handling
-
-Responsibilities:
-- Validate API requests
-- Authenticate users
-- Communicate with AI layer
-- Manage database operations
-- Trigger automation webhook
-
----
-
-### 🔹 4. AI AGENT LAYER (LangChain)
-
-Agents:
-
-1. Conversation Agent
-   - Understand user request
-   - Extract medicine name & quantity
-
-2. Safety Agent
-   - Validate prescription rules
-   - Prevent unsafe orders
-
-3. Refill Prediction Agent
-   - Predict refill need based on history
-
-4. Execution Agent
-   - Confirm final order decision
-   - Send decision to backend
-
-LLM keys stored securely via `.env`.
+### Email Layer (Brevo)
+- Order confirmation emails
+- PDF invoice attachment (ReportLab)
+- Refill alert reminders
 
 ---
 
-### 🔹 5. DATABASE LAYER (SQLite via SQLAlchemy)
+## 3. End-to-End Workflow
 
-Tables:
-
-- Users
-- Medicines
-- Orders
-- User_History
-
-Why ORM?
-- Prevent SQL injection
-- Clean model-based DB structure
-- Scalable architecture
-- Industry-standard backend practice
+1. User logs in → redirected to Quick Start
+2. User chats (text/voice) → Order Agent or SentinelRX-AI
+3. AI extracts intent, checks stock, returns order preview
+4. User confirms → Backend creates order, updates stock
+5. Brevo sends confirmation email with PDF invoice
+6. Order appears in Order History
 
 ---
 
-### 🔹 6. AUTOMATION LAYER (n8n)
-
-Triggered via webhook from backend.
-
-Workflow:
-- Receive confirmed order
-- Simulate warehouse packing
-- Update status (Packed → Shipped)
-- Send notification event
-
-Includes:
-- Error handling for failed triggers
-- Manual webhook testing before deployment
-
----
-
-### 🔹 7. OBSERVABILITY LAYER (Langfuse)
-
-Purpose:
-- Log AI decisions
-- Store reasoning traces
-- Track workflow execution
-- Debug AI errors
-
-Why Important?
-- Judges see transparency in AI decisions
-- Helps during debugging
-- Adds production maturity
-
----
-
-## 3️⃣ End-to-End Workflow
-
-1. User sends medicine request.
-2. React sends API call to Backend.
-3. Backend forwards request to AI Agent.
-4. AI validates order.
-5. Backend checks stock in DB.
-6. AI confirms final decision.
-7. Backend:
-   - Saves order
-   - Updates stock
-   - Triggers n8n webhook
-8. n8n simulates warehouse + notifications.
-9. Order status returned to frontend.
-10. AI reasoning logged in Langfuse.
-
----
-
-## 4️⃣ Security & Best Practices
+## 4. Security & Best Practices
 
 - Environment variables for all API keys
 - No hardcoded secrets
 - Pydantic request validation
-- Structured error responses
-- CORS configured properly
-- Postman testing before integration
-- Separate testing phase after each module
+- CORS configured
+- JWT with role-based access (user/admin)
 
 ---
 
-## 5️⃣ Deployment Plan
+## 5. Deployment
 
-Backend:
-- Render / Railway
-
-Frontend:
-- Vercel / Netlify
-
-Automation:
-- n8n Cloud
-
-Production Steps:
-- Configure environment variables
-- Update API URLs
-- Perform full end-to-end production testing
-
----
-
-
-This is not just a hackathon prototype — it is a production-style architecture.
+- **Backend:** Render / Railway
+- **Frontend:** Vercel / Netlify
+- **Database:** Managed PostgreSQL (e.g. Supabase, Neon)

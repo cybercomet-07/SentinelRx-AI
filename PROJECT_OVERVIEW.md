@@ -66,12 +66,14 @@ AI-powered pharmacy platform with medicine ordering, symptom-based recommendatio
 |------|------|------|
 | `/` | Landing | Public |
 | `/login` | Login | Public |
+| `/user/quick-start` | Quick Start (onboarding roadmap) | User |
 | `/user/dashboard` | User Dashboard | User |
 | `/user/chat` | AI Chat (Order Agent + SentinelRX-AI) | User |
 | `/user/medicines` | Browse Medicines | User |
 | `/user/orders` | Order History | User |
 | `/user/notifications` | Refill Alerts + Notifications | User |
 | `/user/prescriptions` | Prescriptions | User |
+| `/user/contact` | Contact Us | User |
 | `/admin/dashboard` | Admin Dashboard | Admin |
 | `/admin/medicines` | Medicine Inventory | Admin |
 | `/admin/orders` | All Orders | Admin |

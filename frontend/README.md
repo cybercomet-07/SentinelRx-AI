@@ -10,13 +10,12 @@ Full-stack pharmacy platform with AI-powered ordering, admin management, and rea
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React.js + Vite + TailwindCSS |
-| AI Layer | LangChain + OpenRouter |
+| Frontend | React 18 + Vite + TailwindCSS |
+| AI | Groq (Order Agent), Cohere (SentinelRX-AI) |
 | Backend | FastAPI |
-| Auth | Firebase Auth (optional) / JWT |
-| Database | SQLite + CSV |
-| Automation | n8n (webhooks, notifications) |
-| Observability | Langfuse |
+| Auth | JWT |
+| Database | PostgreSQL |
+| Email | Brevo (order confirmation + invoice) |
 | Charts | Chart.js + react-chartjs-2 |
 | Voice Input | Web Speech API |
 
@@ -34,7 +33,7 @@ frontend/
 │   │   └── admin/                  # Admin-facing pages
 │   ├── components/
 │   │   ├── layout/                 # Sidebar, Header, ProtectedRoute
-│   │   ├── chat/                   # ChatShell, MessageBubble, VoiceButton, OrderSuggestionCard
+│   │   ├── chat/                   # ChatShell, MessageBubble, OrderSuggestionCard
 │   │   ├── medicines/              # MedicineGrid, MedicineCard
 │   │   ├── cart/                   # CartDrawer, CartItem, OrderSummary
 │   │   ├── orders/                 # OrderHistoryTable, StatusBadge
@@ -44,7 +43,7 @@ frontend/
 │   ├── services/                   # All API service functions (axios)
 │   ├── hooks/                      # useAuth, useVoice, useCart
 │   ├── context/                    # AuthContext, CartContext
-│   └── utils/                      # constants, mockData
+│   └── utils/                      # voicePrompts, voiceLanguages, constants
 ```
 
 ---
@@ -82,9 +81,9 @@ frontend/
 ### Auth
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/login` | Login with email, password, role → returns `{ user, token }` |
-| POST | `/api/auth/logout` | Logout |
-| GET | `/api/auth/me` | Get current user info |
+| POST | `/api/v1/auth/login` | Login with email, password → returns `{ user, token }` |
+| POST | `/api/v1/auth/refresh` | Refresh token |
+| GET | `/api/v1/auth/me` | Get current user info |
 
 ### Chat
 | Method | Endpoint | Description |
@@ -163,7 +162,7 @@ npm run dev
 
 Set env variable:
 ```
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=http://127.0.0.1:8000
 ```
 
 ---
