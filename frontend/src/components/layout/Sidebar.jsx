@@ -2,11 +2,12 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
-  Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail
+  Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail, Rocket
 } from 'lucide-react'
 import clsx from 'clsx'
 
 const userLinks = [
+  { to: '/user/quick-start', icon: Rocket, label: 'Quick Start' },
   { to: '/user/chat', icon: MessageSquare, label: 'AI Chat' },
   { to: '/user/medicines', icon: ShoppingBag, label: 'Browse Medicines' },
   { to: '/user/orders', icon: History, label: 'Order History' },

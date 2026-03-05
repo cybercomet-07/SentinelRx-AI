@@ -4,10 +4,11 @@ import toast from 'react-hot-toast'
 import api from '../../services/api'
 import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
+import { getVoicePrompt } from '../../utils/voicePrompts'
 
 const WELCOME = {
   role: 'assistant',
-  content: "Hi! I'm SentinelRX-AI. Tell me your symptoms or disease (e.g. 'I have fever', 'Which tablet for headache?') and I'll recommend medicines from our inventory. If we don't have a suitable medicine, I'll advise you to consult a doctor.",
+  content: "Hi! I'm SentinelRX-AI. Type or speak your symptoms and I'll recommend medicines from our inventory. If we don't have a suitable medicine, I'll advise you to consult a doctor.",
   timestamp: Date.now(),
 }
 
@@ -126,7 +127,16 @@ export default function SymptomChatShell() {
       addMessage('assistant', 'Voice input is not supported. Use Chrome or Edge.')
       return
     }
-    voiceToggle()
+    const wasListening = listening
+    if (wasListening) {
+      voiceToggle()
+      speak(getVoicePrompt(lang, 'symptomAgentStopped'), lang)
+    } else {
+      // Start mic only AFTER AI finishes speaking, so mic does not pick up AI's own voice
+      speak(getVoicePrompt(lang, 'symptomAgentListening'), lang, () => {
+        voiceToggle()
+      })
+    }
   }
 
   const formatTime = (ts) =>
@@ -224,7 +234,7 @@ export default function SymptomChatShell() {
                 sendMessage()
               }
             }}
-            placeholder="e.g. I have fever, Which tablet for headache?"
+            placeholder="Type or speak symptoms"
             className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0 min-w-0"
             maxLength={500}
             disabled={loading}

@@ -4,6 +4,7 @@ import Header from '../../components/layout/Header'
 import CartDrawer from '../../components/cart/CartDrawer'
 
 const TITLES = {
+  '/user/quick-start': 'Quick Start',
   '/user/chat': 'AI Assistant',
   '/user/medicines': 'Browse Medicines',
   '/user/orders': 'Order History',

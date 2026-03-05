@@ -67,7 +67,12 @@ def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, us
 
     lang_instruction = ""
     if response_lang and response_lang in LANG_NAMES:
-        lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+        lang_name = LANG_NAMES[response_lang]
+        lang_instruction = (
+            f"\nCRITICAL: Respond ONLY in {lang_name}. Use fluent, natural {lang_name} — "
+            f"not English translated word-by-word. Write as a native {lang_name} speaker would. "
+            f"The user selected {lang_name} and expects the full response in that language.\n"
+        )
     system_prompt = f"""You are SentinelRX-AI, a helpful pharmacy assistant. You help users with:{lang_instruction}
 1. General health advice (symptoms, when to see a doctor, self-care tips)
 2. Medicine recommendations FROM OUR INVENTORY ONLY
@@ -85,8 +90,10 @@ Our pharmacy inventory (name | price | stock | description):
     system_prompt += inventory
     system_prompt += """
 
-Always add: "Consult a pharmacist or doctor for personalized advice."
-Be concise and helpful."""
+RESPONSE LENGTH: Be very concise. Max 2-3 sentences. List only medicine names and prices. No long descriptions.
+Example: "We have Paracetamol 500 mg (₹2.06) and Nurofen 200 mg (₹10.98). Order via Order Agent. Consult a pharmacist."
+Always add briefly: "Consult a pharmacist or doctor for personalized advice."
+"""
 
     try:
         import cohere

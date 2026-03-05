@@ -145,7 +145,11 @@ def get_symptom_recommendation(
 
     lang_instruction = ""
     if response_lang and response_lang in LANG_NAMES:
-        lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+        lang_name = LANG_NAMES[response_lang]
+        lang_instruction = (
+            f"\nCRITICAL: Respond ONLY in {lang_name}. Use fluent, natural {lang_name} — "
+            f"not English translated word-by-word. Write as a native {lang_name} speaker would.\n"
+        )
     system_prompt = f"""You are a pharmacy assistant. The user has described symptoms but does NOT have a doctor's prescription.{lang_instruction}
 You MUST only recommend medicines from the list below. Include:
 1. Medicine name(s) that may help

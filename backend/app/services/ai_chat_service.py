@@ -26,8 +26,10 @@ CONFIDENCE_THRESHOLD = 0.6
 
 
 def _split_by_and(message: str) -> list[str]:
-    """Split message into medicine segments. E.g. 'Panthenol 2 and Vividrin 1'."""
-    return re.split(r"\band\b|,", message.lower())
+    """Split message into medicine segments. E.g. 'Panthenol 2 and Vividrin 1' or 'paracetamol, crocin, vitamin b'."""
+    # Split by "and", comma, semicolon, "also", "plus" to support multiple medicines
+    segments = re.split(r"\band\b|[,;]|\balso\b|\bplus\b", message, flags=re.IGNORECASE)
+    return [s.strip() for s in segments if s.strip()]
 
 
 def _extract_quantity(text: str) -> int | None:
@@ -425,9 +427,10 @@ def _extract_medicines_via_llm(message: str) -> list[tuple[str, int]]:
             temperature=0.1,
             groq_api_key=settings.groq_api_key,
         )
-        prompt = f"""Extract medicine/product names and quantities from this order message.
-Return ONLY a JSON array, nothing else. Example: [{{"name":"Vitamin B complex ratiopharm","qty":2}}]
-If quantity not specified, use 1. Extract the exact medicine name as the user said it (any medicine — Paracetamol, Vitamin B, Ibuprofen, Magnesium, etc.).
+        prompt = f"""Extract ALL medicine/product names and quantities from this order message.
+The user may order MULTIPLE medicines at once, e.g. "paracetamol 2 and crocin 1" or "order paracetamol, crocin, vitamin b".
+Return ONLY a JSON array. Example: [{{"name":"Paracetamol 500 mg","qty":2}},{{"name":"Crocin","qty":1}}]
+If quantity not specified, use 1. Extract EVERY medicine the user wants.
 
 Message: "{message}"
 JSON array:"""
@@ -477,9 +480,8 @@ def _handle_stock_inquiry(db: Session, message: str) -> str:
             for m in matched[:5]:
                 parts.append(f"• {m.name} — ₹{m.price}, {m.quantity} units in stock")
             return (
-                f"Yes! We have the following in stock:\n\n"
-                + "\n".join(parts)
-                + "\n\nYou can order any of these by typing the medicine name. Consult a pharmacist for dosage advice."
+                f"Yes! We have:\n" + "\n".join(parts[:5])
+                + "\n\nOrder by typing the medicine name. Consult a pharmacist."
             )
 
     # General "what do you have" / "any medicine in stock" -> list all (or sample)
@@ -488,14 +490,10 @@ def _handle_stock_inquiry(db: Session, message: str) -> str:
     lines = []
     for m in medicines_in_stock[:show_limit]:
         lines.append(f"• {m.name} — ₹{m.price} ({m.quantity} in stock)")
-    response = (
-        f"Yes! We have {total} medicine(s) in stock. Here are some:\n\n"
-        + "\n".join(lines)
-    )
-    if total > show_limit:
-        response += f"\n\n...and {total - show_limit} more. Type a medicine name to search or say 'order [name]' to place an order."
-    else:
-        response += "\n\nYou can order any of these by typing the medicine name. Consult a pharmacist for personalized advice."
+    response = f"Yes! We have {total} in stock:\n" + "\n".join(lines[:10])
+    if total > 10:
+        response += f"\n...and {total - 10} more."
+    response += "\n\nOrder by typing the medicine name. Consult a pharmacist."
     return response
 
 
@@ -545,7 +543,11 @@ def invoke_llm(db: Session, message: str, response_lang: str | None = None) -> s
         inventory = _get_inventory_for_llm(db)
         lang_instruction = ""
         if response_lang and response_lang in LANG_NAMES:
-            lang_instruction = f"\nIMPORTANT: Respond ONLY in {LANG_NAMES[response_lang]}. The user is speaking in {LANG_NAMES[response_lang]}.\n"
+            lang_name = LANG_NAMES[response_lang]
+            lang_instruction = (
+                f"\nCRITICAL: Respond ONLY in {lang_name}. Use fluent, natural {lang_name} — "
+                f"not English translated word-by-word. Write as a native {lang_name} speaker would.\n"
+            )
         prompt = f"""You are an AI Pharmaceutical Assistant for a pharmacy. Provide helpful, clear answers.{lang_instruction}
 
 CRITICAL RULES FOR MEDICINE SUGGESTIONS:
@@ -556,10 +558,11 @@ CRITICAL RULES FOR MEDICINE SUGGESTIONS:
 Our medicine inventory (name | price | stock - all are available):
 {inventory}
 
-For medical questions: explain symptoms, treatments, when to see a doctor.
-For medicine suggestions: pick from the inventory above. ALWAYS say we have it in stock, the price, and units available.
-For general health: give practical, responsible advice.
+For medical questions: explain briefly (max 2-3 sentences).
+For medicine suggestions: pick from the inventory above. Say medicine name, price, stock. Keep to 1-2 sentences.
+For general health: give practical, responsible advice in 2-3 sentences max.
 Always add a brief disclaimer: "Consult a pharmacist or doctor for personalized advice."
+Be concise — save the user's time. No long paragraphs.
 
 User message:
 {message}
@@ -603,14 +606,19 @@ def chat(
     if predicted_intent == "stock_inquiry":
         final_response = _handle_stock_inquiry(db, message)
     elif predicted_intent == "order_medicine":
-        if not detected_entities:
-            # Fallback: use LLM to extract medicine names, then search DB
+        # Use LLM when no entities found, or when message suggests multiple items (and, comma) but we found fewer
+        needs_llm = (
+            not detected_entities
+            or (re.search(r"\band\b|[,;]", message, re.I) and len(detected_entities) < 2)
+        )
+        if needs_llm:
             llm_extracted = _extract_medicines_via_llm(message)
             for name, qty in llm_extracted:
                 if name and len(name) >= 2:
                     meds = _sql_medicine_search(db, name, limit=1)
                     if meds:
                         detected_entities.append({"medicine_name": meds[0].name, "quantity": max(1, min(qty, MAX_QUANTITY_LIMIT))})
+            detected_entities = _normalize_entities(detected_entities)
         if not detected_entities:
             final_response = "Medicine not found in our catalog. You can order any medicine we have in stock — try 'Browse Medicines' to see what's available, or say the exact name (e.g. order 2 Vitamin B complex ratiopharm)."
         else:

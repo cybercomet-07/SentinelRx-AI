@@ -112,7 +112,7 @@ export default function Login() {
         const userData = { ...meRes.data, role: meRes.data.role?.toLowerCase() || 'user' }
         login(userData, token)
         toast.success('Account created! Welcome.')
-        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/user/chat')
+        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/user/quick-start')
       } catch (err) {
         const msg = err.response?.data?.error?.message || err.message || 'Registration failed'
         toast.error(msg)
@@ -139,7 +139,7 @@ export default function Login() {
       }
       login(userData, token)
       toast.success(`Welcome back, ${userData.name}!`)
-      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/user/chat')
+      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/user/quick-start')
     } catch (err) {
       let msg = err.response?.data?.error?.message || (typeof err.response?.data?.detail === 'string' ? err.response.data.detail : null) || err.message || 'Invalid credentials'
       if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {

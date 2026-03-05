@@ -6,6 +6,7 @@ import Login from '../pages/Login'
 
 import UserLayout from '../pages/user/UserLayout'
 import Dashboard from '../pages/user/Dashboard'
+import QuickStartPage from '../pages/user/QuickStartPage'
 import ChatPage from '../pages/user/ChatPage'
 import ManualOrderPage from '../pages/user/ManualOrderPage'
 import OrderHistoryPage from '../pages/user/OrderHistoryPage'
@@ -30,7 +31,8 @@ export default function AppRouter() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/user" element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/user/chat" replace />} />
+        <Route index element={<Navigate to="/user/quick-start" replace />} />
+        <Route path="quick-start" element={<QuickStartPage />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="medicines" element={<ManualOrderPage />} />

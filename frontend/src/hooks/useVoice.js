@@ -8,6 +8,26 @@ let activeRecognition = null
  * Web Speech API hook: Speech-to-Text (mic) + Text-to-Speech (AI speaks).
  * Supports multi-language - user speaks in any language, AI speaks back in same language.
  */
+/** Max chars for TTS — speak only key info to save user time. ~50 words, ~20 sec. */
+const TTS_MAX_CHARS = 350
+
+/** Strip Markdown and symbols so TTS speaks only the actual text, not asterisks etc. */
+function stripForTts(text) {
+  if (!text || typeof text !== 'string') return ''
+  return (
+    String(text)
+      .replace(/<[^>]+>/g, ' ')           // HTML tags
+      .replace(/\*\*([^*]*)\*\*/g, '$1')  // **bold**
+      .replace(/\*([^*]*)\*/g, '$1')     // *italic*
+      .replace(/__([^_]*)__/g, '$1')     // __bold__
+      .replace(/_([^_]*)_/g, '$1')      // _italic_
+      .replace(/`([^`]*)`/g, '$1')       // `code`
+      .replace(/[*_`]/g, '')              // leftover asterisks, underscores, backticks
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
+}
+
 const VOICE_ERROR_MESSAGES = {
   'not-allowed': 'Microphone access denied. Allow mic in browser settings and try again.',
   'no-speech': 'No speech detected. Please speak clearly and try again.',
@@ -79,21 +99,42 @@ export function useVoice(options = {}) {
     }
   }, [lang])
 
-  // Text-to-Speech: speak AI response in user's language
-  const speak = useCallback((text, overrideLang = null) => {
+  // Text-to-Speech: speak AI response in user's language.
+  // Optional onEnd callback runs when TTS finishes (used to start mic only after AI stops speaking).
+  const speak = useCallback((text, overrideLang = null, onEnd = null) => {
     try {
-      if (!window.speechSynthesis || !ttsEnabled || !text) return
+      if (!window.speechSynthesis || !text) {
+        if (onEnd) onEnd()
+        return
+      }
+      if (!ttsEnabled) {
+        if (onEnd) onEnd()
+        return
+      }
       const toSpeak = typeof text === 'string' ? text : String(text)
-      const plain = toSpeak.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-      if (!plain) return
+      let plain = stripForTts(toSpeak)
+      if (plain.length > TTS_MAX_CHARS) {
+        const cut = plain.slice(0, TTS_MAX_CHARS)
+        const lastSpace = cut.lastIndexOf(' ')
+        plain = lastSpace > TTS_MAX_CHARS * 0.6 ? cut.slice(0, lastSpace) : cut
+      }
+      if (!plain) {
+        if (onEnd) onEnd()
+        return
+      }
 
       window.speechSynthesis.cancel()
       const u = new SpeechSynthesisUtterance(plain)
       u.lang = overrideLang || lang
       u.rate = 0.95
       u.pitch = 1
+      if (onEnd && typeof onEnd === 'function') {
+        u.onend = () => onEnd()
+      }
       window.speechSynthesis.speak(u)
-    } catch (_) {}
+    } catch (_) {
+      if (onEnd) onEnd()
+    }
   }, [lang, ttsEnabled])
 
   const stopSpeaking = useCallback(() => {

@@ -4,6 +4,7 @@ import { Mic, Plus, Send, User, Volume2, VolumeX } from 'lucide-react'
 import api from '../../services/api'
 import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
+import { getVoicePrompt } from '../../utils/voicePrompts'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
 import { API_BASE } from '../../utils/constants'
 
@@ -116,8 +117,8 @@ export default function ChatShell() {
   const sendMessageRef = useRef(null)
 
   // Speak AI response in user's selected language (Text-to-Speech) - must be before sendMessage
-  const speakResponse = useCallback((text) => {
-    voice.speak(text, lang)
+  const speakResponse = useCallback((text, onEnd) => {
+    voice.speak(text, lang, onEnd)
   }, [voice, lang])
 
   const sendMessage = useCallback(
@@ -387,8 +388,14 @@ export default function ChatShell() {
       return
     }
     const wasListening = listening
-    if (voiceToggle()) {
-      speakResponse(wasListening ? 'Voice stopped.' : 'Listening... Tell me the medicine name you need.')
+    if (wasListening) {
+      voiceToggle()
+      speakResponse(getVoicePrompt(lang, 'orderAgentStopped'))
+    } else {
+      // Start mic only AFTER AI finishes speaking, so mic does not pick up AI's own voice
+      speakResponse(getVoicePrompt(lang, 'orderAgentListening'), () => {
+        voiceToggle()
+      })
     }
   }
 

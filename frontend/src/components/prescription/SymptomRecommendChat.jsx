@@ -4,8 +4,9 @@ import { MessageCircle, Send, Loader2, Mic, Volume2, VolumeX } from 'lucide-reac
 import toast from 'react-hot-toast'
 import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
+import { getVoicePrompt } from '../../utils/voicePrompts'
 
-const PLACEHOLDER = "e.g. I have fever but I don't have a doctor's prescription"
+const PLACEHOLDER = 'Type or speak symptoms'
 
 export default function SymptomRecommendChat() {
   const [messages, setMessages] = useState([])
@@ -70,7 +71,16 @@ export default function SymptomRecommendChat() {
       toast.error('Voice input is not supported. Use Chrome or Edge.')
       return
     }
-    voiceToggle()
+    const wasListening = listening
+    if (wasListening) {
+      voiceToggle()
+      speak(getVoicePrompt(lang, 'prescriptionStopped'), lang)
+    } else {
+      // Start mic only AFTER AI finishes speaking, so mic does not pick up AI's own voice
+      speak(getVoicePrompt(lang, 'prescriptionListening'), lang, () => {
+        voiceToggle()
+      })
+    }
   }
 
   return (
