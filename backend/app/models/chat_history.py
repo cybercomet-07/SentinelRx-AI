@@ -13,7 +13,7 @@ from app.db.base import Base
 
 
 class OrderMedicineAiChatHistory(Base):
-    """Chat history for Order Medicine AI - ordering medicines via chat."""
+    """Chat history for Order Medicine AI - ordering medicines via chat. Separate table for order agent."""
 
     __tablename__ = "order_medicine_ai_chat_history"
 
@@ -25,10 +25,12 @@ class OrderMedicineAiChatHistory(Base):
     user_message: Mapped[str] = mapped_column(Text, nullable=False)
     ai_response: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    chat_session_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    agent_type: Mapped[str | None] = mapped_column(String(32), nullable=True, default="order")
 
 
 class GeneralTalkChatHistory(Base):
-    """Chat history for General Talk Suggestion AI (SentinelRX-AI) - health advice, symptom suggestions."""
+    """Chat history for General Talk Suggestion AI (SentinelRX-AI) - health advice, symptom suggestions. Separate table for SentinelRX-AI."""
 
     __tablename__ = "general_talk_chat_history"
 
@@ -40,6 +42,8 @@ class GeneralTalkChatHistory(Base):
     user_message: Mapped[str] = mapped_column(Text, nullable=False)
     ai_response: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    chat_session_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    agent_type: Mapped[str | None] = mapped_column(String(32), nullable=True, default="sentinelrx")
 
 
 class SymptomSuggestionChatHistory(Base):

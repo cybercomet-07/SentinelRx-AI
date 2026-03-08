@@ -33,7 +33,7 @@ frontend/
 │   │   └── admin/                  # Admin-facing pages
 │   ├── components/
 │   │   ├── layout/                 # Sidebar, Header, ProtectedRoute
-│   │   ├── chat/                   # ChatShell, MessageBubble, OrderSuggestionCard
+│   │   ├── chat/                   # UnifiedChatShell (symptom + order agents)
 │   │   ├── medicines/              # MedicineGrid, MedicineCard
 │   │   ├── cart/                   # CartDrawer, CartItem, OrderSummary
 │   │   ├── orders/                 # OrderHistoryTable, StatusBadge

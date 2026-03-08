@@ -314,6 +314,148 @@ def test_analytics_admin_only(client: TestClient, user_token: str, admin_token: 
     assert "top_medicines" in data
 
 
+# ----- AI Chat: Sessions -----
+def test_ai_chat_sessions_crud(client: TestClient, user_token: str):
+    """Test chat sessions: list, create, update, delete."""
+    # List (may be empty)
+    r = client.get("/api/v1/ai-chat/sessions", headers=_headers(user_token))
+    assert r.status_code == 200
+    data = r.json()
+    assert "sessions" in data
+    initial_count = len(data["sessions"])
+
+    # Create session
+    session_id = f"s_test_{uuid.uuid4().hex[:12]}"
+    r2 = client.post(
+        "/api/v1/ai-chat/sessions",
+        headers=_headers(user_token),
+        json={"id": session_id, "title": "Test chat", "messages": []},
+    )
+    assert r2.status_code == 200
+    sess = r2.json()
+    assert sess["id"] == session_id
+    assert sess["title"] == "Test chat"
+
+    # List again - should have one more
+    r3 = client.get("/api/v1/ai-chat/sessions", headers=_headers(user_token))
+    assert r3.status_code == 200
+    assert len(r3.json()["sessions"]) >= initial_count + 1
+
+    # Update session
+    r4 = client.patch(
+        f"/api/v1/ai-chat/sessions/{session_id}",
+        headers=_headers(user_token),
+        json={"title": "Updated title", "messages": [{"role": "user", "content": "hi"}]},
+    )
+    assert r4.status_code == 200
+    assert r4.json()["title"] == "Updated title"
+    assert len(r4.json()["messages"]) == 1
+
+    # Delete session
+    r5 = client.delete(f"/api/v1/ai-chat/sessions/{session_id}", headers=_headers(user_token))
+    assert r5.status_code == 200
+
+
+# ----- AI Chat: Unified chat + DB storage -----
+def test_ai_chat_unified_saves_to_db(client: TestClient, user_token: str):
+    """
+    Test unified-chat saves to DB in separate tables.
+    - Symptom message -> general_talk_chat_history
+    - Order message -> order_medicine_ai_chat_history
+    """
+    from app.models.chat_history import GeneralTalkChatHistory, OrderMedicineAiChatHistory
+    from app.db.session import SessionLocal
+    from app.models.user import User
+
+    # Get user_id for DB query
+    db = SessionLocal()
+    try:
+        me = client.get("/api/v1/auth/me", headers=_headers(user_token))
+        assert me.status_code == 200
+        email = me.json()["email"]
+        user = db.query(User).filter(User.email == email).first()
+        assert user is not None
+        user_id = user.id
+
+        # Count rows before
+        gt_before = db.query(GeneralTalkChatHistory).filter(GeneralTalkChatHistory.user_id == user_id).count()
+        om_before = db.query(OrderMedicineAiChatHistory).filter(OrderMedicineAiChatHistory.user_id == user_id).count()
+
+        session_id = f"s_db_{uuid.uuid4().hex[:12]}"
+
+        # 1. Symptom message -> should save to general_talk_chat_history
+        r1 = client.post(
+            "/api/v1/ai-chat/unified-chat",
+            headers=_headers(user_token),
+            json={
+                "message": "I have headache",
+                "session_id": session_id,
+                "history": [],
+            },
+            timeout=30,
+        )
+        assert r1.status_code == 200
+        data1 = r1.json()
+        assert "response" in data1
+        assert data1.get("intent") == "symptom"
+
+        db.commit()
+        gt_after = db.query(GeneralTalkChatHistory).filter(GeneralTalkChatHistory.user_id == user_id).count()
+        assert gt_after >= gt_before + 1, "Symptom chat should save to general_talk_chat_history"
+
+        # Verify chat_session_id is stored
+        last_gt = (
+            db.query(GeneralTalkChatHistory)
+            .filter(GeneralTalkChatHistory.user_id == user_id)
+            .order_by(GeneralTalkChatHistory.created_at.desc())
+            .first()
+        )
+        assert last_gt is not None
+        assert last_gt.chat_session_id == session_id
+        assert last_gt.user_message == "I have headache"
+
+        # 2. Order message -> should save to order_medicine_ai_chat_history
+        r2 = client.post(
+            "/api/v1/ai-chat/unified-chat",
+            headers=_headers(user_token),
+            json={
+                "message": "order paracetamol",
+                "session_id": session_id,
+                "history": [],
+            },
+            timeout=30,
+        )
+        assert r2.status_code == 200
+        data2 = r2.json()
+        assert "response" in data2
+        assert data2.get("intent") in ("order", "order_medicine", "stock_inquiry")
+
+        db.commit()
+        om_after = db.query(OrderMedicineAiChatHistory).filter(OrderMedicineAiChatHistory.user_id == user_id).count()
+        assert om_after >= om_before + 1, "Order chat should save to order_medicine_ai_chat_history"
+
+        last_om = (
+            db.query(OrderMedicineAiChatHistory)
+            .filter(OrderMedicineAiChatHistory.user_id == user_id)
+            .order_by(OrderMedicineAiChatHistory.created_at.desc())
+            .first()
+        )
+        assert last_om is not None
+        assert last_om.chat_session_id == session_id
+        assert "paracetamol" in last_om.user_message.lower()
+    finally:
+        db.close()
+
+
+def test_ai_chat_medicines_autocomplete(client: TestClient, user_token: str):
+    """Test medicines autocomplete for chat."""
+    r = client.get("/api/v1/ai-chat/medicines", headers=_headers(user_token))
+    assert r.status_code == 200
+    data = r.json()
+    assert "medicine_list" in data
+    assert isinstance(data["medicine_list"], list)
+
+
 # ----- Root -----
 def test_root_returns_links(client: TestClient):
     r = client.get("/")
