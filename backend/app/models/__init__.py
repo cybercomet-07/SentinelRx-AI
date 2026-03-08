@@ -1,4 +1,5 @@
 from app.models.cart import Cart
+from app.models.chat_session import ChatSession
 from app.models.chat_history import (
     OrderMedicineAiChatHistory,
     GeneralTalkChatHistory,

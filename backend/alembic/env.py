@@ -8,6 +8,7 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.models import (
     Cart,
+    ChatSession,
     ContactMessage,
     GeneralTalkChatHistory,
     Medicine,

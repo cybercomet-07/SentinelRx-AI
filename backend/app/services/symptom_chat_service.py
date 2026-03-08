@@ -31,19 +31,6 @@ def _get_inventory_for_cohere(db: Session, limit: int = 100) -> str:
     return "\n".join(lines)
 
 
-def _is_medicine_recommendation_query(message: str) -> bool:
-    """Detect if user is asking which tablets/medicines we have for a symptom/disease."""
-    lower = message.lower().strip()
-    symptom_phrases = (
-        "which tablet", "which medicine", "what tablet", "what medicine",
-        "tablet for", "medicine for", "tablets for", "medicines for",
-        "do you have for", "have for", "recommend for", "suggest for",
-        "for fever", "for headache", "for cold", "for cough", "for pain",
-        "for allergy", "for stomach", "for my", "for this",
-    )
-    return any(p in lower for p in symptom_phrases) or len(lower.split()) <= 15
-
-
 LANG_NAMES = {
     "hi-IN": "Hindi", "mr-IN": "Marathi", "ta-IN": "Tamil", "te-IN": "Telugu",
     "bn-IN": "Bengali", "kn-IN": "Kannada", "ml-IN": "Malayalam", "pa-IN": "Punjabi",
@@ -51,57 +38,65 @@ LANG_NAMES = {
 }
 
 
-def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, user_email: str | None = None, response_lang: str | None = None) -> str:
+def symptom_chat(db: Session, message: str, user_id: uuid.UUID | None = None, user_email: str | None = None, response_lang: str | None = None, chat_session_id: str | None = None, history: list[dict] | None = None) -> str:
     """
     Handle symptom-based chat using Cohere.
-    - General health questions: Cohere gives advice
-    - "Which tablet for fever?": Cohere picks from DB inventory, returns only matching medicines
-    - If no medicine in DB for that disease: "We don't have any medicine for that. Please consult a doctor."
+    CONVERSATIONAL FLOW:
+    1. User describes symptom (e.g. "I have headache what to do?") → AI listens, asks how to help, does NOT suggest medicine yet.
+    2. AI asks "Can I suggest you some medicine for [symptom]?"
+    3. Only when user says "yes suggest", "tell me medicine", etc. → AI suggests from inventory.
     """
     settings = get_settings()
     if not settings.cohere_api_key:
         return "SentinelRX-AI is not configured. Please set COHERE_API_KEY in backend/.env"
 
     inventory = _get_inventory_for_cohere(db)
-    is_medicine_query = _is_medicine_recommendation_query(message)
+    history = history or []
 
     lang_instruction = ""
     if response_lang and response_lang in LANG_NAMES:
         lang_name = LANG_NAMES[response_lang]
         lang_instruction = (
             f"\nCRITICAL: Respond ONLY in {lang_name}. Use fluent, natural {lang_name} — "
-            f"not English translated word-by-word. Write as a native {lang_name} speaker would. "
-            f"The user selected {lang_name} and expects the full response in that language.\n"
+            f"not English translated word-by-word. Write as a native {lang_name} speaker would.\n"
         )
-    system_prompt = f"""You are SentinelRX-AI, a helpful pharmacy assistant. You help users with:{lang_instruction}
-1. General health advice (symptoms, when to see a doctor, self-care tips)
-2. Medicine recommendations FROM OUR INVENTORY ONLY
+    system_prompt = f"""You are SentinelRX-AI, a professional pharmacy assistant. Use clear, concise medical language.{lang_instruction}
 
-CRITICAL RULES FOR MEDICINE RECOMMENDATIONS:
-- ONLY recommend medicines from the inventory list below. Every medicine listed is IN STOCK at our pharmacy.
-- When the user asks "which tablet for [disease/symptom]", you MUST look at the inventory and pick ONLY medicines that are suitable for that condition based on their name and description.
-- Return the medicine names EXACTLY as they appear in the inventory (e.g. "Paracetamol 500 mg tablets" not "Paracetamol").
-- Include the price (₹) and that they can order by going to the Order Agent and typing the medicine name.
-- If NO medicine in our inventory is suitable for the user's disease/symptom, you MUST say: "We don't have any medicine for that disease in our inventory. Please consult a doctor for proper treatment."
-- Never suggest medicines not in the inventory. Never make up medicine names.
+CONVERSATIONAL FLOW (FOLLOW STRICTLY):
+
+PHASE 1 - When user has NOT mentioned any specific symptom/disease:
+- Respond: "I'm listening. How can I help you? Please describe your symptoms or condition."
+
+PHASE 2 - When user HAS mentioned a symptom/disease (fever, headache, cold, cough, pain, etc.) in current message OR chat history:
+- DO NOT suggest medicine yet.
+- Acknowledge professionally: "I understand you have [symptom]. Would you like me to suggest suitable medicines from our pharmacy?"
+
+PHASE 3 - ONLY when user explicitly asks for medicine (e.g. "yes suggest", "tell me medicine", "suggest me medicine"):
+- Suggest medicines from the inventory below. Use professional medical tone.
+- Format: "For [symptom], we recommend: [Medicine 1] (₹price), [Medicine 2] (₹price). Type 'order [medicine name]' to purchase. Please consult a pharmacist for personalized advice."
+- Pick ONLY medicines suitable for their condition. Return names EXACTLY as in inventory.
+- If no suitable medicine: "We do not have a suitable medicine for that condition in stock. Please consult a doctor."
+- Keep responses concise: 2-3 sentences max. No lengthy descriptions.
 
 Our pharmacy inventory (name | price | stock | description):
 """
     system_prompt += inventory
     system_prompt += """
 
-RESPONSE LENGTH: Be very concise. Max 2-3 sentences. List only medicine names and prices. No long descriptions.
-Example: "We have Paracetamol 500 mg (₹2.06) and Nurofen 200 mg (₹10.98). Order via Order Agent. Consult a pharmacist."
-Always add briefly: "Consult a pharmacist or doctor for personalized advice."
+TONE: Professional, clear, concise. Like a trained pharmacy assistant.
 """
 
     try:
         import cohere
         co = cohere.ClientV2(api_key=settings.cohere_api_key)
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": message},
-        ]
+        # Build messages: system + history + current user message
+        messages = [{"role": "system", "content": system_prompt}]
+        for h in history[-8:]:  # Last 8 turns for context
+            role = "user" if h.get("role") == "user" else "assistant"
+            content = (h.get("content") or "").strip()
+            if content:
+                messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": message})
         response = co.chat(
             model="command-r-plus-08-2024",
             messages=messages,
@@ -114,7 +109,7 @@ Always add briefly: "Consult a pharmacist or doctor for personalized advice."
             text = str(response)
         result = text.strip()
 
-        # Log to general_talk_chat_history
+        # Log to general_talk_chat_history (SentinelRX-AI - separate table)
         if user_id:
             try:
                 db.add(
@@ -123,6 +118,7 @@ Always add briefly: "Consult a pharmacist or doctor for personalized advice."
                         user_email=user_email,
                         user_message=message,
                         ai_response={"response": result[:500]},
+                        chat_session_id=chat_session_id,
                     )
                 )
                 db.commit()
@@ -140,6 +136,7 @@ Always add briefly: "Consult a pharmacist or doctor for personalized advice."
                         user_email=user_email,
                         user_message=message,
                         ai_response={"response": err_msg[:500], "error": True},
+                        chat_session_id=chat_session_id,
                     )
                 )
                 db.commit()

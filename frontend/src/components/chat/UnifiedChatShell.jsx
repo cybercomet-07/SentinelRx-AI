@@ -1,30 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Plus, Send, User, Volume2, VolumeX } from 'lucide-react'
+import { Mic, Plus, Send, User, Volume2, VolumeX, Square, MessageSquare, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react'
 import api from '../../services/api'
 import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 import { getVoicePrompt } from '../../utils/voicePrompts'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
-import { API_BASE } from '../../utils/constants'
 
 const WELCOME = {
   role: 'assistant',
-  content: "Hi! How can I help you today? I'm here to take your medicine order. Just tell me the name of the medicine you need — type it or click the mic button to speak. I'll check our stock and confirm your order.",
+  content: "Hi! I'm SentinelRX-AI.\n• Symptoms → I suggest medicines from our inventory.\n• Orders → Tell me medicine name & quantity.\nType or speak to get started.",
   timestamp: Date.now(),
 }
 
+const UNIFIED_CHAT_ENDPOINT = 'ai-chat/unified-chat'
 const MEDICINES_ENDPOINT = 'ai-chat/medicines'
-const CHAT_ENDPOINT = 'ai-chat/chat'
 const PROCESS_ORDER_ENDPOINT = 'ai-chat/process-order'
 const ORDER_ACTION_ENDPOINT = (id) => `ai-chat/order/${id}/action`
+const SESSIONS_ENDPOINT = 'ai-chat/sessions'
 
 const DEBOUNCE_DELAY = 300
 const MAX_SUGGESTIONS = 5
-const CHAT_STORAGE_KEY = 'sentinelrx_chat'
 
-// Detect voice/text "confirm order" or "cancel order" so we trigger the form instead of sending to AI
-const CONFIRM_PHRASES = /^(confirm\s*(the\s*)?order|yes\s*confirm|confirm|ok\s*confirm|order\s*confirm|confirm\s*order\.?)$/i
+const CONFIRM_PHRASES = /^(confirm\s*(the\s*)?order|yes\s*confirm|confirm|ok\s*confirm|order\s*confirm|confirm\s*order|yes\s*please|confirm\s*please|yes|ok|okay)$/i
 const CANCEL_PHRASES = /^(cancel\s*(the\s*)?order|no\s*cancel|cancel|don'?t\s*confirm|cancel\s*order\.?)$/i
 
 function isConfirmOrderIntent(text) {
@@ -37,7 +35,6 @@ function isCancelOrderIntent(text) {
   return CANCEL_PHRASES.test(t) || t === 'no' || t === 'cancel'
 }
 
-/** Programmatically submit the last order form (for voice "confirm order" / "cancel order") */
 function tryTriggerOrderForm(containerEl, action) {
   if (!containerEl) return false
   const forms = containerEl.querySelectorAll('form#orderForm')
@@ -53,31 +50,105 @@ function tryTriggerOrderForm(containerEl, action) {
   }
 }
 
-function getChatStorageKey() {
-  try {
-    const u = JSON.parse(localStorage.getItem('sentinelrx_user') || '{}')
-    return `${CHAT_STORAGE_KEY}_${u?.id || 'default'}`
-  } catch {
-    return `${CHAT_STORAGE_KEY}_default`
+function normalizeSession(s) {
+  return {
+    id: s.id,
+    title: s.title || 'New chat',
+    messages: Array.isArray(s.messages) ? s.messages : [],
+    createdAt: s.createdAt || s.created_at || Date.now(),
+    updatedAt: s.updatedAt || s.updated_at || Date.now(),
   }
 }
 
-function loadStoredMessages() {
-  try {
-    const raw = localStorage.getItem(getChatStorageKey())
-    if (!raw) return null
-    const arr = JSON.parse(raw)
-    if (!Array.isArray(arr) || arr.length === 0) return null
-    return arr
-  } catch {
-    return null
-  }
+function generateSessionId() {
+  return `s_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-export default function ChatShell() {
-  const [messages, setMessages] = useState(() => loadStoredMessages() || [WELCOME])
+function getSessionTitle(messages) {
+  const firstUser = messages?.find((m) => m.role === 'user')
+  if (firstUser?.content) {
+    const text = typeof firstUser.content === 'string' ? firstUser.content : ''
+    return text.slice(0, 40) + (text.length > 40 ? '…' : '')
+  }
+  return 'New chat'
+}
+
+export default function UnifiedChatShell() {
+  const [sessions, setSessions] = useState([])
+  const [currentSessionId, setCurrentSessionId] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [menuOpenId, setMenuOpenId] = useState(null)
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+  const menuRef = useRef(null)
+
+  const messages = sessions.find((s) => s.id === currentSessionId)?.messages ?? [WELCOME]
+  const setMessages = useCallback(
+    (updater) => {
+      setSessions((prev) => {
+        const targetId = currentSessionId || prev[0]?.id
+        if (!targetId) return prev
+        const next = prev.map((s) => {
+          if (s.id !== targetId) return s
+          const newMessages = typeof updater === 'function' ? updater(s.messages || []) : updater
+          return { ...s, messages: newMessages, title: getSessionTitle(newMessages) }
+        })
+        const updated = next.find((s) => s.id === targetId)
+        if (updated) {
+          api.patch(`${SESSIONS_ENDPOINT}/${updated.id}`, { title: updated.title, messages: updated.messages }).catch(() => {})
+        }
+        return next
+      })
+    },
+    [currentSessionId]
+  )
   const [loading, setLoading] = useState(false)
   const [prompt, setPrompt] = useState('')
+
+  // Fetch sessions from DB on mount
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const res = await api.get(SESSIONS_ENDPOINT)
+        const list = res.data?.sessions ?? []
+        if (list.length > 0) {
+          const normalized = list.map(normalizeSession)
+          setSessions(normalized)
+          setCurrentSessionId((prev) => prev || normalized[0].id)
+        } else {
+          const id = generateSessionId()
+          const newSession = { id, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+          await api.post(SESSIONS_ENDPOINT, { id, title: newSession.title, messages: newSession.messages })
+          setSessions([newSession])
+          setCurrentSessionId(id)
+        }
+      } catch {
+        const id = generateSessionId()
+        const newSession = { id, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+        setSessions([newSession])
+        setCurrentSessionId(id)
+      } finally {
+        setSessionsLoading(false)
+      }
+    }
+    fetchSessions()
+  }, [])
+
+  useEffect(() => {
+    if (!currentSessionId && sessions.length > 0) {
+      setCurrentSessionId(sessions[0].id)
+    }
+  }, [currentSessionId, sessions])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpenId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -86,8 +157,8 @@ export default function ChatShell() {
   const addMessageRef = useRef(null)
   const addMessage = useCallback((role, content, isHtml = false, orderData = null) => {
     setMessages((prev) => {
-      const next = [...prev]
-      if (next.length === 1 && next[0].role === 'assistant' && next[0].content === WELCOME.content) {
+      const next = [...(prev || [])]
+      if (next.length === 1 && next[0].role === 'assistant') {
         next.shift()
       }
       next.push({
@@ -99,26 +170,27 @@ export default function ChatShell() {
       })
       return next
     })
-  }, [])
+  }, [setMessages])
   addMessageRef.current = addMessage
 
   const voice = useVoice({
     onTranscript: (text) => {
-      setPrompt(text)
-      setTimeout(() => sendMessageRef.current?.(text), 100)
+      const cleaned = (text || '').trim().replace(/\s+/g, ' ')
+      if (!cleaned || cleaned.length < 2) return
+      setPrompt(cleaned)
+      setTimeout(() => sendMessageRef.current?.(cleaned), 50)
     },
     onError: (msg) => addMessageRef.current?.('assistant', msg),
   })
-  const { listening, recognition, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
+  const { listening, speaking, lang, setLanguage, ttsEnabled, setTtsEnabled, speak, stopSpeaking, toggleVoice: voiceToggle, isSupported: voiceSupported } = voice
   const [orderProcessing, setOrderProcessing] = useState(false)
   const debounceRef = useRef(null)
   const chatContainerRef = useRef(null)
   const suggestionsRef = useRef(null)
   const sendMessageRef = useRef(null)
 
-  // Speak AI response in user's selected language (Text-to-Speech) - must be before sendMessage
   const speakResponse = useCallback((text, onEnd) => {
-    voice.speak(text, lang, onEnd)
+    voice.speak(text, lang, onEnd, true)
   }, [voice, lang])
 
   const sendMessage = useCallback(
@@ -130,50 +202,51 @@ export default function ChatShell() {
       setPrompt('')
       setShowSuggestions(false)
 
-      // Voice/text "confirm order" or "cancel order" → trigger the order form instead of sending to AI
       if (isConfirmOrderIntent(text) && tryTriggerOrderForm(chatContainerRef.current, 'confirm')) return
       if (isCancelOrderIntent(text) && tryTriggerOrderForm(chatContainerRef.current, 'cancel')) return
 
       setLoading(true)
       try {
-        const res = await api.post(CHAT_ENDPOINT, { message: text, lang })
+        const history = messages.slice(-10).map((m) => ({
+          role: m.role,
+          content: typeof m.content === 'string' ? m.content.replace(/<[^>]+>/g, ' ').trim().slice(0, 300) : String(m.content || ''),
+        }))
+        const res = await api.post(UNIFIED_CHAT_ENDPOINT, { message: text, lang, history, session_id: currentSessionId }, { timeout: 45000 })
         const data = res.data
         const response = data?.response ?? ''
+        const toSpeak = data?.speak || (typeof response === 'string' && response.startsWith('<')
+          ? response.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 450)
+          : response)
+        speakResponse(toSpeak)
         if (typeof response === 'string' && response.startsWith('<')) {
           addMessage('assistant', response, true)
-          speakResponse(response.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300))
         } else {
           addMessage('assistant', response)
-          speakResponse(response)
         }
       } catch (err) {
-        const msg = err.code === 'ERR_NETWORK' || !err.response
-          ? 'Connection error. Make sure the backend is running on port 8000 (run run-backend.bat).'
-          : 'Connection error. Please try again.'
-        addMessage('assistant', msg)
+        let msg = 'Connection error. Please try again.'
+        if (err.code === 'ERR_NETWORK' || !err.response) {
+          msg = 'Cannot reach server. Start the backend: run run-backend.ps1 (port 8000).'
+        } else if (err.response?.data?.response) {
+          msg = err.response.data.response
+        } else if (err.response?.data?.detail) {
+          msg = typeof err.response.data.detail === 'string' ? err.response.data.detail : JSON.stringify(err.response.data.detail)
+        } else if (err.response?.status === 401) {
+          msg = 'Session expired. Please sign in again.'
+        }
         speakResponse(msg)
+        addMessage('assistant', msg)
       } finally {
         setLoading(false)
       }
     },
-    [prompt, loading, addMessage, speakResponse, lang]
+    [prompt, loading, addMessage, speakResponse, lang, messages, currentSessionId]
   )
 
   useEffect(() => {
     sendMessageRef.current = sendMessage
   }, [sendMessage])
 
-  // Persist chat to localStorage so it survives navigation
-  useEffect(() => {
-    if (messages.length === 0) return
-    try {
-      localStorage.setItem(getChatStorageKey(), JSON.stringify(messages))
-    } catch {
-      // ignore quota or parse errors
-    }
-  }, [messages])
-
-  // Load medicines for autocomplete
   useEffect(() => {
     const load = async () => {
       try {
@@ -181,9 +254,7 @@ export default function ChatShell() {
         if (Array.isArray(res.data?.medicine_list)) {
           setMedicineList(res.data.medicine_list)
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
     load()
   }, [])
@@ -201,7 +272,6 @@ export default function ChatShell() {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
-  // Autocomplete
   useEffect(() => {
     if (!prompt.trim()) {
       setShowSuggestions(false)
@@ -257,7 +327,6 @@ export default function ChatShell() {
     [addMessage, speakResponse]
   )
 
-  // Order form submit handler (delegated)
   useEffect(() => {
     const handleSubmit = async (e) => {
       const form = e.target
@@ -324,7 +393,6 @@ export default function ChatShell() {
     return () => document.removeEventListener('submit', handleSubmit, true)
   }, [processOrderWithPayload])
 
-  // Order action (cancel/edit) - delegated click handler
   const handleOrderAction = useCallback(
     async (orderId, action) => {
       if (!orderId || !action) return
@@ -390,10 +458,9 @@ export default function ChatShell() {
     const wasListening = listening
     if (wasListening) {
       voiceToggle()
-      speakResponse(getVoicePrompt(lang, 'orderAgentStopped'))
+      speakResponse(getVoicePrompt(lang, 'unifiedAgentStopped'))
     } else {
-      // Start mic only AFTER AI finishes speaking, so mic does not pick up AI's own voice
-      speakResponse(getVoicePrompt(lang, 'orderAgentListening'), () => {
+      speakResponse(getVoicePrompt(lang, 'unifiedAgentListening'), () => {
         voiceToggle()
       })
     }
@@ -402,41 +469,154 @@ export default function ChatShell() {
   const formatTime = (ts) =>
     new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-  const startNewChat = useCallback(() => {
-    setMessages([{ ...WELCOME, timestamp: Date.now() }])
+  const startNewChat = useCallback(async () => {
+    const id = generateSessionId()
+    const newSession = { id, title: 'New chat', messages: [{ ...WELCOME, timestamp: Date.now() }], createdAt: Date.now() }
     try {
-      localStorage.removeItem(getChatStorageKey())
+      await api.post(SESSIONS_ENDPOINT, { id, title: newSession.title, messages: newSession.messages })
     } catch {}
+    setSessions((prev) => [newSession, ...prev])
+    setCurrentSessionId(id)
   }, [])
 
+  const selectSession = useCallback((id) => {
+    setCurrentSessionId(id)
+    setMenuOpenId(null)
+  }, [])
+
+  const deleteSession = useCallback(async (id) => {
+    setMenuOpenId(null)
+    try {
+      await api.delete(`${SESSIONS_ENDPOINT}/${id}`)
+    } catch {}
+    setSessions((prev) => {
+      const next = prev.filter((s) => s.id !== id)
+      if (currentSessionId === id && next.length > 0) {
+        setCurrentSessionId(next[0].id)
+      } else if (next.length === 0) {
+        const newId = generateSessionId()
+        const newSession = { id: newId, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+        setCurrentSessionId(newId)
+        api.post(SESSIONS_ENDPOINT, { id: newId, title: 'New chat', messages: [WELCOME] }).catch(() => {})
+        return [newSession]
+      }
+      return next
+    })
+  }, [currentSessionId])
+
   return (
-    <div className="flex flex-col h-full bg-slate-50/80">
-      {/* Compact header bar */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-sm shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center border border-white/20">
-            <span className="text-lg">💊</span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold leading-tight">AI Pharmaceutical Assistant</p>
-            <p className="text-[10px] text-blue-100 mt-0.5 leading-tight">Order medicines by name. Voice & text supported.</p>
-          </div>
+    <div className="flex h-full bg-slate-50/80">
+      {/* Chat history sidebar - ChatGPT style */}
+      <aside
+        className={`${
+          sidebarOpen ? 'w-64' : 'w-0'
+        } flex flex-col border-r border-slate-200 bg-white shrink-0 overflow-hidden transition-all duration-200`}
+      >
+        <div className="shrink-0 p-3 border-b border-slate-100 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={startNewChat}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors w-full justify-center"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+            New chat
+          </button>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+            title="Close sidebar"
+          >
+            <ChevronLeft size={18} />
+          </button>
         </div>
+        <div className="flex-1 overflow-y-auto py-2">
+          <p className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Your chats</p>
+          {sessionsLoading ? (
+            <div className="px-4 py-3 text-sm text-slate-400">Loading...</div>
+          ) : (
+            sessions.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => selectSession(s.id)}
+                className={`group relative flex items-start gap-2 px-3 py-2.5 mx-2 rounded-lg cursor-pointer transition-colors ${
+                  s.id === currentSessionId ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <MessageSquare size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm line-clamp-3 break-words" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {s.title}
+                  </p>
+                </div>
+                <div className="relative shrink-0" ref={menuOpenId === s.id ? menuRef : null}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpenId((prev) => (prev === s.id ? null : s.id))
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="More options"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+                  {menuOpenId === s.id && (
+                    <div
+                      className="absolute right-0 top-full mt-1 py-1 min-w-[140px] bg-white border border-slate-200 rounded-lg shadow-lg z-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => deleteSession(s.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+
+      <div className="flex-1 flex flex-col min-w-0 relative">
+      {!sidebarOpen && (
         <button
           type="button"
-          onClick={startNewChat}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition-all text-xs font-medium border border-white/20"
-          title="New chat"
+          onClick={() => setSidebarOpen(true)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-r-lg bg-white border border-slate-200 border-l-0 shadow-sm hover:bg-slate-50"
+          title="Open chat history"
         >
-          <Plus size={14} strokeWidth={2.5} />
-          New chat
+          <ChevronRight size={18} />
         </button>
+      )}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-gradient-to-r from-emerald-700 via-teal-700 to-blue-800 text-white shadow-sm shrink-0">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((v) => !v)}
+            className="p-1.5 rounded-lg hover:bg-white/15"
+            title={sidebarOpen ? 'Close history' : 'Open history'}
+          >
+            <MessageSquare size={18} />
+          </button>
+          <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center border border-white/20">
+            <span className="text-lg">🩺</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold leading-tight">SentinelRX-AI</p>
+            <p className="text-[10px] text-white/80 mt-0.5 leading-tight">Symptom recommendations & medicine orders. Type or speak.</p>
+          </div>
+        </div>
       </div>
 
-      {/* Messages */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-6 space-y-5 bg-white"
+        className="flex-1 overflow-y-auto p-4 space-y-3 bg-white"
         aria-live="polite"
       >
         {messages.map((msg, i) => (
@@ -445,15 +625,15 @@ export default function ChatShell() {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} msg-animate`}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm ${
+              className={`max-w-[85%] rounded-xl px-4 py-2.5 shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-md'
+                  ? 'bg-emerald-600 text-white rounded-br-md'
                   : 'bg-slate-50 text-slate-800 rounded-bl-md border border-slate-100'
               }`}
             >
               {msg.isHtml ? (
                 <div
-                  className="prose prose-sm max-w-none"
+                  className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0"
                   dangerouslySetInnerHTML={{
                     __html: msg.orderFormHandled
                       ? (msg.content || '').replace(/<div[^>]*id="buttonContainer"[^>]*>[\s\S]*?<\/div>/gi, '')
@@ -461,7 +641,7 @@ export default function ChatShell() {
                   }}
                 />
               ) : msg.content ? (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm leading-snug">{msg.content}</p>
               ) : null}
               {msg.orderData && !msg.orderData.cancelled && (
                 <div className="mt-4 p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
@@ -489,22 +669,21 @@ export default function ChatShell() {
                   </div>
                 </div>
               )}
-              <p className="text-xs opacity-70 mt-1">{formatTime(msg.timestamp)}</p>
+              <p className="text-[10px] opacity-60 mt-0.5">{formatTime(msg.timestamp)}</p>
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex justify-start">
             <div className="flex gap-1.5 px-5 py-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" />
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.1s' }} />
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-bounce" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0.1s' }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
             </div>
           </div>
         )}
       </div>
 
-      {/* Compact input */}
       <div className="border-t border-slate-200 bg-slate-50/80 p-3 shrink-0">
         <div className="flex items-center gap-2 mb-2">
           <select
@@ -520,11 +699,22 @@ export default function ChatShell() {
           <button
             type="button"
             onClick={() => setTtsEnabled((v) => !v)}
-            className={`p-1.5 rounded-lg transition-all ${ttsEnabled ? 'text-blue-600 bg-blue-50' : 'text-slate-400'}`}
+            className={`p-1.5 rounded-lg transition-all ${ttsEnabled ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400'}`}
             title={ttsEnabled ? 'AI speech on' : 'AI speech off'}
           >
             {ttsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
           </button>
+          {speaking && (
+            <button
+              type="button"
+              onClick={stopSpeaking}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-100 text-red-600 text-xs font-medium hover:bg-red-200 transition-colors"
+              title="Stop AI voice"
+            >
+              <Square size={12} fill="currentColor" />
+              Stop
+            </button>
+          )}
         </div>
         <div className="relative">
           {showSuggestions && suggestions.length > 0 && (
@@ -553,7 +743,7 @@ export default function ChatShell() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type or speak the medicine name..."
+              placeholder="Type or speak symptoms or medicine name..."
               className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0 min-w-0"
               maxLength={500}
               disabled={loading}
@@ -563,16 +753,16 @@ export default function ChatShell() {
               onClick={toggleVoice}
               aria-label="Voice input"
               className={`p-2 rounded-lg transition-all ${
-                listening ? 'bg-blue-100 text-blue-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                listening ? 'bg-emerald-100 text-emerald-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
               }`}
             >
               <Mic size={16} strokeWidth={2} />
             </button>
             <button
               type="button"
-              onClick={() => sendMessage()}
+              onClick={(e) => { e.preventDefault(); sendMessage(); }}
               disabled={!prompt.trim() || loading}
-              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm"
+              className="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-sm"
               aria-label="Send"
             >
               <Send size={16} strokeWidth={2} />
@@ -581,7 +771,6 @@ export default function ChatShell() {
         </div>
       </div>
 
-      {/* Delivery address modal for AI order confirm */}
       {pendingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
@@ -600,6 +789,7 @@ export default function ChatShell() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

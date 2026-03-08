@@ -32,12 +32,21 @@ def _split_by_and(message: str) -> list[str]:
     return [s.strip() for s in segments if s.strip()]
 
 
+_NUM_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+
+
 def _extract_quantity(text: str) -> int | None:
-    """Extract order quantity from text."""
+    """Extract order quantity from text. Handles voice: '2 paracetamol', 'order 2 paracetamol', 'two paracetamol'."""
     text_lower = text.lower()
+    word_num_match = re.search(r"^\s*(one|two|three|four|five|six|seven|eight|nine|ten)\s+", text_lower)
+    if word_num_match:
+        return _NUM_WORDS.get(word_num_match.group(1).lower())
     patterns = [
         r"(\d+)\s*(pack|packs|bottle|bottles|strip|strips)",
-        r"(order|buy|need|want)\s*(\d+)",
+        r"(order|buy|need|want|give me|send me)\s*(\d+)",
+        r"^(\d+)\s+",
+        r"\s+(\d+)\s*(?:tablets?|capsules?|packs?|bottles?)\b",
+        r"\b(\d+)\s+(?:x|of)\b",
     ]
     for pattern in patterns:
         match = re.search(pattern, text_lower)
@@ -46,8 +55,8 @@ def _extract_quantity(text: str) -> int | None:
             if nums:
                 return int(nums[0])
     cleaned = re.sub(r"\d+\s*(mg|g|ml|mcg|ie|i\.e\.)", "", text_lower)
-    num_match = re.search(r"\b\d+\b", cleaned)
-    return int(num_match.group()) if num_match else None
+    num_match = re.search(r"\b(\d+)\b", cleaned)
+    return int(num_match.group(1)) if num_match else None
 
 
 def _sql_medicine_search(db: Session, query: str, limit: int = 10) -> list[Medicine]:
@@ -415,8 +424,9 @@ def process_order_from_chat(
         raise
 
 
-def _extract_medicines_via_llm(message: str) -> list[tuple[str, int]]:
-    """Use LLM to extract medicine names and quantities from order message. Returns [(name, qty), ...]."""
+def _extract_medicines_via_llm(message: str, chat_history: list[dict] | None = None) -> list[tuple[str, int]]:
+    """Use LLM to extract medicine names and quantities from order message. Returns [(name, qty), ...].
+    When user says 'order that' or 'order it', uses chat_history to resolve from previous AI suggestion."""
     try:
         from langchain_groq import ChatGroq
         settings = get_settings()
@@ -427,10 +437,23 @@ def _extract_medicines_via_llm(message: str) -> list[tuple[str, int]]:
             temperature=0.1,
             groq_api_key=settings.groq_api_key,
         )
+        context = ""
+        if chat_history:
+            recent = [h for h in chat_history if isinstance(h, dict) and h.get("content")][-4:]
+            if recent:
+                context = "\nRecent chat (for context when user says 'that', 'it', 'this medicine'):\n"
+                for h in recent:
+                    role = h.get("role", "")
+                    content = (h.get("content") or "")[:500]
+                    if isinstance(content, str) and not content.startswith("<"):
+                        context += f"{role}: {content}\n"
+
         prompt = f"""Extract ALL medicine/product names and quantities from this order message.
 The user may order MULTIPLE medicines at once, e.g. "paracetamol 2 and crocin 1" or "order paracetamol, crocin, vitamin b".
+If user says "order that", "order it", "order this medicine" - look at the assistant's previous message for the medicine name suggested.
 Return ONLY a JSON array. Example: [{{"name":"Paracetamol 500 mg","qty":2}},{{"name":"Crocin","qty":1}}]
 If quantity not specified, use 1. Extract EVERY medicine the user wants.
+{context}
 
 Message: "{message}"
 JSON array:"""
@@ -470,30 +493,22 @@ def _handle_stock_inquiry(db: Session, message: str) -> str:
     )
 
     if not medicines_in_stock:
-        return "We currently have no medicines in stock. Please check back later or browse our catalog."
+        return "We currently have no medicines in stock. Please check back later or browse our catalog. Consult a pharmacist for assistance."
 
     # If user seems to ask about a specific medicine, search for it
     if search_text and len(search_text) >= 2:
         matched = _sql_medicine_search(db, search_text, limit=5)
         if matched:
-            parts = []
-            for m in matched[:5]:
-                parts.append(f"• {m.name} — ₹{m.price}, {m.quantity} units in stock")
-            return (
-                f"Yes! We have:\n" + "\n".join(parts[:5])
-                + "\n\nOrder by typing the medicine name. Consult a pharmacist."
-            )
+            parts = [f"• {m.name} — ₹{m.price}, {m.quantity} units in stock" for m in matched[:5]]
+            return f"We have:\n" + "\n".join(parts) + "\n\nType 'order [medicine name]' to purchase. Consult a pharmacist for personalized advice."
 
     # General "what do you have" / "any medicine in stock" -> list all (or sample)
     total = len(medicines_in_stock)
-    show_limit = min(25, total)
-    lines = []
-    for m in medicines_in_stock[:show_limit]:
-        lines.append(f"• {m.name} — ₹{m.price} ({m.quantity} in stock)")
-    response = f"Yes! We have {total} in stock:\n" + "\n".join(lines[:10])
+    lines = [f"• {m.name} — ₹{m.price} ({m.quantity} in stock)" for m in medicines_in_stock[:10]]
+    response = f"We have {total} medicines in stock:\n" + "\n".join(lines)
     if total > 10:
         response += f"\n...and {total - 10} more."
-    response += "\n\nOrder by typing the medicine name. Consult a pharmacist."
+    response += "\n\nType 'order [medicine name]' to purchase. Consult a pharmacist for personalized advice."
     return response
 
 
@@ -548,26 +563,22 @@ def invoke_llm(db: Session, message: str, response_lang: str | None = None) -> s
                 f"\nCRITICAL: Respond ONLY in {lang_name}. Use fluent, natural {lang_name} — "
                 f"not English translated word-by-word. Write as a native {lang_name} speaker would.\n"
             )
-        prompt = f"""You are an AI Pharmaceutical Assistant for a pharmacy. Provide helpful, clear answers.{lang_instruction}
+        prompt = f"""You are a professional pharmacy assistant. Use clear, concise medical language.{lang_instruction}
 
-CRITICAL RULES FOR MEDICINE SUGGESTIONS:
+RULES:
 1. ONLY recommend medicines from our inventory below. Every medicine listed is IN STOCK.
-2. When suggesting a medicine, you MUST confirm: "We have [medicine name] in stock" and mention the price (₹) and units available.
-3. Do NOT suggest any medicine not in this list. If no suitable medicine is in our inventory, say "We don't have a specific medicine for that in stock right now. Please browse our medicines or consult a pharmacist."
+2. When suggesting: "We have [medicine name] in stock (₹price). Type 'order [name]' to purchase."
+3. If no suitable medicine: "We do not have a suitable medicine for that in stock. Please consult a pharmacist."
 
-Our medicine inventory (name | price | stock - all are available):
+Our medicine inventory (name | price | stock - all available):
 {inventory}
 
-For medical questions: explain briefly (max 2-3 sentences).
-For medicine suggestions: pick from the inventory above. Say medicine name, price, stock. Keep to 1-2 sentences.
-For general health: give practical, responsible advice in 2-3 sentences max.
-Always add a brief disclaimer: "Consult a pharmacist or doctor for personalized advice."
-Be concise — save the user's time. No long paragraphs.
+TONE: Professional, concise. Max 2-3 sentences. Always add: "Consult a pharmacist for personalized advice."
 
 User message:
 {message}
 
-Your response (ONLY suggest from our inventory; always confirm stock availability and price):"""
+Your response:"""
         response = llm.invoke(prompt)
         return response.content if hasattr(response, "content") else str(response)
     except Exception as e:
@@ -575,20 +586,25 @@ Your response (ONLY suggest from our inventory; always confirm stock availabilit
 
 
 def chat(
-    db: Session, message: str, user_id: uuid.UUID | None, response_lang: str | None = None
+    db: Session, message: str, user_id: uuid.UUID | None, response_lang: str | None = None, history: list[dict] | None = None, chat_session_id: str | None = None
 ) -> dict[str, Any]:
     """
     Main chat handler. Intent + medicine detection + order preview or LLM.
     Logs to order_medicine_ai_chat_history or general_talk_chat_history based on intent.
+    history: recent messages for context (e.g. when user says "order that medicine").
     """
     message = (message or "").strip()
     if not message:
         return {"response": "Message cannot be empty.", "intent": "unknown", "confidence": 0}
 
     uid = user_id or uuid.uuid4()  # anonymous fallback
+    history = history or []
     predicted_intent, confidence = _predict_intent(message)
     segments = _split_by_and(message)
     detected_entities: list[dict] = []
+
+    # "order that" / "order it" / "order this" - need context from previous AI message
+    needs_context = bool(re.search(r"\b(order|buy|get|give)\s+(that|it|this)\b", message, re.I))
 
     for seg in segments:
         name, qty, score = _hybrid_search_sql(db, seg)
@@ -603,16 +619,18 @@ def chat(
             predicted_intent = "order_medicine"
             confidence = 0.9
 
+    order_speak = None
     if predicted_intent == "stock_inquiry":
         final_response = _handle_stock_inquiry(db, message)
     elif predicted_intent == "order_medicine":
-        # Use LLM when no entities found, or when message suggests multiple items (and, comma) but we found fewer
+        # Use LLM when no entities found, or "order that/it", or multiple items
         needs_llm = (
             not detected_entities
+            or needs_context
             or (re.search(r"\band\b|[,;]", message, re.I) and len(detected_entities) < 2)
         )
         if needs_llm:
-            llm_extracted = _extract_medicines_via_llm(message)
+            llm_extracted = _extract_medicines_via_llm(message, chat_history=history)
             for name, qty in llm_extracted:
                 if name and len(name) >= 2:
                     meds = _sql_medicine_search(db, name, limit=1)
@@ -620,9 +638,16 @@ def chat(
                         detected_entities.append({"medicine_name": meds[0].name, "quantity": max(1, min(qty, MAX_QUANTITY_LIMIT))})
             detected_entities = _normalize_entities(detected_entities)
         if not detected_entities:
-            final_response = "Medicine not found in our catalog. You can order any medicine we have in stock — try 'Browse Medicines' to see what's available, or say the exact name (e.g. order 2 Vitamin B complex ratiopharm)."
+            final_response = "Medicine not found in our catalog. Please try 'Browse Medicines' or say the exact medicine name (e.g. order 2 Paracetamol). Consult a pharmacist for assistance."
+            order_speak = None
         else:
             final_response = generate_order_preview(db, detected_entities, str(uid))
+            speak_parts = []
+            for item in _normalize_entities(detected_entities):
+                med = db.query(Medicine).filter(Medicine.name == item["medicine_name"]).first()
+                if med:
+                    speak_parts.append(f"{item['medicine_name']}, quantity {item['quantity']}, price {med.price} rupees")
+            order_speak = "Order preview. " + ". ".join(speak_parts) + ". Confirm or cancel." if speak_parts else None
     else:
         # General chat: LLM for medical suggestions, symptoms, etc.
         final_response = invoke_llm(db, message, response_lang)
@@ -644,24 +669,29 @@ def chat(
                     user_email=user_email,
                     user_message=message,
                     ai_response=ai_resp,
+                    chat_session_id=chat_session_id,
                 )
             )
         else:
-            # order_medicine, stock_inquiry, etc.
+            # order_medicine, stock_inquiry, etc. -> Order Agent (separate table)
             db.add(
                 OrderMedicineAiChatHistory(
                     user_id=uid,
                     user_email=user_email,
                     user_message=message,
                     ai_response=ai_resp,
+                    chat_session_id=chat_session_id,
                 )
             )
         db.commit()
     except Exception:
         db.rollback()
 
-    return {
+    result = {
         "response": final_response,
         "intent": predicted_intent,
         "confidence": round(confidence * 100, 2),
     }
+    if order_speak:
+        result["speak"] = order_speak
+    return result
