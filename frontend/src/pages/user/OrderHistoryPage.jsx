@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import OrderHistoryTable from '../../components/orders/OrderHistoryTable'
 import Loader from '../../components/ui/Loader'
 import ErrorState from '../../components/ui/ErrorState'
@@ -8,6 +9,7 @@ import { orderService } from '../../services/orderService'
 const LIMIT = 10
 
 export default function OrderHistoryPage() {
+  const { t } = useTranslation()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -38,7 +40,7 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <p className="text-sm text-gray-500">{total} order{total !== 1 ? 's' : ''} found</p>
+      <p className="text-sm text-gray-500">{t('common.ordersFound', { count: total })}</p>
       <OrderHistoryTable orders={orders} />
       <Pagination page={page} limit={LIMIT} total={total} onPageChange={handlePageChange} />
     </div>

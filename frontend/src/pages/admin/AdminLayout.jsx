@@ -1,21 +1,24 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Sidebar from '../../components/layout/Sidebar'
 import Header from '../../components/layout/Header'
 
-const TITLES = {
-  '/admin/dashboard': 'Dashboard',
-  '/admin/medicines': 'Medicine Management',
-  '/admin/orders': 'Orders Management',
-  '/admin/prescriptions': 'Prescription Management',
-  '/admin/notifications': 'Notifications',
-  '/admin/map': 'Delivery Map',
-  '/admin/users': 'User Management',
-  '/admin/profile': 'Profile',
+const TITLE_KEYS = {
+  '/admin/dashboard': 'admin.dashboard',
+  '/admin/medicines': 'admin.medicineManagement',
+  '/admin/orders': 'admin.ordersManagement',
+  '/admin/prescriptions': 'admin.prescriptionManagement',
+  '/admin/notifications': 'nav.notifications',
+  '/admin/map': 'sidebar.deliveryMap',
+  '/admin/users': 'admin.userManagement',
+  '/admin/profile': 'nav.profile',
 }
 
 export default function AdminLayout() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
-  const title = TITLES[pathname] || 'Admin'
+  const titleKey = TITLE_KEYS[pathname]
+  const title = titleKey ? t(titleKey) : t('admin.admin')
 
   return (
     <div className="flex h-screen overflow-hidden bg-warm-50">

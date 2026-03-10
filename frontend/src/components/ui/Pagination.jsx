@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Pagination({ page, limit, total, onPageChange }) {
+  const { t } = useTranslation()
   const totalPages = Math.max(1, Math.ceil(total / limit))
   const start = (page - 1) * limit + 1
   const end = Math.min(page * limit, total)
@@ -10,7 +12,7 @@ export default function Pagination({ page, limit, total, onPageChange }) {
   return (
     <div className="flex items-center justify-between py-4">
       <p className="text-sm text-gray-500">
-        Showing {start}–{end} of {total}
+        {t('pagination.showing', { start, end, total })}
       </p>
       <div className="flex items-center gap-1">
         <button
@@ -21,7 +23,7 @@ export default function Pagination({ page, limit, total, onPageChange }) {
           <ChevronLeft size={18} />
         </button>
         <span className="px-3 py-1 text-sm text-gray-600">
-          Page {page} of {totalPages}
+          {t('pagination.pageOf', { page, total: totalPages })}
         </span>
         <button
           onClick={() => onPageChange(page + 1)}

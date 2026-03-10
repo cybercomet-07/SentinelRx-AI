@@ -1,4 +1,5 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
@@ -6,31 +7,32 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 
-const userLinks = [
-  { to: '/user/quick-start', icon: Rocket, label: 'Quick Start' },
-  { to: '/user/chat', icon: MessageSquare, label: 'AI Chat' },
-  { to: '/user/medicines', icon: ShoppingBag, label: 'Browse Medicines' },
-  { to: '/user/orders', icon: History, label: 'Order History' },
-  { to: '/user/notifications', icon: Bell, label: 'Notifications' },
-  { to: '/user/prescriptions', icon: FileText, label: 'Prescriptions' },
-  { to: '/user/contact', icon: Mail, label: 'Contact Us' },
+const userLinkKeys = [
+  { to: '/user/quick-start', icon: Rocket, key: 'sidebar.quickStart' },
+  { to: '/user/chat', icon: MessageSquare, key: 'sidebar.aiChat' },
+  { to: '/user/medicines', icon: ShoppingBag, key: 'sidebar.browseMedicines' },
+  { to: '/user/orders', icon: History, key: 'sidebar.orderHistory' },
+  { to: '/user/notifications', icon: Bell, key: 'sidebar.notifications' },
+  { to: '/user/prescriptions', icon: FileText, key: 'sidebar.prescriptions' },
+  { to: '/user/contact', icon: Mail, key: 'sidebar.contactUs' },
 ]
 
-const adminLinks = [
-  { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/medicines', icon: Pill, label: 'Medicines' },
-  { to: '/admin/orders', icon: ClipboardList, label: 'Orders' },
-  { to: '/admin/prescriptions', icon: FileText, label: 'Prescriptions' },
-  { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
-  { to: '/admin/map', icon: MapPin, label: 'Delivery Map' },
-  { to: '/admin/users', icon: Users, label: 'Users' },
-  { to: '/admin/contact', icon: Mail, label: 'Contact Submissions' },
+const adminLinkKeys = [
+  { to: '/admin/dashboard', icon: LayoutDashboard, key: 'sidebar.dashboard' },
+  { to: '/admin/medicines', icon: Pill, key: 'sidebar.medicines' },
+  { to: '/admin/orders', icon: ClipboardList, key: 'sidebar.orders' },
+  { to: '/admin/prescriptions', icon: FileText, key: 'sidebar.prescriptions' },
+  { to: '/admin/notifications', icon: Bell, key: 'sidebar.notifications' },
+  { to: '/admin/map', icon: MapPin, key: 'sidebar.deliveryMap' },
+  { to: '/admin/users', icon: Users, key: 'sidebar.users' },
+  { to: '/admin/contact', icon: Mail, key: 'sidebar.contactSubmissions' },
 ]
 
 export default function Sidebar() {
+  const { t } = useTranslation()
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
-  const links = isAdmin ? adminLinks : userLinks
+  const linkKeys = isAdmin ? adminLinkKeys : userLinkKeys
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -44,14 +46,14 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="font-display font-semibold text-slate-900 leading-tight text-base">SentinelRx AI</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">{isAdmin ? 'Admin Panel' : 'Pharmacy'}</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">{isAdmin ? t('common.adminPanel') : t('common.pharmacy')}</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {links.map(({ to, icon: Icon, label }) => (
+        {linkKeys.map(({ to, icon: Icon, key: labelKey }) => (
           <NavLink
             key={to}
             to={to}
@@ -63,7 +65,7 @@ export default function Sidebar() {
             )}
           >
             <Icon size={18} strokeWidth={2} />
-            <span>{label}</span>
+            <span>{t(labelKey)}</span>
           </NavLink>
         ))}
       </nav>
@@ -78,7 +80,7 @@ export default function Sidebar() {
             {user?.name?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{user?.name || 'User'}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{user?.name || t('common.user')}</p>
             <p className="text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </Link>
@@ -87,7 +89,7 @@ export default function Sidebar() {
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
         >
           <LogOut size={16} strokeWidth={2} />
-          Sign out
+          {t('common.signOut')}
         </button>
       </div>
     </aside>

@@ -11,6 +11,23 @@ from app.models.order import OrderStatus
 from app.models.user import User, UserRole
 from app.schemas.notification import NotificationListResponse, NotificationRead
 
+# Order notification translations: en, hi, mr
+_ORDER_PLACED = {
+    "en": ("Order placed successfully", "Your order {order_id} has been placed. Total amount: {total_amount}."),
+    "hi": ("ऑर्डर सफलतापूर्वक दिया गया", "आपका ऑर्डर {order_id} दिया गया। कुल राशि: {total_amount}।"),
+    "mr": ("ऑर्डर यशस्वीरित्या दिला", "तुमचा ऑर्डर {order_id} दिला गेला। एकूण रक्कम: {total_amount}।"),
+}
+_ORDER_STATUS_UPDATED = {
+    "en": ("Order status updated", "Order {order_id} is now {status}."),
+    "hi": ("ऑर्डर स्थिति अपडेट", "ऑर्डर {order_id} अब {status} है।"),
+    "mr": ("ऑर्डर स्थिती अपडेट", "ऑर्डर {order_id} आता {status} आहे।"),
+}
+_STATUS_LABELS = {
+    "en": {"PENDING": "PENDING", "CONFIRMED": "CONFIRMED", "OUT_FOR_DELIVERY": "OUT FOR DELIVERY", "DELIVERED": "DELIVERED", "CANCELLED": "CANCELLED"},
+    "hi": {"PENDING": "लंबित", "CONFIRMED": "पुष्ट", "OUT_FOR_DELIVERY": "डिलीवरी के लिए निकला", "DELIVERED": "डिलीवर", "CANCELLED": "रद्द"},
+    "mr": {"PENDING": "प्रलंबित", "CONFIRMED": "पुष्टी", "OUT_FOR_DELIVERY": "डिलिव्हरीसाठी बाहेर", "DELIVERED": "डिलिव्हर", "CANCELLED": "रद्द"},
+}
+
 
 def create_notification(
     db: Session,
@@ -24,13 +41,13 @@ def create_notification(
 
 
 def notify_order_created(db: Session, *, user_id: uuid.UUID, order_id: uuid.UUID, total_amount: float) -> None:
-    create_notification(
-        db,
-        user_id=user_id,
-        title="Order placed successfully",
-        message=f"Your order {order_id} has been placed. Total amount: {total_amount}.",
-        typ=NotificationType.ORDER,
-    )
+    user = db.query(User).filter(User.id == user_id).first()
+    lang = (user.preferred_language or "en") if user else "en"
+    lang = "en" if lang not in _ORDER_PLACED else lang
+    total_str = f"{float(total_amount):.2f}"
+    title, msg_tpl = _ORDER_PLACED[lang]
+    message = msg_tpl.format(order_id=order_id, total_amount=total_str)
+    create_notification(db, user_id=user_id, title=title, message=message, typ=NotificationType.ORDER)
 
 
 def notify_admins_new_order(
@@ -62,13 +79,13 @@ def notify_order_status_changed(
     order_id: uuid.UUID,
     new_status: OrderStatus,
 ) -> None:
-    create_notification(
-        db,
-        user_id=user_id,
-        title="Order status updated",
-        message=f"Order {order_id} is now {new_status.value}.",
-        typ=NotificationType.ORDER,
-    )
+    user = db.query(User).filter(User.id == user_id).first()
+    lang = (user.preferred_language or "en") if user else "en"
+    lang = "en" if lang not in _ORDER_STATUS_UPDATED else lang
+    status_label = _STATUS_LABELS.get(lang, _STATUS_LABELS["en"]).get(new_status.value, new_status.value)
+    title, msg_tpl = _ORDER_STATUS_UPDATED[lang]
+    message = msg_tpl.format(order_id=order_id, status=status_label)
+    create_notification(db, user_id=user_id, title=title, message=message, typ=NotificationType.ORDER)
 
 
 def notify_expiring_medicines_to_admins(db: Session, *, days_ahead: int = 7) -> None:

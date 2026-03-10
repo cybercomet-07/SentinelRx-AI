@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { ShoppingCart, Package } from 'lucide-react'
 import { useCart } from '../../hooks/useCart'
 import LowStockBadge from '../admin/LowStockBadge'
 
 export default function MedicineCard({ medicine }) {
+  const { t } = useTranslation()
   const { addItem } = useCart()
 
   return (
@@ -41,7 +43,7 @@ export default function MedicineCard({ medicine }) {
           className="flex items-center gap-1.5 bg-mint-500 hover:bg-mint-600 disabled:opacity-40 text-white text-xs font-medium px-3 py-2 rounded-xl transition-colors"
         >
           <ShoppingCart size={13} />
-          Add
+          {t('common.add')}
         </button>
       </div>
     </div>

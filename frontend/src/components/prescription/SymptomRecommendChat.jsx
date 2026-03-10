@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { prescriptionService } from '../../services/prescriptionService'
 import { MessageCircle, Send, Loader2, Mic, Volume2, VolumeX } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -6,9 +7,8 @@ import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 import { getVoicePrompt } from '../../utils/voicePrompts'
 
-const PLACEHOLDER = 'Type or speak symptoms'
-
 export default function SymptomRecommendChat() {
+  const { t } = useTranslation()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -89,12 +89,12 @@ export default function SymptomRecommendChat() {
         {messages.length === 0 && (
           <div className="text-center py-8 text-gray-500 text-sm">
             <MessageCircle size={32} className="mx-auto mb-3 text-teal-300" />
-            <p className="font-medium text-gray-600">No prescription? Get suggestions</p>
+            <p className="font-medium text-gray-600">{t('prescriptions.noPrescriptionGetSuggestions')}</p>
             <p className="mt-1 text-xs">
-              Describe your symptoms. We'll suggest OTC medicines from our inventory with dosage limits.
+              {t('prescriptions.describeSymptoms')}
             </p>
             <p className="mt-2 text-xs text-amber-600">
-              Sleep aids, antibiotics & blood pressure meds require a doctor's prescription.
+              {t('prescriptions.disclaimer')}
             </p>
           </div>
         )}
@@ -118,7 +118,7 @@ export default function SymptomRecommendChat() {
           <div className="flex justify-start">
             <div className="bg-gray-100 rounded-2xl px-4 py-2.5 flex items-center gap-2 text-gray-500 text-sm">
               <Loader2 size={16} className="animate-spin" />
-              Searching our medicine index...
+              {t('prescriptions.searchingMedicineIndex')}
             </div>
           </div>
         )}
@@ -151,7 +151,7 @@ export default function SymptomRecommendChat() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={PLACEHOLDER}
+            placeholder={t('prescriptions.typeOrSpeakSymptoms')}
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300"
             disabled={loading}
           />

@@ -1,23 +1,25 @@
 import { useEffect, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, Mail,
   Stethoscope, ChevronDown
 } from 'lucide-react'
 
-const FEATURES = [
-  { id: 1, icon: MessageSquare, title: 'AI Chat', desc: 'Two agents: symptom tips + order placement. Voice & text in 10+ languages.', color: 'from-emerald-500 to-teal-600', lightColor: 'bg-emerald-50 border-emerald-200' },
-  { id: 2, icon: Stethoscope, title: 'Symptom Tips', desc: 'Describe symptoms — AI suggests medicines from stock. Multilingual.', color: 'from-teal-500 to-cyan-600', lightColor: 'bg-teal-50 border-teal-200' },
-  { id: 3, icon: ShoppingBag, title: 'Browse Medicines', desc: 'Search catalogue, add to cart, checkout with delivery address.', color: 'from-blue-500 to-blue-600', lightColor: 'bg-blue-50 border-blue-200' },
-  { id: 4, icon: History, title: 'Order History', desc: 'View past orders, track status, reorder with one click.', color: 'from-violet-500 to-purple-600', lightColor: 'bg-violet-50 border-violet-200' },
-  { id: 5, icon: Bell, title: 'Refill Alerts', desc: 'Set reminders. Email 5 days before you run out.', color: 'from-amber-500 to-orange-500', lightColor: 'bg-amber-50 border-amber-200' },
-  { id: 6, icon: FileText, title: 'Prescriptions', desc: 'Upload prescriptions. OTC suggestions without a prescription.', color: 'from-rose-500 to-pink-600', lightColor: 'bg-rose-50 border-rose-200' },
-  { id: 7, icon: Mail, title: 'Contact Us', desc: 'Questions, feedback, or help — we respond to all.', color: 'from-slate-500 to-slate-600', lightColor: 'bg-slate-50 border-slate-200' },
+const FEATURE_KEYS = [
+  { id: 1, icon: MessageSquare, titleKey: 'quickStart.aiChat', descKey: 'quickStart.aiChatDesc', color: 'from-emerald-500 to-teal-600', lightColor: 'bg-emerald-50 border-emerald-200' },
+  { id: 2, icon: Stethoscope, titleKey: 'quickStart.symptomTips', descKey: 'quickStart.symptomTipsDesc', color: 'from-teal-500 to-cyan-600', lightColor: 'bg-teal-50 border-teal-200' },
+  { id: 3, icon: ShoppingBag, titleKey: 'quickStart.browseMedicines', descKey: 'quickStart.browseMedicinesDesc', color: 'from-blue-500 to-blue-600', lightColor: 'bg-blue-50 border-blue-200' },
+  { id: 4, icon: History, titleKey: 'quickStart.orderHistory', descKey: 'quickStart.orderHistoryDesc', color: 'from-violet-500 to-purple-600', lightColor: 'bg-violet-50 border-violet-200' },
+  { id: 5, icon: Bell, titleKey: 'quickStart.refillAlerts', descKey: 'quickStart.refillAlertsDesc', color: 'from-amber-500 to-orange-500', lightColor: 'bg-amber-50 border-amber-200' },
+  { id: 6, icon: FileText, titleKey: 'quickStart.prescriptions', descKey: 'quickStart.prescriptionsDesc', color: 'from-rose-500 to-pink-600', lightColor: 'bg-rose-50 border-rose-200' },
+  { id: 7, icon: Mail, titleKey: 'quickStart.contactUs', descKey: 'quickStart.contactUsDesc', color: 'from-slate-500 to-slate-600', lightColor: 'bg-slate-50 border-slate-200' },
 ]
 
 const CARD_HEIGHT = 100
 
 export default function QuickStartPage() {
+  const { t } = useTranslation()
   const [activeStep, setActiveStep] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
   const intervalRef = useRef(null)
@@ -31,7 +33,7 @@ export default function QuickStartPage() {
     intervalRef.current = setInterval(() => {
       step += 1
       setActiveStep(step)
-      if (step >= FEATURES.length - 1) {
+      if (step >= FEATURE_KEYS.length - 1) {
         if (intervalRef.current) clearInterval(intervalRef.current)
         intervalRef.current = null
         setIsComplete(true)
@@ -52,8 +54,8 @@ export default function QuickStartPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto overflow-y-auto">
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-slate-900">Features Roadmap</h1>
-        <p className="text-slate-600 mt-1">Explore what SentinelRx AI can do for you</p>
+        <h1 className="font-display text-2xl font-bold text-slate-900">{t('quickStart.featuresRoadmap')}</h1>
+        <p className="text-slate-600 mt-1">{t('quickStart.exploreWhat')}</p>
       </div>
 
       {/* Vertical flow timeline */}
@@ -61,7 +63,7 @@ export default function QuickStartPage() {
         {/* Vertical dotted line - extends through all cards including Contact Us */}
         <div
           className="absolute left-6 top-0 w-0.5 border-l-2 border-dashed border-slate-300"
-          style={{ height: FEATURES.length * CARD_HEIGHT + 60 }}
+          style={{ height: FEATURE_KEYS.length * CARD_HEIGHT + 60 }}
         />
 
         {/* Traveling dot */}
@@ -79,7 +81,7 @@ export default function QuickStartPage() {
 
         {/* Feature cards - vertical stack */}
         <div className="relative pl-16 space-y-4">
-          {FEATURES.map((feature, index) => {
+          {FEATURE_KEYS.map((feature, index) => {
             const isVisible = index <= activeStep
             const Icon = feature.icon
 
@@ -97,12 +99,12 @@ export default function QuickStartPage() {
                       className={`absolute -left-10 top-5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold z-10 ${
                         index === activeStep
                           ? 'bg-emerald-500 text-white ring-4 ring-emerald-200'
-                          : index < activeStep || (index === FEATURES.length - 1 && isComplete)
+                          : index < activeStep || (index === FEATURE_KEYS.length - 1 && isComplete)
                           ? 'bg-emerald-500 text-white'
                           : 'bg-slate-200 text-slate-500'
                       }`}
                     >
-                      {(index < activeStep || (index === FEATURES.length - 1 && isComplete)) ? '✓' : index + 1}
+                      {(index < activeStep || (index === FEATURE_KEYS.length - 1 && isComplete)) ? '✓' : index + 1}
                     </div>
 
                     <div className={`border rounded-xl p-4 ${feature.lightColor}`}>
@@ -111,8 +113,8 @@ export default function QuickStartPage() {
                           <Icon size={20} className="text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900">{feature.title}</h3>
-                          <p className="text-sm text-slate-600 mt-0.5 leading-relaxed">{feature.desc}</p>
+                          <h3 className="font-semibold text-slate-900">{t(feature.titleKey)}</h3>
+                          <p className="text-sm text-slate-600 mt-0.5 leading-relaxed">{t(feature.descKey)}</p>
                         </div>
                       </div>
                     </div>
@@ -136,7 +138,7 @@ export default function QuickStartPage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors"
             >
               <ChevronDown size={16} className="rotate-[-90deg]" />
-              Replay roadmap
+              {t('quickStart.replayRoadmap')}
             </button>
           </motion.div>
         )}

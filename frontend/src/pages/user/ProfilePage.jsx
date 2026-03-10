@@ -25,22 +25,28 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    // Pre-fill from auth context if available (e.g. right after registration)
-    if (user?.name) {
-      setForm(prev => ({
-        ...prev,
-        name: user.name || prev.name,
-        email: user.email || prev.email,
-        phone: user.phone ?? prev.phone,
-        address: user.address ?? prev.address,
-        landmark: user.landmark ?? prev.landmark,
-        pin_code: user.pin_code ?? prev.pin_code,
-        date_of_birth: user.date_of_birth ? String(user.date_of_birth).split('T')[0] : prev.date_of_birth,
-        gender: user.gender || prev.gender || 'prefer_not_to_say',
-        preferred_language: user.preferred_language || prev.preferred_language || 'en',
-      }))
+    const token = localStorage.getItem('sentinelrx_token')
+    if (!token) {
+      setLoading(false)
+      return
     }
-    authService.me()
+    // Show form immediately from auth context so profile opens even if API is slow/fails
+    if (user) {
+      setForm({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        landmark: user.landmark || '',
+        pin_code: user.pin_code || '',
+        date_of_birth: user.date_of_birth ? String(user.date_of_birth).split('T')[0] : '',
+        gender: user.gender || 'prefer_not_to_say',
+        preferred_language: user.preferred_language || 'en',
+      })
+      setLoading(false)
+    }
+    authService
+      .me()
       .then((res) => {
         const u = res.data
         setForm({
@@ -55,8 +61,9 @@ export default function ProfilePage() {
           preferred_language: u?.preferred_language || 'en',
         })
       })
-      .catch(() => toast.error(t('profile.failedToLoad')))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        toast.error(t('profile.failedToLoad'))
+      })
   }, [user?.id])
 
   const handleChange = (e) => {
@@ -134,8 +141,8 @@ export default function ProfilePage() {
             {form.name?.[0]?.toUpperCase() || 'U'}
           </div>
           <div>
-            <h2 className="font-display font-semibold text-gray-900 text-xl">{form.name || 'Profile'}</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{form.email || 'Edit your information below'}</p>
+            <h2 className="font-display font-semibold text-gray-900 text-xl">{form.name || t('profile.title')}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{form.email || t('profile.editInfo')}</p>
             {user?.role && (
               <span className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
                 <Shield size={12} />
@@ -147,7 +154,7 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-4 border-t border-gray-100 pt-6">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Legal Name *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.fullLegalName')} *</label>
             <div className="relative">
               <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -162,7 +169,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.email')}</label>
             <div className="relative">
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -173,10 +180,10 @@ export default function ProfilePage() {
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+            <p className="text-xs text-gray-400 mt-1">{t('profile.emailCannotChange')}</p>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.phone')} *</label>
             <div className="relative">
               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -191,7 +198,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Address *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.address')} *</label>
             <div className="relative">
               <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
               <textarea
@@ -207,7 +214,7 @@ export default function ProfilePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Landmark *</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.landmark')} *</label>
               <input
                 name="landmark"
                 type="text"
@@ -219,7 +226,7 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">PIN Code *</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.pinCode')} *</label>
               <input
                 name="pin_code"
                 type="text"
@@ -233,7 +240,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Date of Birth *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.dateOfBirth')} *</label>
             <div className="relative">
               <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -247,7 +254,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Gender</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.gender')}</label>
             <select
               name="gender"
               value={form.gender || 'prefer_not_to_say'}

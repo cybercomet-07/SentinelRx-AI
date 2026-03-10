@@ -1,21 +1,25 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Sidebar from '../../components/layout/Sidebar'
 import Header from '../../components/layout/Header'
 import CartDrawer from '../../components/cart/CartDrawer'
 
-const TITLES = {
-  '/user/quick-start': 'Quick Start',
-  '/user/chat': 'AI Assistant',
-  '/user/medicines': 'Browse Medicines',
-  '/user/orders': 'Order History',
-  '/user/notifications': 'Notifications',
-  '/user/prescriptions': 'Prescriptions',
-  '/user/profile': 'Profile',
+const TITLE_KEYS = {
+  '/user/quick-start': 'nav.quickStart',
+  '/user/chat': 'nav.aiAssistant',
+  '/user/medicines': 'nav.browseMedicines',
+  '/user/orders': 'nav.orderHistory',
+  '/user/notifications': 'nav.notifications',
+  '/user/prescriptions': 'nav.prescriptions',
+  '/user/profile': 'nav.profile',
+  '/user/contact': 'nav.contact',
 }
 
 export default function UserLayout() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
-  const title = TITLES[pathname] || 'Dashboard'
+  const titleKey = TITLE_KEYS[pathname]
+  const title = titleKey ? t(titleKey) : t('sidebar.dashboard')
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">

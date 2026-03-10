@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Mic, Plus, Send, User, Volume2, VolumeX, Square, MessageSquare, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react'
 import api from '../../services/api'
@@ -6,12 +7,6 @@ import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 import { getVoicePrompt } from '../../utils/voicePrompts'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
-
-const WELCOME = {
-  role: 'assistant',
-  content: "Hi! I'm SentinelRX-AI.\n• Symptoms → I suggest medicines from our inventory.\n• Orders → Tell me medicine name & quantity.\nType or speak to get started.",
-  timestamp: Date.now(),
-}
 
 const UNIFIED_CHAT_ENDPOINT = 'ai-chat/unified-chat'
 const MEDICINES_ENDPOINT = 'ai-chat/medicines'
@@ -50,10 +45,10 @@ function tryTriggerOrderForm(containerEl, action) {
   }
 }
 
-function normalizeSession(s) {
+function normalizeSession(s, newChatLabel) {
   return {
     id: s.id,
-    title: s.title || 'New chat',
+    title: s.title || newChatLabel,
     messages: Array.isArray(s.messages) ? s.messages : [],
     createdAt: s.createdAt || s.created_at || Date.now(),
     updatedAt: s.updatedAt || s.updated_at || Date.now(),
@@ -64,16 +59,23 @@ function generateSessionId() {
   return `s_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-function getSessionTitle(messages) {
+function getSessionTitle(messages, newChatLabel) {
   const firstUser = messages?.find((m) => m.role === 'user')
   if (firstUser?.content) {
     const text = typeof firstUser.content === 'string' ? firstUser.content : ''
     return text.slice(0, 40) + (text.length > 40 ? '…' : '')
   }
-  return 'New chat'
+  return newChatLabel
 }
 
 export default function UnifiedChatShell() {
+  const { t, i18n } = useTranslation()
+  const welcomeMessage = useMemo(() => ({
+    role: 'assistant',
+    content: t('chat.welcome'),
+    timestamp: Date.now(),
+    isWelcome: true,
+  }), [t, i18n.language])
   const [sessions, setSessions] = useState([])
   const [currentSessionId, setCurrentSessionId] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -81,7 +83,7 @@ export default function UnifiedChatShell() {
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const menuRef = useRef(null)
 
-  const messages = sessions.find((s) => s.id === currentSessionId)?.messages ?? [WELCOME]
+  const messages = sessions.find((s) => s.id === currentSessionId)?.messages ?? [welcomeMessage]
   const setMessages = useCallback(
     (updater) => {
       setSessions((prev) => {
@@ -90,7 +92,7 @@ export default function UnifiedChatShell() {
         const next = prev.map((s) => {
           if (s.id !== targetId) return s
           const newMessages = typeof updater === 'function' ? updater(s.messages || []) : updater
-          return { ...s, messages: newMessages, title: getSessionTitle(newMessages) }
+          return { ...s, messages: newMessages, title: getSessionTitle(newMessages, t('chat.newChat')) }
         })
         const updated = next.find((s) => s.id === targetId)
         if (updated) {
@@ -111,19 +113,19 @@ export default function UnifiedChatShell() {
         const res = await api.get(SESSIONS_ENDPOINT)
         const list = res.data?.sessions ?? []
         if (list.length > 0) {
-          const normalized = list.map(normalizeSession)
+          const normalized = list.map((s) => normalizeSession(s, t('chat.newChat')))
           setSessions(normalized)
           setCurrentSessionId((prev) => prev || normalized[0].id)
         } else {
           const id = generateSessionId()
-          const newSession = { id, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+          const newSession = { id, title: t('chat.newChat'), messages: [welcomeMessage], createdAt: Date.now() }
           await api.post(SESSIONS_ENDPOINT, { id, title: newSession.title, messages: newSession.messages })
           setSessions([newSession])
           setCurrentSessionId(id)
         }
       } catch {
         const id = generateSessionId()
-        const newSession = { id, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+        const newSession = { id, title: t('chat.newChat'), messages: [welcomeMessage], createdAt: Date.now() }
         setSessions([newSession])
         setCurrentSessionId(id)
       } finally {
@@ -471,13 +473,13 @@ export default function UnifiedChatShell() {
 
   const startNewChat = useCallback(async () => {
     const id = generateSessionId()
-    const newSession = { id, title: 'New chat', messages: [{ ...WELCOME, timestamp: Date.now() }], createdAt: Date.now() }
+    const newSession = { id, title: t('chat.newChat'), messages: [{ ...welcomeMessage, timestamp: Date.now() }], createdAt: Date.now() }
     try {
       await api.post(SESSIONS_ENDPOINT, { id, title: newSession.title, messages: newSession.messages })
     } catch {}
     setSessions((prev) => [newSession, ...prev])
     setCurrentSessionId(id)
-  }, [])
+  }, [t, welcomeMessage])
 
   const selectSession = useCallback((id) => {
     setCurrentSessionId(id)
@@ -495,14 +497,14 @@ export default function UnifiedChatShell() {
         setCurrentSessionId(next[0].id)
       } else if (next.length === 0) {
         const newId = generateSessionId()
-        const newSession = { id: newId, title: 'New chat', messages: [WELCOME], createdAt: Date.now() }
+        const newSession = { id: newId, title: t('chat.newChat'), messages: [welcomeMessage], createdAt: Date.now() }
         setCurrentSessionId(newId)
-        api.post(SESSIONS_ENDPOINT, { id: newId, title: 'New chat', messages: [WELCOME] }).catch(() => {})
+        api.post(SESSIONS_ENDPOINT, { id: newId, title: newSession.title, messages: newSession.messages }).catch(() => {})
         return [newSession]
       }
       return next
     })
-  }, [currentSessionId])
+  }, [currentSessionId, t, welcomeMessage])
 
   return (
     <div className="flex h-full bg-slate-50/80">
@@ -519,7 +521,7 @@ export default function UnifiedChatShell() {
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors w-full justify-center"
           >
             <Plus size={18} strokeWidth={2.5} />
-            New chat
+            {t('chat.newChat')}
           </button>
           <button
             type="button"
@@ -641,7 +643,11 @@ export default function UnifiedChatShell() {
                   }}
                 />
               ) : msg.content ? (
-                <p className="whitespace-pre-wrap text-sm leading-snug">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm leading-snug">
+                  {(msg.isWelcome || (i === 0 && msg.role === 'assistant' && (msg.content || '').includes('SentinelRX')))
+                    ? t('chat.welcome')
+                    : msg.content}
+                </p>
               ) : null}
               {msg.orderData && !msg.orderData.cancelled && (
                 <div className="mt-4 p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
@@ -743,7 +749,7 @@ export default function UnifiedChatShell() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type or speak symptoms or medicine name..."
+              placeholder={t('chat.typeOrSpeak')}
               className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none border-none focus:ring-0 min-w-0"
               maxLength={500}
               disabled={loading}

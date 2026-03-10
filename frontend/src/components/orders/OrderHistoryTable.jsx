@@ -1,17 +1,20 @@
+import { useTranslation } from 'react-i18next'
 import StatusBadge from './StatusBadge'
 
 export default function OrderHistoryTable({ orders }) {
+  const { t } = useTranslation()
   if (!orders?.length) return (
-    <div className="text-center py-16 text-gray-400">No orders yet.</div>
+    <div className="text-center py-16 text-gray-400">{t('common.noOrdersYet')}</div>
   )
 
+  const headers = [t('orderHistory.orderId'), t('orderHistory.date'), t('orderHistory.medicines'), t('orderHistory.total'), t('orderHistory.status')]
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
-            {['Order ID', 'Date', 'Medicines', 'Total', 'Status'].map(h => (
-              <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+            {headers.map((h, i) => (
+              <th key={i} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
             ))}
           </tr>
         </thead>

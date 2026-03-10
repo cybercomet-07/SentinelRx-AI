@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import AlertPanel from '../../components/notifications/AlertPanel'
 import Loader from '../../components/ui/Loader'
@@ -13,6 +14,7 @@ import toast from 'react-hot-toast'
 const NOTIF_LIMIT = 10
 
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
   const [alerts, setAlerts] = useState([])
@@ -101,22 +103,22 @@ export default function NotificationsPage() {
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!form.medicine_id || !form.last_purchase_date || !form.suggested_refill_date) {
-      toast.error('Please fill all fields')
+      toast.error(t('common.pleaseFillAllFields'))
       return
     }
     if (new Date(form.suggested_refill_date) < new Date(form.last_purchase_date)) {
-      toast.error('Suggested refill date must be after last purchase')
+      toast.error(t('common.suggestedRefillAfterPurchase'))
       return
     }
     setCreating(true)
     try {
       await refillAlertService.create(form)
-      toast.success('Refill alert created')
+      toast.success(t('common.refillAlertCreated'))
       setForm({ medicine_id: '', last_purchase_date: '', suggested_refill_date: '' })
       setShowCreateForm(false)
       await fetchAlerts()
     } catch (err) {
-      toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? 'Failed to create alert')
+      toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? t('common.failedToCreateAlert'))
     } finally {
       setCreating(false)
     }
@@ -125,25 +127,25 @@ export default function NotificationsPage() {
   const handleComplete = async (id) => {
     try {
       await refillAlertService.complete(id)
-      toast.success('Marked as complete')
+      toast.success(t('common.markedAsComplete'))
       await fetchAlerts()
     } catch {
-      toast.error('Failed to mark complete')
+      toast.error(t('common.failedToMarkComplete'))
     }
   }
 
   const handleDelete = async (id) => {
     try {
       await refillAlertService.delete(id)
-      toast.success('Alert removed')
+      toast.success(t('common.alertRemoved'))
       await fetchAlerts()
     } catch {
-      toast.error('Failed to delete')
+      toast.error(t('common.failedToDelete'))
     }
   }
 
   const handleReorder = (alert) => {
-    toast.success(`Reorder for ${alert.medicine_name} placed!`)
+    toast.success(t('common.reorderPlaced', { name: alert.medicine_name }))
   }
 
   if (loading) return <Loader center />
@@ -155,7 +157,7 @@ export default function NotificationsPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <RefreshCw size={16} className="text-orange-500" />
-              <h2 className="font-display font-semibold text-gray-900">Refill Alerts</h2>
+              <h2 className="font-display font-semibold text-gray-900">{t('quickStart.refillAlerts')}</h2>
               {alerts.length > 0 && (
                 <span className="ml-1 bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">
                   {alerts.length}
@@ -167,21 +169,21 @@ export default function NotificationsPage() {
               className="flex items-center gap-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
             >
               <Plus size={14} />
-              {showCreateForm ? 'Cancel' : 'Create'}
+              {showCreateForm ? t('common.cancel') : t('common.create')}
             </button>
           </div>
 
           {showCreateForm && (
             <form onSubmit={handleCreate} className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Medicine</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.medicine')}</label>
                 <select
                   value={form.medicine_id}
                   onChange={(e) => setForm((f) => ({ ...f, medicine_id: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                   required
                 >
-                  <option value="">Select medicine</option>
+                  <option value="">{t('common.selectMedicine')}</option>
                   {medicines.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name}
@@ -190,7 +192,7 @@ export default function NotificationsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Last purchase date</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.lastPurchaseDate')}</label>
                 <input
                   type="date"
                   value={form.last_purchase_date}
@@ -200,7 +202,7 @@ export default function NotificationsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Suggested refill date</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.suggestedRefillDate')}</label>
                 <input
                   type="date"
                   value={form.suggested_refill_date}
@@ -215,21 +217,21 @@ export default function NotificationsPage() {
                   disabled={creating}
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg"
                 >
-                  {creating ? 'Creating…' : 'Create'}
+                  {creating ? t('common.creating') : t('common.create')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
                   className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
           )}
 
           {alertsError ? (
-            <ErrorState message="Unable to load refill alerts." onRetry={loadAll} />
+            <ErrorState message={t('common.unableToLoadRefillAlerts')} onRetry={loadAll} />
           ) : (
             <AlertPanel
               alerts={alerts}
@@ -244,17 +246,17 @@ export default function NotificationsPage() {
       <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <Bell size={16} className="text-mint-600" />
-          <h2 className="font-display font-semibold text-gray-900">Notifications</h2>
+          <h2 className="font-display font-semibold text-gray-900">{t('sidebar.notifications')}</h2>
           {notifications.filter((n) => !(n.read ?? n.is_read)).length > 0 && (
             <span className="ml-1 bg-mint-100 text-mint-700 text-xs font-medium px-2 py-0.5 rounded-full">
-              {notifications.filter((n) => !(n.read ?? n.is_read)).length} new
+              {t('common.newCount', { count: notifications.filter((n) => !(n.read ?? n.is_read)).length })}
             </span>
           )}
         </div>
         {notificationsError ? (
-          <ErrorState message="Unable to load notifications." onRetry={loadAll} />
+          <ErrorState message={t('common.unableToLoadNotifications')} onRetry={loadAll} />
         ) : notifications.length === 0 ? (
-          <p className="text-sm text-gray-400">No new notifications.</p>
+          <p className="text-sm text-gray-400">{t('common.noNewNotifications')}</p>
         ) : (
           <>
             <div className="space-y-3">

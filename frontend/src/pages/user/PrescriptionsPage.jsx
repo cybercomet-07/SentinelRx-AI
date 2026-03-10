@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { prescriptionService } from '../../services/prescriptionService'
 import { cartService } from '../../services/cartService'
@@ -19,6 +20,7 @@ function fileToBase64(file) {
 }
 
 export default function PrescriptionsPage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     patient_name: '',
     doctor_name: '',
@@ -46,11 +48,11 @@ export default function PrescriptionsPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
+      toast.error(t('prescriptions.selectImageFile'))
       return
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      toast.error(`Image must be under ${MAX_IMAGE_SIZE_MB}MB`)
+      toast.error(t('prescriptions.imageSizeLimit', { mb: MAX_IMAGE_SIZE_MB }))
       return
     }
     try {
@@ -59,7 +61,7 @@ export default function PrescriptionsPage() {
       const url = res.data?.url
       if (url) {
         setImage(url)
-        toast.success('Image uploaded')
+        toast.success(t('prescriptions.imageUploaded'))
       } else {
         setImage(base64)
         toast.success('Image added (Cloudinary not configured)')
@@ -70,7 +72,7 @@ export default function PrescriptionsPage() {
         setImage(await fileToBase64(file))
         toast.success('Image added (stored locally - add Cloudinary credentials for cloud storage)')
       } else {
-        toast.error(msg || 'Failed to upload image')
+        toast.error(msg || t('prescriptions.failedToUploadImage'))
       }
     }
     e.target.value = ''
@@ -91,20 +93,20 @@ export default function PrescriptionsPage() {
   const addMedicineToCart = async (medicineId, quantity) => {
     try {
       await cartService.addItem(medicineId, quantity)
-      toast.success('Added to cart')
+      toast.success(t('prescriptions.addedToCart'))
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to add to cart')
+      toast.error(err.response?.data?.detail || t('prescriptions.failedToAddToCart'))
     }
   }
 
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!form.patient_name?.trim() || !form.prescription_text?.trim()) {
-      toast.error('Patient name and prescription text are required')
+      toast.error(t('prescriptions.patientAndTextRequired'))
       return
     }
     if (form.prescription_text.trim().length < 3) {
-      toast.error('Prescription text must be at least 3 characters')
+      toast.error(t('prescriptions.prescriptionTextMinLength'))
       return
     }
     setCreating(true)
@@ -116,12 +118,12 @@ export default function PrescriptionsPage() {
       }
       const res = await prescriptionService.create(payload)
       const created = res.data
-      toast.success('Prescription created')
+      toast.success(t('prescriptions.prescriptionCreated'))
       setForm({ patient_name: '', doctor_name: '', prescription_text: '' })
       setImage(null)
       setActiveTab('my')
     } catch (err) {
-      toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? 'Failed to create prescription')
+      toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? t('prescriptions.failedToCreatePrescription'))
     } finally {
       setCreating(false)
     }
@@ -138,7 +140,7 @@ export default function PrescriptionsPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'create' ? 'bg-mint-500 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             <Plus size={16} className="inline mr-1" />
-            Create
+            {t('prescriptions.create')}
           </button>
           <button
             type="button"
@@ -146,7 +148,7 @@ export default function PrescriptionsPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'my' ? 'bg-mint-500 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             <History size={16} className="inline mr-1" />
-            My Prescriptions
+            {t('prescriptions.myPrescriptions')}
           </button>
         </div>
         <div className="space-y-8 max-w-2xl mx-auto">
@@ -154,16 +156,16 @@ export default function PrescriptionsPage() {
       <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <FileText size={18} className="text-mint-600" />
-          <h2 className="font-display font-semibold text-gray-900">Create Prescription</h2>
+          <h2 className="font-display font-semibold text-gray-900">{t('prescriptions.createPrescription')}</h2>
         </div>
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Patient name *</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('prescriptions.patientName')} *</label>
             <input
               type="text"
               value={form.patient_name}
               onChange={(e) => setForm((f) => ({ ...f, patient_name: e.target.value }))}
-              placeholder="Patient full name"
+              placeholder={t('prescriptions.patientNamePlaceholder')}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
               required
               minLength={2}
@@ -171,19 +173,19 @@ export default function PrescriptionsPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Doctor name (optional)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('prescriptions.doctorName')}</label>
             <input
               type="text"
               value={form.doctor_name}
               onChange={(e) => setForm((f) => ({ ...f, doctor_name: e.target.value }))}
-              placeholder="Dr. Name"
+              placeholder={t('prescriptions.doctorNamePlaceholder')}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
               maxLength={120}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Prescription image (optional)</label>
-            <p className="text-xs text-gray-500 mb-2">Upload from gallery or take a photo with camera</p>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('prescriptions.prescriptionImage')}</label>
+            <p className="text-xs text-gray-500 mb-2">{t('prescriptions.uploadOrTakePhoto')}</p>
             <div className="flex gap-2">
               <input
                 ref={galleryInputRef}
@@ -206,7 +208,7 @@ export default function PrescriptionsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
               >
                 <Upload size={16} />
-                Upload from gallery
+                {t('prescriptions.uploadFromGallery')}
               </button>
               <button
                 type="button"
@@ -214,7 +216,7 @@ export default function PrescriptionsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
               >
                 <Camera size={16} />
-                Take photo
+                {t('prescriptions.takePhotoBtn')}
               </button>
             </div>
             {image && (
@@ -235,11 +237,11 @@ export default function PrescriptionsPage() {
             )}
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Prescription text *</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('prescriptions.prescriptionText')}</label>
             <textarea
               value={form.prescription_text}
               onChange={(e) => setForm((f) => ({ ...f, prescription_text: e.target.value }))}
-              placeholder="Medicines, dosage, instructions..."
+              placeholder={t('prescriptions.prescriptionTextPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
               required
@@ -252,7 +254,7 @@ export default function PrescriptionsPage() {
             className="flex items-center gap-2 px-4 py-2 bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg"
           >
             <Plus size={14} />
-            {creating ? 'Creating…' : 'Create'}
+            {creating ? t('prescriptions.creating') : t('prescriptions.create')}
           </button>
         </form>
       </section>
@@ -261,12 +263,12 @@ export default function PrescriptionsPage() {
       <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
           <History size={18} className="text-mint-600" />
-          <h2 className="font-display font-semibold text-gray-900">My Prescriptions</h2>
+          <h2 className="font-display font-semibold text-gray-900">{t('prescriptions.myPrescriptions')}</h2>
         </div>
         {loadingMy ? (
-          <p className="text-sm text-gray-500">Loading...</p>
+          <p className="text-sm text-gray-500">{t('prescriptions.loading')}</p>
         ) : myPrescriptions.length === 0 ? (
-          <p className="text-sm text-gray-500">No prescriptions yet. Create one above.</p>
+          <p className="text-sm text-gray-500">{t('prescriptions.noPrescriptionsYet')}</p>
         ) : (
           <div className="space-y-4">
             {myPrescriptions.map((p) => (
@@ -283,13 +285,13 @@ export default function PrescriptionsPage() {
                 <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{p.prescription_text}</p>
                 {p.admin_reply && (
                   <div className="mt-3 p-3 bg-mint-50 rounded-lg border border-mint-100">
-                    <p className="text-xs font-medium text-mint-700 mb-1">Admin Reply</p>
+                    <p className="text-xs font-medium text-mint-700 mb-1">{t('prescriptions.adminReply')}</p>
                     <p className="text-sm text-gray-800 whitespace-pre-wrap">{p.admin_reply}</p>
                   </div>
                 )}
                 {p.recommended_medicines?.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Recommended medicines</p>
+                    <p className="text-xs font-medium text-gray-600 mb-2">{t('prescriptions.recommendedMedicines')}</p>
                     <div className="space-y-2">
                       {p.recommended_medicines.map((rm) => (
                         <div key={rm.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -303,7 +305,7 @@ export default function PrescriptionsPage() {
                             className="flex items-center gap-1 px-3 py-1.5 bg-mint-500 text-white text-xs font-medium rounded-lg hover:bg-mint-600"
                           >
                             <ShoppingCart size={14} />
-                            Add to cart
+                            {t('prescriptions.addToCart')}
                           </button>
                         </div>
                       ))}
@@ -323,7 +325,7 @@ export default function PrescriptionsPage() {
       <div className="flex-1 min-h-[400px] lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 bg-white">
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-slate-50">
           <Stethoscope size={18} className="text-teal-600" strokeWidth={2} />
-          <span className="font-semibold text-slate-800">Symptom Suggestions (No Prescription)</span>
+          <span className="font-semibold text-slate-800">{t('prescriptions.symptomSuggestions')}</span>
         </div>
         <div className="flex-1 min-h-0 overflow-hidden">
           <SymptomRecommendChat />

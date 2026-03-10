@@ -200,20 +200,9 @@ export default function Login() {
                 <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={i18n.language}
-                onChange={(e) => { const v = e.target.value; i18n.changeLanguage(v); localStorage.setItem('sentinelrx_lang', v); setPreferredLanguage(v); }}
-                className="bg-white/20 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-white/50 cursor-pointer"
-              >
-                {SUPPORTED.map((code) => (
-                  <option key={code} value={code} className="text-gray-900">{t(`languages.${code}`)}</option>
-                ))}
-              </select>
-              <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
-                <ArrowLeft size={14} /> {t('common.backToHome')}
-              </Link>
-            </div>
+            <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
+              <ArrowLeft size={14} /> {t('common.backToHome')}
+            </Link>
           </div>
         </div>
       </div>
@@ -229,15 +218,6 @@ export default function Login() {
               <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-teal-600 text-sm transition-colors">
                 <ArrowLeft size={14} /> {t('common.backToHome')}
               </Link>
-              <select
-                value={i18n.language}
-                onChange={(e) => { const v = e.target.value; i18n.changeLanguage(v); localStorage.setItem('sentinelrx_lang', v); setPreferredLanguage(v); }}
-                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-300 text-gray-700"
-              >
-                {SUPPORTED.map((code) => (
-                  <option key={code} value={code}>{t(`languages.${code}`)}</option>
-                ))}
-              </select>
             </div>
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">

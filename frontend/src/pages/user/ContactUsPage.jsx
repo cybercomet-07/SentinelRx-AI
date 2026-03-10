@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { contactService } from '../../services/contactService'
 import { Mail, Send, User, Phone, Calendar, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ContactUsPage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     full_name: '',
     contact_details: '',
@@ -19,9 +21,9 @@ export default function ContactUsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.full_name?.trim()) { toast.error('Full name is required'); return }
-    if (!form.contact_details?.trim()) { toast.error('Contact details (phone or email) is required'); return }
-    if (!form.description?.trim()) { toast.error('Description is required'); return }
+    if (!form.full_name?.trim()) { toast.error(t('common.fullNameRequired')); return }
+    if (!form.contact_details?.trim()) { toast.error(t('common.contactDetailsRequired')); return }
+    if (!form.description?.trim()) { toast.error(t('common.descriptionRequired')); return }
     setLoading(true)
     try {
       await contactService.create({
@@ -30,10 +32,10 @@ export default function ContactUsPage() {
         date_of_birth: form.date_of_birth || undefined,
         description: form.description.trim(),
       })
-      toast.success('Message sent! We\'ll get back to you soon.')
+      toast.success(t('common.messageSent'))
       setForm({ full_name: '', contact_details: '', date_of_birth: '', description: '' })
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Failed to send message'
+      const msg = err.response?.data?.detail || err.message || t('common.failedToSendMessage')
       toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg))
     } finally {
       setLoading(false)
@@ -43,14 +45,14 @@ export default function ContactUsPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-slate-900">Contact Us</h1>
-        <p className="text-slate-500 mt-1">Send us a message and we&apos;ll get back to you.</p>
+        <h1 className="font-display text-2xl font-bold text-slate-900">{t('contact.title')}</h1>
+        <p className="text-slate-500 mt-1">{t('contact.subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-soft">
         <div>
           <label htmlFor="full_name" className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Full Name *
+            {t('common.fullName')} *
           </label>
           <div className="relative">
             <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -69,7 +71,7 @@ export default function ContactUsPage() {
 
         <div>
           <label htmlFor="contact_details" className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Contact Details (Phone or Email) *
+            {t('common.contactDetails')} *
           </label>
           <div className="relative">
             <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -88,7 +90,7 @@ export default function ContactUsPage() {
 
         <div>
           <label htmlFor="date_of_birth" className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Date of Birth
+            {t('auth.dateOfBirth')}
           </label>
           <div className="relative">
             <Calendar size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -105,7 +107,7 @@ export default function ContactUsPage() {
 
         <div>
           <label htmlFor="description" className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Description *
+            {t('common.description')} *
           </label>
           <div className="relative">
             <FileText size={18} className="absolute left-3.5 top-4 text-slate-400" />
@@ -114,7 +116,7 @@ export default function ContactUsPage() {
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="Describe your query or feedback..."
+              placeholder={t('common.describeQueryOrFeedback')}
               rows={4}
               className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 resize-none"
               required
@@ -132,14 +134,14 @@ export default function ContactUsPage() {
           ) : (
             <>
               <Send size={16} />
-              Send Message
+              {t('common.sendMessage')}
             </>
           )}
         </button>
       </form>
 
       <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100">
-        <p className="text-sm font-medium text-slate-700 mb-2">Or reach us directly:</p>
+        <p className="text-sm font-medium text-slate-700 mb-2">{t('common.orReachUsDirectly')}</p>
         <a href="mailto:ainpharmacyofficial@gmail.com" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-semibold">
           <Mail size={16} />
           ainpharmacyofficial@gmail.com

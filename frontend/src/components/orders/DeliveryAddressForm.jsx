@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapPin, Navigation } from 'lucide-react'
 
 export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState(null) // 'live' | 'manual'
   const [address, setAddress] = useState('')
   const [lat, setLat] = useState(null)
@@ -40,7 +42,7 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
     e.preventDefault()
     setError('')
     if (!address.trim()) {
-      setError('Please provide your delivery address.')
+      setError(t('delivery.provideAddress'))
       return
     }
     const { lat: refLat, lng: refLng } = coordsRef.current
@@ -59,7 +61,7 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <p className="text-sm text-gray-600">Where should we deliver your order?</p>
+      <p className="text-sm text-gray-600">{t('delivery.whereToDeliver')}</p>
       <div className="flex gap-2">
         <button
           type="button"
@@ -68,11 +70,11 @@ export default function DeliveryAddressForm({ onSubmit, onCancel, loading }) {
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-mint-200 bg-mint-50 text-mint-700 hover:bg-mint-100 font-medium text-sm transition-colors disabled:opacity-60"
         >
           <Navigation size={18} />
-          {gettingLocation ? 'Getting location…' : 'Use my location'}
+          {gettingLocation ? t('delivery.gettingLocation') : t('delivery.useMyLocation')}
         </button>
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">Or enter address manually</label>
+        <label className="block text-xs font-medium text-gray-500 mb-1.5">{t('delivery.enterAddressManually')}</label>
         <textarea
           value={address}
           onChange={(e) => { setAddress(e.target.value); setMode('manual'); setLat(null); setLng(null); coordsRef.current = { lat: null, lng: null } }}

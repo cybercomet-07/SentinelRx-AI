@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { notificationService } from '../../services/notificationService'
