@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Eye, EyeOff, Activity, Shield, User, ArrowLeft, UserPlus, LogIn } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
+import { SUPPORTED } from '../i18n'
+import i18n from '../i18n'
 
 // my.spline.design scenes embed via iframe (prod.spline.design/scene.splinecode is for Code export only)
 const SPLINE_EMBED_URL = 'https://my.spline.design/genkubgreetingrobot-ZifrhwRHpj4D389o6wERaW9o/'
@@ -32,8 +35,10 @@ const ROLES = [
 ]
 
 export default function Login() {
+  const { t } = useTranslation()
   const [mode, setMode] = useState('signin')
   const [role, setRole] = useState('user')
+  const [preferredLanguage, setPreferredLanguage] = useState('en')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -58,6 +63,11 @@ export default function Login() {
       setMode(modeFromState)
     }
   }, [location.state])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('sentinelrx_lang')
+    if (stored && SUPPORTED.includes(stored)) setPreferredLanguage(stored)
+  }, [])
 
   useEffect(() => {
     // Use relative URL so Vite proxy forwards to backend (avoids CORS)
@@ -105,6 +115,7 @@ export default function Login() {
           pin_code: pinCode.trim(),
           date_of_birth: dateOfBirth,
           gender: gender || undefined,
+          preferred_language: preferredLanguage || 'en',
         })
         const token = res.data.access_token
         localStorage.setItem('sentinelrx_token', token)
@@ -189,9 +200,20 @@ export default function Login() {
                 <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
               </div>
             </div>
-            <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
-              <ArrowLeft size={14} /> Back to home
-            </Link>
+            <div className="flex items-center gap-3">
+              <select
+                value={i18n.language}
+                onChange={(e) => { const v = e.target.value; i18n.changeLanguage(v); localStorage.setItem('sentinelrx_lang', v); setPreferredLanguage(v); }}
+                className="bg-white/20 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-white/50 cursor-pointer"
+              >
+                {SUPPORTED.map((code) => (
+                  <option key={code} value={code} className="text-gray-900">{t(`languages.${code}`)}</option>
+                ))}
+              </select>
+              <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
+                <ArrowLeft size={14} /> {t('common.backToHome')}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -203,9 +225,20 @@ export default function Login() {
 
           {/* Mobile header */}
           <div className="lg:hidden mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-teal-600 text-sm mb-6 transition-colors">
-              <ArrowLeft size={14} /> Back to home
-            </Link>
+            <div className="flex items-center justify-between mb-6">
+              <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-teal-600 text-sm transition-colors">
+                <ArrowLeft size={14} /> {t('common.backToHome')}
+              </Link>
+              <select
+                value={i18n.language}
+                onChange={(e) => { const v = e.target.value; i18n.changeLanguage(v); localStorage.setItem('sentinelrx_lang', v); setPreferredLanguage(v); }}
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-300 text-gray-700"
+              >
+                {SUPPORTED.map((code) => (
+                  <option key={code} value={code}>{t(`languages.${code}`)}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
                 <Activity size={17} className="text-white" />
@@ -228,20 +261,20 @@ export default function Login() {
           {/* Title + mode switch */}
           <div className="mb-7">
             <h1 className="font-display text-gray-900 text-3xl font-bold mb-1.5">
-              {mode === 'signin' ? 'Sign in' : 'Create account'}
+              {mode === 'signin' ? t('auth.signIn') : t('auth.createAccount')}
             </h1>
             {mode === 'signin' ? (
               <p className="text-gray-400 text-sm">
-                New here?{' '}
+                {t('auth.newHere')}{' '}
                 <button onClick={() => switchMode('signup')} className="text-teal-600 font-semibold hover:text-teal-700 underline underline-offset-2">
-                  Create a new account
+                  {t('auth.createNewAccount')}
                 </button>
               </p>
             ) : (
               <p className="text-gray-400 text-sm">
-                Already have an account?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <button onClick={() => switchMode('signin')} className="text-teal-600 font-semibold hover:text-teal-700 underline underline-offset-2">
-                  Sign in
+                  {t('auth.signInLink')}
                 </button>
               </p>
             )}
@@ -249,7 +282,7 @@ export default function Login() {
 
           {/* Role selector cards */}
           <div className="mb-6">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Select your role</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.selectRole')}</p>
             <div className="grid grid-cols-2 gap-3">
               {ROLES.map(({ value, label, subtitle, icon: Icon, active, inactive, dot }) => {
                 const isActive = role === value
@@ -272,12 +305,34 @@ export default function Login() {
             </div>
           </div>
 
+          {/* Preferred Language (signup only) */}
+          {mode === 'signup' && (
+            <div className="mb-6">
+              <label htmlFor="signup-lang" className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.preferredLanguage')}</label>
+              <select
+                id="signup-lang"
+                value={preferredLanguage}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setPreferredLanguage(v)
+                  i18n.changeLanguage(v)
+                  localStorage.setItem('sentinelrx_lang', v)
+                }}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white"
+              >
+                {SUPPORTED.map((code) => (
+                  <option key={code} value={code}>{t(`languages.${code}`)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
 
             {mode === 'signup' && (
               <div>
-                <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-600 mb-1.5">Full Legal Name *</label>
+                <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.fullLegalName')} *</label>
                 <input id="signup-name" name="name" type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
@@ -375,16 +430,16 @@ export default function Login() {
             <button type="submit" disabled={loading}
               className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm text-white transition-all shadow-sm mt-1 disabled:opacity-60 ${selectedRole?.btn}`}>
               {loading
-                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Please wait…</>
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t('auth.pleaseWait')}</>
                 : mode === 'signup'
-                  ? <><UserPlus size={16} /> Create {selectedRole?.label} Account</>
-                  : <><LogIn size={16} /> Sign in as {selectedRole?.label}</>
+                  ? <><UserPlus size={16} /> {selectedRole?.value === 'admin' ? t('auth.createAdminAccount') : t('auth.createUserAccount')}</>
+                  : <><LogIn size={16} /> {selectedRole?.value === 'admin' ? t('auth.signInAsAdmin') : t('auth.signInAsUser')}</>
               }
             </button>
           </form>
 
           <p className="text-xs text-gray-300 text-center mt-5">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            {t('auth.termsNotice')}
           </p>
         </div>
         </div>

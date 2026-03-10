@@ -1,0 +1,53 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "backToHome": "Back to home"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "newHere": "New here?",
+    "createNewAccount": "Create a new account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "selectRole": "Select your role",
+    "fullLegalName": "Full Legal Name",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "phone": "Phone Number",
+    "address": "Full Address",
+    "landmark": "Landmark",
+    "pinCode": "PIN Code",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "preferredLanguage": "Preferred Language",
+    "createUserAccount": "Create User Account",
+    "createAdminAccount": "Create Admin Account",
+    "signInAsUser": "Sign in as User",
+    "signInAsAdmin": "Sign in as Admin",
+    "pleaseWait": "Please wait…",
+    "termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy.",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "preferNotToSay": "Prefer not to say"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "mr": "मराठी (Marathi)"
+  },
+  "profile": {
+    "title": "Profile",
+    "editInfo": "Edit your information below",
+    "emailCannotChange": "Email cannot be changed",
+    "profileUpdated": "Profile updated",
+    "failedToLoad": "Failed to load profile",
+    "failedToUpdate": "Failed to update profile"
+  }
+}

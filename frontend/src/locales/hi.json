@@ -1,0 +1,53 @@
+{
+  "common": {
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "loading": "लोड हो रहा है...",
+    "saving": "सहेज रहे हैं…",
+    "saveChanges": "परिवर्तन सहेजें",
+    "backToHome": "होम पर वापस"
+  },
+  "auth": {
+    "signIn": "साइन इन करें",
+    "createAccount": "खाता बनाएं",
+    "newHere": "नए हैं?",
+    "createNewAccount": "नया खाता बनाएं",
+    "alreadyHaveAccount": "पहले से खाता है?",
+    "signInLink": "साइन इन करें",
+    "selectRole": "अपनी भूमिका चुनें",
+    "fullLegalName": "पूरा कानूनी नाम",
+    "email": "ईमेल पता",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "phone": "फोन नंबर",
+    "address": "पूरा पता",
+    "landmark": "लैंडमार्क",
+    "pinCode": "पिन कोड",
+    "dateOfBirth": "जन्म तिथि",
+    "gender": "लिंग",
+    "preferredLanguage": "पसंदीदा भाषा",
+    "createUserAccount": "उपयोगकर्ता खाता बनाएं",
+    "createAdminAccount": "एडमिन खाता बनाएं",
+    "signInAsUser": "उपयोगकर्ता के रूप में साइन इन करें",
+    "signInAsAdmin": "एडमिन के रूप में साइन इन करें",
+    "pleaseWait": "कृपया प्रतीक्षा करें…",
+    "termsNotice": "जारी रखकर, आप हमारी सेवा की शर्तें और गोपनीयता नीति से सहमत हैं।",
+    "male": "पुरुष",
+    "female": "महिला",
+    "other": "अन्य",
+    "preferNotToSay": "कहना पसंद नहीं"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "mr": "मराठी (Marathi)"
+  },
+  "profile": {
+    "title": "प्रोफाइल",
+    "editInfo": "नीचे अपनी जानकारी संपादित करें",
+    "emailCannotChange": "ईमेल बदला नहीं जा सकता",
+    "profileUpdated": "प्रोफाइल अपडेट हो गई",
+    "failedToLoad": "प्रोफाइल लोड करने में विफल",
+    "failedToUpdate": "प्रोफाइल अपडेट करने में विफल"
+  }
+}

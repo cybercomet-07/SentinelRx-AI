@@ -47,6 +47,7 @@ def register_user(db: Session, payload: RegisterRequest) -> TokenResponse:
         pin_code=payload.pin_code,
         date_of_birth=payload.date_of_birth,
         gender=payload.gender,
+        preferred_language=payload.preferred_language or "en",
     )
     db.add(user)
     db.flush()

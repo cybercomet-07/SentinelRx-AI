@@ -31,3 +31,4 @@ class User(Base):
     pin_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
     gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    preferred_language: Mapped[str | None] = mapped_column(String(10), nullable=True, default="en")
