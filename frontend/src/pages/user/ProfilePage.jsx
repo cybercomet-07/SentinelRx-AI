@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
 import { User, Mail, Phone, MapPin, Calendar, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { SUPPORTED } from '../../i18n'
+import i18n from '../../i18n'
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const { user, updateUser } = useAuth()
   const [form, setForm] = useState({
     name: '',
@@ -15,6 +19,7 @@ export default function ProfilePage() {
     pin_code: '',
     date_of_birth: '',
     gender: '',
+    preferred_language: 'en',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -32,6 +37,7 @@ export default function ProfilePage() {
         pin_code: user.pin_code ?? prev.pin_code,
         date_of_birth: user.date_of_birth ? String(user.date_of_birth).split('T')[0] : prev.date_of_birth,
         gender: user.gender || prev.gender || 'prefer_not_to_say',
+        preferred_language: user.preferred_language || prev.preferred_language || 'en',
       }))
     }
     authService.me()
@@ -46,15 +52,27 @@ export default function ProfilePage() {
           pin_code: u?.pin_code || '',
           date_of_birth: u?.date_of_birth ? String(u.date_of_birth).split('T')[0] : '',
           gender: u?.gender || 'prefer_not_to_say',
+          preferred_language: u?.preferred_language || 'en',
         })
       })
-      .catch(() => toast.error('Failed to load profile'))
+      .catch(() => toast.error(t('profile.failedToLoad')))
       .finally(() => setLoading(false))
   }, [user?.id])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((f) => ({ ...f, [name]: value }))
+    if (name === 'preferred_language') {
+      const code = value || 'en'
+      authService.updateProfile({ preferred_language: code })
+        .then((res) => {
+          updateUser({ ...user, preferred_language: code })
+          i18n.changeLanguage(code)
+          localStorage.setItem('sentinelrx_lang', code)
+          toast.success(t('profile.profileUpdated'))
+        })
+        .catch(() => toast.error(t('profile.failedToUpdate')))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -77,6 +95,7 @@ export default function ProfilePage() {
         pin_code: form.pin_code.trim(),
         date_of_birth: form.date_of_birth,
         gender: form.gender || 'prefer_not_to_say',
+        preferred_language: form.preferred_language || 'en',
       })
       const updated = res.data
       updateUser({ ...user, ...updated })
@@ -89,10 +108,11 @@ export default function ProfilePage() {
         pin_code: updated.pin_code ?? prev.pin_code,
         date_of_birth: updated.date_of_birth ? updated.date_of_birth.split('T')[0] : prev.date_of_birth,
         gender: updated.gender ?? prev.gender,
+        preferred_language: updated.preferred_language ?? prev.preferred_language,
       }))
-      toast.success('Profile updated')
+      toast.success(t('profile.profileUpdated'))
     } catch (err) {
-      toast.error(err.response?.data?.detail?.[0]?.msg || err.response?.data?.detail || 'Failed to update profile')
+      toast.error(err.response?.data?.detail?.[0]?.msg || err.response?.data?.detail || t('profile.failedToUpdate'))
     } finally {
       setSaving(false)
     }
@@ -234,10 +254,23 @@ export default function ProfilePage() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-white"
             >
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
+              <option value="male">{t('auth.male')}</option>
+              <option value="female">{t('auth.female')}</option>
+              <option value="other">{t('auth.other')}</option>
+              <option value="prefer_not_to_say">{t('auth.preferNotToSay')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.preferredLanguage')}</label>
+            <select
+              name="preferred_language"
+              value={form.preferred_language || 'en'}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-white"
+            >
+              {SUPPORTED.map((code) => (
+                <option key={code} value={code}>{t(`languages.${code}`)}</option>
+              ))}
             </select>
           </div>
           <button
@@ -245,7 +278,7 @@ export default function ProfilePage() {
             disabled={saving}
             className="w-full py-3 bg-teal-500 hover:bg-teal-600 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
           >
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? t('common.saving') : t('common.saveChanges')}
           </button>
         </form>
       </div>

@@ -16,6 +16,7 @@ class RegisterRequest(BaseModel):
     pin_code: str = Field(min_length=5, max_length=10, description="PIN code")
     date_of_birth: date = Field(description="Date of birth")
     gender: str | None = Field(default=None, max_length=20, description="Gender")
+    preferred_language: str | None = Field(default="en", max_length=10, description="en, hi, mr")
 
 
 class LoginRequest(BaseModel):
@@ -51,6 +52,7 @@ class UserProfile(BaseModel):
     pin_code: str | None = None
     date_of_birth: date | None = None
     gender: str | None = None
+    preferred_language: str | None = None
 
 
 class ProfileUpdate(BaseModel):
@@ -61,3 +63,4 @@ class ProfileUpdate(BaseModel):
     pin_code: str | None = Field(default=None, min_length=5, max_length=10)
     date_of_birth: date | None = None
     gender: str | None = Field(default=None, max_length=20)
+    preferred_language: str | None = Field(default=None, max_length=10)
