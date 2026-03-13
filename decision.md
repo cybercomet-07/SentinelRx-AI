@@ -70,4 +70,4 @@ Decisions made during SentinelRx-AI development.
 
 **Decision:** Use browser Web Speech API (SpeechRecognition, SpeechSynthesis).
 
-**Rationale:** No extra backend or third-party cost. Multilingual prompts (Hindi, Marathi, etc.) via `voicePrompts.js`. Listening starts after TTS ends to avoid feedback.
+
