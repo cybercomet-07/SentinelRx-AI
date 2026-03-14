@@ -66,7 +66,10 @@ export default function Login() {
 
   useEffect(() => {
     const stored = localStorage.getItem('sentinelrx_lang')
-    if (stored && SUPPORTED.includes(stored)) setPreferredLanguage(stored)
+    if (stored && SUPPORTED.includes(stored)) {
+      setPreferredLanguage(stored)
+      i18n.changeLanguage(stored)
+    }
   }, [])
 
   useEffect(() => {
@@ -285,27 +288,25 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Preferred Language (signup only) */}
-          {mode === 'signup' && (
-            <div className="mb-6">
-              <label htmlFor="signup-lang" className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.preferredLanguage')}</label>
-              <select
-                id="signup-lang"
-                value={preferredLanguage}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setPreferredLanguage(v)
-                  i18n.changeLanguage(v)
-                  localStorage.setItem('sentinelrx_lang', v)
-                }}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white"
-              >
-                {SUPPORTED.map((code) => (
-                  <option key={code} value={code}>{t(`languages.${code}`)}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Preferred Language - show for both signin and signup so login page uses user's choice */}
+          <div className="mb-6">
+            <label htmlFor="login-lang" className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.preferredLanguage')}</label>
+            <select
+              id="login-lang"
+              value={preferredLanguage}
+              onChange={(e) => {
+                const v = e.target.value
+                setPreferredLanguage(v)
+                i18n.changeLanguage(v)
+                localStorage.setItem('sentinelrx_lang', v)
+              }}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white"
+            >
+              {SUPPORTED.map((code) => (
+                <option key={code} value={code}>{t(`languages.${code}`)}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

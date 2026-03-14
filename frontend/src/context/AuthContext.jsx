@@ -5,7 +5,7 @@ import i18n from '../i18n'
 const AuthContext = createContext(null)
 
 function syncLanguage(lang) {
-  const code = ['en', 'hi', 'mr'].includes(lang) ? lang : 'en'
+  const code = (lang && ['en', 'hi', 'mr'].includes(lang)) ? lang : 'en'
   i18n.changeLanguage(code)
   localStorage.setItem('sentinelrx_lang', code)
 }
@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
         const fresh = { ...r.data, role: r.data.role?.toLowerCase() || 'user' }
         setUser(fresh)
         localStorage.setItem('sentinelrx_user', JSON.stringify(fresh))
-        syncLanguage(fresh.preferred_language)
+        syncLanguage(fresh.preferred_language || 'en')
       })
       .catch(() => {
         setUser(null)
@@ -46,15 +46,13 @@ export function AuthProvider({ children }) {
     localStorage.setItem('sentinelrx_user', JSON.stringify(userData))
     localStorage.setItem('sentinelrx_token', token)
     setUser(userData)
-    syncLanguage(userData.preferred_language)
+    syncLanguage(userData.preferred_language || 'en')
   }
 
   const updateUser = (userData) => {
     localStorage.setItem('sentinelrx_user', JSON.stringify(userData))
     setUser(userData)
-    if (userData.preferred_language != null) {
-      syncLanguage(userData.preferred_language)
-    }
+    syncLanguage(userData.preferred_language ?? 'en')
   }
 
   const logout = () => {
