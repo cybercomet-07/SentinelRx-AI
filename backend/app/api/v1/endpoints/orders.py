@@ -1,13 +1,15 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Body, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import require_roles
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.schemas.order import DeliveryAddressInput, OrderListResponse, OrderRead, OrderStatusUpdateRequest
+from app.services.cloudinary_service import upload_image
 from app.services.order_service import (
     create_order_from_cart,
     get_order_or_404,
@@ -17,6 +19,27 @@ from app.services.order_service import (
 )
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
+
+
+class UploadPaymentReceiptRequest(BaseModel):
+    image: str  # base64 data URL (data:image/...;base64,...)
+
+
+@router.post("/upload-payment-receipt")
+def upload_payment_receipt_endpoint(
+    payload: UploadPaymentReceiptRequest,
+    _current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
+):
+    """Upload UPI transaction screenshot to Cloudinary. Returns URL for use in create-from-cart."""
+    if not payload.image or not str(payload.image).strip().startswith("data:image"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image. Please select an image file (PNG, JPEG, etc.).")
+    result = upload_image(payload.image, folder="payment_receipts")
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Image upload failed. Ensure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set correctly in backend .env",
+        )
+    return {"url": result.get("secure_url", result.get("url", ""))}
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +47,7 @@ logger = logging.getLogger(__name__)
 async def create_order_from_cart_endpoint(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
     try:
         body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
@@ -45,6 +68,7 @@ async def create_order_from_cart_endpoint(
     payment_method = (body.get("payment_method") or "cod").strip().lower()
     if payment_method not in ("cod", "upi"):
         payment_method = "cod"
+    payment_receipt_url = body.get("payment_receipt_url") or None
 
     payload = DeliveryAddressInput(
         delivery_address=body.get("delivery_address") or None,
@@ -52,6 +76,7 @@ async def create_order_from_cart_endpoint(
         delivery_longitude=lng,
         address_source=body.get("address_source") or None,
         payment_method=payment_method,
+        payment_receipt_url=payment_receipt_url,
     )
     logger.debug("create-from-cart payload: addr=%s lat=%s lng=%s source=%s payment=%s",
                  payload.delivery_address, payload.delivery_latitude, payload.delivery_longitude,
@@ -64,6 +89,7 @@ async def create_order_from_cart_endpoint(
         delivery_longitude=payload.delivery_longitude,
         address_source=payload.address_source,
         payment_method=payload.payment_method or "cod",
+        payment_receipt_url=payload.payment_receipt_url,
     )
 
 

@@ -38,4 +38,5 @@ class Order(Base):
     delivery_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     address_source: Mapped[str | None] = mapped_column(String(20), nullable=True)  # live_location | manual
     payment_method: Mapped[str | None] = mapped_column(String(20), nullable=True, default="cod")  # cod | upi
+    payment_receipt_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Cloudinary URL for UPI transaction screenshot
     user: Mapped["User"] = relationship("User", lazy="joined")

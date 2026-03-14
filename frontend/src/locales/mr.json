@@ -187,7 +187,12 @@
     "scanAndPay": "QR स्कॅन करा आणि पैसे द्या",
     "addQRImage": "QR इमेज जोडा",
     "noDeduction": "फेज 1: पैसे कापले जाणार नाहीत। फक्त चाचणीसाठी।",
-    "ivePaid": "मी पैसे दिले"
+    "ivePaid": "मी पैसे दिले",
+    "uploadReceipt": "ट्रान्झॅक्शन स्क्रीनशॉट अपलोड करा",
+    "selectScreenshot": "स्क्रीनशॉट निवडा",
+    "receiptUploaded": "स्क्रीनशॉट अपलोड झाला",
+    "uploadFailed": "अपलोड अयशस्वी",
+    "uploadReceiptFirst": "कृपया प्रथम ट्रान्झॅक्शन स्क्रीनशॉट अपलोड करा"
   },
   "delivery": {
     "whereToDeliver": "तुमचा ऑर्डर कुठे डिलिव्हर करू?",

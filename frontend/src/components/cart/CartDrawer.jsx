@@ -49,15 +49,15 @@ export default function CartDrawer() {
     await doCreateOrder(pendingDelivery, 'cod')
   }
 
-  const handleUpiPaid = async () => {
+  const handleUpiPaid = async (receiptUrl) => {
     setShowUpiModal(false)
-    await doCreateOrder(pendingDelivery, 'upi')
+    await doCreateOrder(pendingDelivery, 'upi', receiptUrl)
   }
 
-  const doCreateOrder = async (delivery, pm) => {
+  const doCreateOrder = async (delivery, pm, receiptUrl = null) => {
     setPlacing(true)
     try {
-      await orderService.createFromCart(delivery, pm)
+      await orderService.createFromCart(delivery, pm, receiptUrl)
       toast.success(t('common.orderPlacedSuccess'))
       clearCart()
       setShowPayment(false)

@@ -387,6 +387,7 @@ def process_order_from_chat(
             delivery_longitude=lng,
             address_source=form_data.get("address_source"),
             payment_method=pm,
+            payment_receipt_url=form_data.get("payment_receipt_url"),
         )
         db.add(order)
         db.flush()

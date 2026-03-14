@@ -3,7 +3,7 @@ import { cartService } from './cartService'
 
 export const orderService = {
   /** Create order from backend cart. Pass delivery { delivery_address, delivery_latitude, delivery_longitude, address_source } and payment_method (cod | upi). */
-  createFromCart: (delivery, paymentMethod = 'cod') => {
+  createFromCart: (delivery, paymentMethod = 'cod', paymentReceiptUrl = null) => {
     const d = delivery && typeof delivery === 'object' ? delivery : {}
     const body = {
       delivery_address: d.delivery_address ?? null,
@@ -11,9 +11,12 @@ export const orderService = {
       delivery_longitude: typeof d.delivery_longitude === 'number' ? d.delivery_longitude : null,
       address_source: d.address_source ?? null,
       payment_method: paymentMethod === 'upi' ? 'upi' : 'cod',
+      payment_receipt_url: paymentReceiptUrl || null,
     }
     return api.post('/orders/create-from-cart', body)
   },
+  uploadPaymentReceipt: (base64Image) =>
+    api.post('/orders/upload-payment-receipt', { image: base64Image }).then(r => r.data?.url),
 
   /** Place order: syncs items to backend cart, then creates order. Items: [{ medicine_id, quantity }] or [{ id, qty }] */
   placeOrder: async (items) => {

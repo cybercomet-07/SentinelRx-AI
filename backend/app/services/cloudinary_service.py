@@ -9,14 +9,18 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-def upload_prescription_image(file_data: str | bytes, folder: str = "prescriptions") -> dict[str, Any] | None:
+def upload_image(file_data: str | bytes, folder: str = "prescriptions") -> dict[str, Any] | None:
     """
-    Upload prescription image (base64 data URL or bytes) to Cloudinary.
+    Upload image (base64 data URL or bytes) to Cloudinary.
     Returns dict with url, public_id, etc. or None if upload fails.
     """
     settings = get_settings()
     if not settings.cloudinary_cloud_name or not settings.cloudinary_api_key or not settings.cloudinary_api_secret:
         logger.warning("Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET")
+        return None
+
+    if not file_data or (isinstance(file_data, str) and len(file_data.strip()) < 50):
+        logger.warning("Upload received empty or invalid image data")
         return None
 
     try:
@@ -39,3 +43,8 @@ def upload_prescription_image(file_data: str | bytes, folder: str = "prescriptio
     except Exception as e:
         logger.exception("Cloudinary upload failed: %s", e)
         return None
+
+
+def upload_prescription_image(file_data: str | bytes, folder: str = "prescriptions") -> dict[str, Any] | None:
+    """Alias for upload_image for prescriptions."""
+    return upload_image(file_data, folder)

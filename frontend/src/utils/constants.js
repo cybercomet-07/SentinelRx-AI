@@ -11,4 +11,13 @@ export const ORDER_STATUS = {
   CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-700' },
 }
 
+// Valid status transitions (must match backend order_service.STATUS_TRANSITIONS)
+export const STATUS_TRANSITIONS = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['OUT_FOR_DELIVERY', 'CANCELLED'],
+  OUT_FOR_DELIVERY: ['DELIVERED'],
+  DELIVERED: [],
+  CANCELLED: [],
+}
+
 export const LOW_STOCK_THRESHOLD = 10

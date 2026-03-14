@@ -303,8 +303,8 @@ export default function UnifiedChatShell() {
   }, [prompt, medicineList])
 
   const processOrderWithPayload = useCallback(
-    async (payload, delivery = null, pm = 'cod') => {
-      const fullPayload = { ...payload, ...delivery, payment_method: pm }
+    async (payload, delivery = null, pm = 'cod', paymentReceiptUrl = null) => {
+      const fullPayload = { ...payload, ...delivery, payment_method: pm, payment_receipt_url: paymentReceiptUrl }
       try {
         const res = await api.post(PROCESS_ORDER_ENDPOINT, fullPayload)
         const data = res.data
@@ -838,10 +838,10 @@ export default function UnifiedChatShell() {
         open={showUpiModal}
         onClose={() => setShowUpiModal(false)}
         totalAmount={0}
-        onPaid={async () => {
+        onPaid={async (receiptUrl) => {
           setShowUpiModal(false)
           setOrderProcessing(true)
-          await processOrderWithPayload(pendingOrder, pendingDelivery, 'upi')
+          await processOrderWithPayload(pendingOrder, pendingDelivery, 'upi', receiptUrl)
           setPendingOrder(null)
           setPendingDelivery(null)
           setShowPaymentStep(false)

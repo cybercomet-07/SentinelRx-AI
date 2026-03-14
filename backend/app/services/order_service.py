@@ -63,6 +63,7 @@ def _build_order_read(db: Session, order: Order) -> OrderRead:
         delivery_longitude=order.delivery_longitude,
         address_source=order.address_source,
         payment_method=getattr(order, "payment_method", None),
+        payment_receipt_url=getattr(order, "payment_receipt_url", None),
     )
 
 
@@ -116,6 +117,7 @@ def _build_order_list(db: Session, orders: list[Order]) -> list[OrderRead]:
             delivery_longitude=order.delivery_longitude,
             address_source=order.address_source,
             payment_method=getattr(order, "payment_method", None),
+            payment_receipt_url=getattr(order, "payment_receipt_url", None),
         ))
     return result
 
@@ -128,6 +130,7 @@ def create_order_from_cart(
     delivery_longitude: float | None = None,
     address_source: str | None = None,
     payment_method: str = "cod",
+    payment_receipt_url: str | None = None,
 ) -> OrderRead:
     cart_items = db.query(Cart).filter(Cart.user_id == user.id).all()
     if not cart_items:
@@ -174,6 +177,7 @@ def create_order_from_cart(
         delivery_longitude=lng or delivery_longitude,
         address_source=address_source,
         payment_method=payment_method if payment_method in ("cod", "upi") else "cod",
+        payment_receipt_url=payment_receipt_url,
     )
     db.add(order)
     db.flush()
@@ -261,6 +265,7 @@ def _build_order_list_with_users(
             delivery_longitude=order.delivery_longitude,
             address_source=order.address_source,
             payment_method=getattr(order, "payment_method", None),
+            payment_receipt_url=getattr(order, "payment_receipt_url", None),
         ))
     return result
 

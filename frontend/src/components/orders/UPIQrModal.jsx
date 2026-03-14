@@ -1,45 +1,70 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Smartphone, ArrowLeft } from 'lucide-react'
-
-const UPI_QR_GPAY = '/upi-qr-gpay.png'
-const UPI_QR_PHONEPE = '/upi-qr-phonepe.png'
+import { X, Smartphone, ArrowLeft, Upload, Image } from 'lucide-react'
+import QRCode from 'qrcode'
+import { buildUpiUrl } from '../../utils/upiConfig'
+import { orderService } from '../../services/orderService'
+import toast from 'react-hot-toast'
 
 const UPI_APPS = [
-  { id: 'phonepe', label: 'PhonePe', src: UPI_QR_PHONEPE },
-  { id: 'gpay', label: 'Google Pay', src: UPI_QR_GPAY },
+  { id: 'phonepe', label: 'PhonePe' },
+  { id: 'gpay', label: 'Google Pay' },
 ]
 
-function QRDisplay({ src, label, placeholder, size = 280 }) {
-  const [errored, setErrored] = useState(false)
+function DynamicQRDisplay({ upiUrl, label, size = 260 }) {
+  const [dataUrl, setDataUrl] = useState(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    if (!upiUrl) return
+    setError(false)
+    QRCode.toDataURL(upiUrl, { width: size, margin: 2, color: { dark: '#000', light: '#fff' } })
+      .then(setDataUrl)
+      .catch(() => setError(true))
+  }, [upiUrl, size])
+
+  if (error || !dataUrl) {
+    return (
+      <div className="text-center">
+        <p className="text-sm font-semibold text-gray-700 mb-3">{label}</p>
+        <div className="flex items-center justify-center w-[260px] h-[260px] mx-auto border-2 border-gray-200 rounded-2xl bg-gray-50">
+          <span className="text-sm text-gray-500 px-4">Failed to generate QR</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="text-center">
       <p className="text-sm font-semibold text-gray-700 mb-3">{label}</p>
-      <div
-        className="border-2 border-gray-200 rounded-2xl bg-white flex items-center justify-center overflow-hidden mx-auto shadow-sm"
-        style={{ width: size, height: size }}
-      >
-        {!errored ? (
-          <img
-            src={src}
-            alt={`${label} UPI QR`}
-            className="w-full h-full object-contain p-2"
-            onError={() => setErrored(true)}
-          />
-        ) : (
-          <span className="text-sm text-gray-500 px-4 text-center">{placeholder}</span>
-        )}
+      <div className="border-2 border-gray-200 rounded-2xl bg-white flex items-center justify-center overflow-hidden mx-auto shadow-sm p-3" style={{ width: size, height: size }}>
+        <img src={dataUrl} alt={`${label} UPI QR`} className="w-full h-full object-contain" />
       </div>
     </div>
   )
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function UPIQrModal({ open, onClose, totalAmount, onPaid }) {
   const { t } = useTranslation()
   const [selectedApp, setSelectedApp] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [receiptPreview, setReceiptPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
-    if (!open) setSelectedApp(null)
+    if (!open) {
+      setSelectedApp(null)
+      setReceiptPreview(null)
+    }
   }, [open])
 
   if (!open) return null
@@ -50,6 +75,10 @@ export default function UPIQrModal({ open, onClose, totalAmount, onPaid }) {
   }
 
   const app = selectedApp ? UPI_APPS.find((a) => a.id === selectedApp) : null
+
+  // Phase 1: amount=0 so amount auto-fills when user scans. For Phase 2, use totalAmount.
+  const upiAmount = 0
+  const upiUrl = buildUpiUrl(upiAmount)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -100,18 +129,72 @@ export default function UPIQrModal({ open, onClose, totalAmount, onPaid }) {
             <p className="text-xl font-bold text-mint-700 mb-5">₹{totalAmount}</p>
 
             <div className="flex justify-center mb-5">
-              <QRDisplay
-                src={app.src}
-                label={app.label}
-                placeholder={t('payment.addQRImage')}
-                size={260}
-              />
+              <DynamicQRDisplay upiUrl={upiUrl} label={app.label} size={260} />
             </div>
+            <p className="text-xs text-slate-500 mb-2">Amount ₹{upiAmount} will auto-fill when you scan</p>
 
             <p className="text-xs text-gray-400 mb-4">{t('payment.noDeduction')}</p>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                {t('payment.uploadReceipt') || 'Upload transaction screenshot'}
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target?.files?.[0]
+                  if (!file) return
+                  setUploading(true)
+                  try {
+                    const base64 = await fileToBase64(file)
+                    const url = await orderService.uploadPaymentReceipt(base64)
+                    if (url) {
+                      setReceiptPreview(url)
+                      toast.success(t('payment.receiptUploaded') || 'Screenshot uploaded')
+                    } else {
+                      toast.error(t('payment.uploadFailed') || 'Upload failed')
+                    }
+                  } catch (err) {
+                    const msg = err.response?.data?.detail || err.response?.data?.message || err.message
+                    toast.error(typeof msg === 'string' ? msg : (t('payment.uploadFailed') || 'Upload failed'))
+                  } finally {
+                    setUploading(false)
+                    e.target.value = ''
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full py-2.5 border-2 border-dashed border-gray-300 hover:border-mint-400 rounded-xl flex items-center justify-center gap-2 text-gray-600 hover:text-mint-600 transition-colors disabled:opacity-60"
+              >
+                {receiptPreview ? (
+                  <>
+                <Image size={20} className="text-green-600" />
+                <span className="text-sm font-medium">{t('payment.receiptUploaded') || 'Screenshot uploaded ✓'}</span>
+                  </>
+                ) : (
+                  <>
+                <Upload size={20} />
+                <span className="text-sm font-medium">{uploading ? t('common.loading') : (t('payment.selectScreenshot') || 'Select screenshot')}</span>
+                  </>
+                )}
+              </button>
+              {receiptPreview && (
+                <div className="flex justify-center">
+                  <img src={receiptPreview} alt="Receipt" className="max-h-24 rounded-lg border border-gray-200 object-cover" />
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={onPaid}
-              className="w-full py-3 bg-mint-500 hover:bg-mint-600 text-white font-semibold rounded-xl transition-colors"
+              onClick={() => receiptPreview ? onPaid(receiptPreview) : toast.error(t('payment.uploadReceiptFirst') || 'Please upload transaction screenshot first')}
+              disabled={!receiptPreview || uploading}
+              className="w-full py-3 bg-mint-500 hover:bg-mint-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-3"
             >
               {t('payment.ivePaid')}
             </button>

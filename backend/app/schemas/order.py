@@ -21,6 +21,7 @@ class DeliveryAddressInput(BaseModel):
     delivery_longitude: float | None = None
     address_source: str | None = None  # live_location | manual
     payment_method: str = Field(default="cod", description="cod | upi")
+    payment_receipt_url: str | None = None  # Cloudinary URL for UPI transaction screenshot
 
 
 class OrderRead(BaseModel):
@@ -39,6 +40,7 @@ class OrderRead(BaseModel):
     delivery_longitude: float | None = None
     address_source: str | None = None
     payment_method: str | None = None  # cod | upi
+    payment_receipt_url: str | None = None  # Cloudinary URL for UPI transaction screenshot
 
 
 class OrderListResponse(BaseModel):

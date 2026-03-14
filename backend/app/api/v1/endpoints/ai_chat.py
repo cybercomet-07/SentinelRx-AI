@@ -276,6 +276,7 @@ class ProcessOrderRequest(BaseModel):
     delivery_longitude: float | None = None
     address_source: str | None = None
     payment_method: str = "cod"  # cod | upi
+    payment_receipt_url: str | None = None  # Cloudinary URL for UPI transaction screenshot
 
 
 @router.post("/process-order")
@@ -298,6 +299,7 @@ def process_order(
             "delivery_longitude": payload.delivery_longitude,
             "address_source": payload.address_source,
             "payment_method": pm,
+            "payment_receipt_url": payload.payment_receipt_url,
         }
         result = process_order_from_chat(db, form_data, current_user.id)
         return JSONResponse(content=result)

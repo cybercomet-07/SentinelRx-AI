@@ -187,7 +187,12 @@
     "scanAndPay": "Scan QR and pay",
     "addQRImage": "Add QR image",
     "noDeduction": "Phase 1: No money will be deducted. For testing only.",
-    "ivePaid": "I've paid"
+    "ivePaid": "I've paid",
+    "uploadReceipt": "Upload transaction screenshot",
+    "selectScreenshot": "Select screenshot",
+    "receiptUploaded": "Screenshot uploaded",
+    "uploadFailed": "Upload failed",
+    "uploadReceiptFirst": "Please upload transaction screenshot first"
   },
   "delivery": {
     "whereToDeliver": "Where should we deliver your order?",
