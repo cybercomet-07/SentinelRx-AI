@@ -37,4 +37,5 @@ class Order(Base):
     delivery_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     delivery_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     address_source: Mapped[str | None] = mapped_column(String(20), nullable=True)  # live_location | manual
+    payment_method: Mapped[str | None] = mapped_column(String(20), nullable=True, default="cod")  # cod | upi
     user: Mapped["User"] = relationship("User", lazy="joined")

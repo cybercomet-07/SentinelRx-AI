@@ -275,6 +275,7 @@ class ProcessOrderRequest(BaseModel):
     delivery_latitude: float | None = None
     delivery_longitude: float | None = None
     address_source: str | None = None
+    payment_method: str = "cod"  # cod | upi
 
 
 @router.post("/process-order")
@@ -285,6 +286,9 @@ def process_order(
 ):
     """Process order confirm/cancel from chat. Accepts JSON payload."""
     try:
+        pm = (payload.payment_method or "cod").strip().lower()
+        if pm not in ("cod", "upi"):
+            pm = "cod"
         form_data = {
             "order_id": payload.order_id.strip(),
             "action": payload.action.strip().lower(),
@@ -293,6 +297,7 @@ def process_order(
             "delivery_latitude": payload.delivery_latitude,
             "delivery_longitude": payload.delivery_longitude,
             "address_source": payload.address_source,
+            "payment_method": pm,
         }
         result = process_order_from_chat(db, form_data, current_user.id)
         return JSONResponse(content=result)

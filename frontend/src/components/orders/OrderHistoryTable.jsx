@@ -7,7 +7,11 @@ export default function OrderHistoryTable({ orders }) {
     <div className="text-center py-16 text-gray-400">{t('common.noOrdersYet')}</div>
   )
 
-  const headers = [t('orderHistory.orderId'), t('orderHistory.date'), t('orderHistory.medicines'), t('orderHistory.total'), t('orderHistory.status')]
+  const headers = [t('orderHistory.orderId'), t('orderHistory.date'), t('orderHistory.medicines'), t('orderHistory.total'), t('orderHistory.paymentMethod'), t('orderHistory.status')]
+  const getPaymentLabel = (pm) => {
+    if (!pm) return '—'
+    return pm === 'upi' ? 'UPI' : pm === 'cod' ? 'Cash on Delivery' : pm
+  }
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
       <table className="w-full text-sm">
@@ -24,7 +28,8 @@ export default function OrderHistoryTable({ orders }) {
               <td className="px-4 py-3 font-mono text-xs text-gray-500">#{order.id}</td>
               <td className="px-4 py-3 text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
               <td className="px-4 py-3 text-gray-800">{order.items?.map(i => `${i.medicine_name} ×${i.quantity}`).join(', ') || '—'}</td>
-              <td className="px-4 py-3 font-semibold text-mint-700">₹{order.total}</td>
+              <td className="px-4 py-3 font-semibold text-mint-700">₹{order.total_amount ?? order.total}</td>
+              <td className="px-4 py-3 text-gray-600">{getPaymentLabel(order.payment_method)}</td>
               <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
             </tr>
           ))}

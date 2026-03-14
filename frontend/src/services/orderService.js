@@ -2,14 +2,15 @@ import api from './api'
 import { cartService } from './cartService'
 
 export const orderService = {
-  /** Create order from backend cart. Pass delivery { delivery_address, delivery_latitude, delivery_longitude, address_source }. */
-  createFromCart: (delivery) => {
+  /** Create order from backend cart. Pass delivery { delivery_address, delivery_latitude, delivery_longitude, address_source } and payment_method (cod | upi). */
+  createFromCart: (delivery, paymentMethod = 'cod') => {
     const d = delivery && typeof delivery === 'object' ? delivery : {}
     const body = {
       delivery_address: d.delivery_address ?? null,
       delivery_latitude: typeof d.delivery_latitude === 'number' ? d.delivery_latitude : null,
       delivery_longitude: typeof d.delivery_longitude === 'number' ? d.delivery_longitude : null,
       address_source: d.address_source ?? null,
+      payment_method: paymentMethod === 'upi' ? 'upi' : 'cod',
     }
     return api.post('/orders/create-from-cart', body)
   },

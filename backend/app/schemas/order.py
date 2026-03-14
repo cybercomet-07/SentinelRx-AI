@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.order import OrderStatus
 
@@ -20,6 +20,7 @@ class DeliveryAddressInput(BaseModel):
     delivery_latitude: float | None = None
     delivery_longitude: float | None = None
     address_source: str | None = None  # live_location | manual
+    payment_method: str = Field(default="cod", description="cod | upi")
 
 
 class OrderRead(BaseModel):
@@ -37,6 +38,7 @@ class OrderRead(BaseModel):
     delivery_latitude: float | None = None
     delivery_longitude: float | None = None
     address_source: str | None = None
+    payment_method: str | None = None  # cod | upi
 
 
 class OrderListResponse(BaseModel):

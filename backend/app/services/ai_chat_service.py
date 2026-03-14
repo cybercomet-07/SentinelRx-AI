@@ -374,6 +374,9 @@ def process_order_from_chat(
             else:
                 geocoded_lat, geocoded_lng = geocode_address(addr)
                 lat, lng = lat or geocoded_lat, lng or geocoded_lng
+        pm = (form_data.get("payment_method") or "cod").strip().lower()
+        if pm not in ("cod", "upi"):
+            pm = "cod"
         order = Order(
             user_id=user_id,
             user_name=customer_name,
@@ -383,6 +386,7 @@ def process_order_from_chat(
             delivery_latitude=lat,
             delivery_longitude=lng,
             address_source=form_data.get("address_source"),
+            payment_method=pm,
         )
         db.add(order)
         db.flush()

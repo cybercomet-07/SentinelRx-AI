@@ -5,16 +5,26 @@ import { useAuthContext } from '../../context/AuthContext'
 import CartItem from './CartItem'
 import OrderSummary from './OrderSummary'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
+import PaymentMethodStep from '../orders/PaymentMethodStep'
+import UPIQrModal from '../orders/UPIQrModal'
 import { orderService } from '../../services/orderService'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 
+const DELIVERY_FEE = 30
+
 export default function CartDrawer() {
   const { t } = useTranslation()
   const { user } = useAuthContext()
-  const { open, setOpen, items, clearCart } = useCart()
+  const { open, setOpen, items, clearCart, total } = useCart()
   const [placing, setPlacing] = useState(false)
   const [showAddress, setShowAddress] = useState(false)
+  const [showPayment, setShowPayment] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('cod')
+  const [showUpiModal, setShowUpiModal] = useState(false)
+  const [pendingDelivery, setPendingDelivery] = useState(null)
+
+  const grandTotal = (total || 0) + DELIVERY_FEE
 
   const handlePlaceOrder = () => {
     if (!items.length) return
@@ -25,13 +35,34 @@ export default function CartDrawer() {
     setShowAddress(true)
   }
 
-  const handleAddressSubmit = async (delivery) => {
+  const handleAddressSubmit = (delivery) => {
+    setPendingDelivery(delivery)
+    setShowAddress(false)
+    setShowPayment(true)
+  }
+
+  const handlePaymentSubmit = async () => {
+    if (paymentMethod === 'upi') {
+      setShowUpiModal(true)
+      return
+    }
+    await doCreateOrder(pendingDelivery, 'cod')
+  }
+
+  const handleUpiPaid = async () => {
+    setShowUpiModal(false)
+    await doCreateOrder(pendingDelivery, 'upi')
+  }
+
+  const doCreateOrder = async (delivery, pm) => {
     setPlacing(true)
     try {
-      await orderService.createFromCart(delivery)
+      await orderService.createFromCart(delivery, pm)
       toast.success(t('common.orderPlacedSuccess'))
       clearCart()
-      setShowAddress(false)
+      setShowPayment(false)
+      setPendingDelivery(null)
+      setPaymentMethod('cod')
       setOpen(false)
     } catch {
       toast.error(t('common.failedToPlaceOrder'))
@@ -79,6 +110,26 @@ export default function CartDrawer() {
                   loading={placing}
                 />
               </div>
+            ) : showPayment ? (
+              <div className="space-y-4">
+                <PaymentMethodStep value={paymentMethod} onChange={setPaymentMethod} />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowPayment(false); setPendingDelivery(null) }}
+                    className="flex-1 py-2.5 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={handlePaymentSubmit}
+                    disabled={placing}
+                    className="flex-1 py-2.5 bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white rounded-xl font-semibold text-sm"
+                  >
+                    {placing ? t('common.loading') : t('common.placeOrder')}
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <OrderSummary />
@@ -94,6 +145,12 @@ export default function CartDrawer() {
           </div>
         )}
       </div>
+      <UPIQrModal
+        open={showUpiModal}
+        onClose={() => setShowUpiModal(false)}
+        totalAmount={grandTotal}
+        onPaid={handleUpiPaid}
+      />
     </>
   )
 }
