@@ -160,6 +160,7 @@
     "date": "तिथि",
     "medicines": "दवाएं",
     "total": "कुल",
+    "paymentMethod": "भुगतान",
     "status": "स्थिति"
   },
   "chat": {
@@ -172,6 +173,21 @@
     "orderCancelled": "ऑर्डर सफलतापूर्वक रद्द हुआ।",
     "orderProcessingFailed": "ऑर्डर प्रोसेसिंग विफल।",
     "orderConfirmedDetails": "✓ ऑर्डर पुष्टि हुई! यहां आपके ऑर्डर विवरण हैं:"
+  },
+  "payment": {
+    "selectMethod": "भुगतान विधि चुनें",
+    "cashOnDelivery": "कैश ऑन डिलीवरी",
+    "codDesc": "डिलीवरी पर भुगतान करें",
+    "upi": "UPI",
+    "upiDesc": "QR से अभी भुगतान करें",
+    "selectUPIApp": "अपना UPI ऐप चुनें",
+    "chooseAppToScan": "QR स्कैन करने के लिए PhonePe या Google Pay चुनें",
+    "backToSelect": "ऐप चुनने के लिए वापस",
+    "payViaUPI": "UPI से भुगतान करें",
+    "scanAndPay": "QR स्कैन करें और भुगतान करें",
+    "addQRImage": "QR इमेज जोड़ें",
+    "noDeduction": "फेज़ 1: कोई पैसा कटेगा नहीं। केवल टेस्टिंग के लिए।",
+    "ivePaid": "मैंने भुगतान कर दिया"
   },
   "delivery": {
     "whereToDeliver": "आपका ऑर्डर कहां डिलीवर करें?",

@@ -160,6 +160,7 @@
     "date": "Date",
     "medicines": "Medicines",
     "total": "Total",
+    "paymentMethod": "Payment",
     "status": "Status"
   },
   "chat": {
@@ -172,6 +173,21 @@
     "orderCancelled": "Order cancelled successfully.",
     "orderProcessingFailed": "Order processing failed.",
     "orderConfirmedDetails": "✓ Order confirmed! Here are your order details:"
+  },
+  "payment": {
+    "selectMethod": "Select payment method",
+    "cashOnDelivery": "Cash on Delivery",
+    "codDesc": "Pay when delivered",
+    "upi": "UPI",
+    "upiDesc": "Pay now via QR",
+    "selectUPIApp": "Select your UPI app",
+    "chooseAppToScan": "Choose PhonePe or Google Pay to scan the QR code",
+    "backToSelect": "Back to select app",
+    "payViaUPI": "Pay via UPI",
+    "scanAndPay": "Scan QR and pay",
+    "addQRImage": "Add QR image",
+    "noDeduction": "Phase 1: No money will be deducted. For testing only.",
+    "ivePaid": "I've paid"
   },
   "delivery": {
     "whereToDeliver": "Where should we deliver your order?",

@@ -42,14 +42,20 @@ async def create_order_from_cart_endpoint(
             lng = float(lng)
         except (TypeError, ValueError):
             lng = None
+    payment_method = (body.get("payment_method") or "cod").strip().lower()
+    if payment_method not in ("cod", "upi"):
+        payment_method = "cod"
+
     payload = DeliveryAddressInput(
         delivery_address=body.get("delivery_address") or None,
         delivery_latitude=lat,
         delivery_longitude=lng,
         address_source=body.get("address_source") or None,
+        payment_method=payment_method,
     )
-    logger.debug("create-from-cart payload: addr=%s lat=%s lng=%s source=%s",
-                 payload.delivery_address, payload.delivery_latitude, payload.delivery_longitude, payload.address_source)
+    logger.debug("create-from-cart payload: addr=%s lat=%s lng=%s source=%s payment=%s",
+                 payload.delivery_address, payload.delivery_latitude, payload.delivery_longitude,
+                 payload.address_source, payload.payment_method)
     return create_order_from_cart(
         db,
         current_user,
@@ -57,6 +63,7 @@ async def create_order_from_cart_endpoint(
         delivery_latitude=payload.delivery_latitude,
         delivery_longitude=payload.delivery_longitude,
         address_source=payload.address_source,
+        payment_method=payload.payment_method or "cod",
     )
 
 

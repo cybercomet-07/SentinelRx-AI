@@ -7,6 +7,8 @@ import { useVoice } from '../../hooks/useVoice'
 import { VOICE_LANGUAGES } from '../../utils/voiceLanguages'
 import { getVoicePrompt } from '../../utils/voicePrompts'
 import DeliveryAddressForm from '../orders/DeliveryAddressForm'
+import PaymentMethodStep from '../orders/PaymentMethodStep'
+import UPIQrModal from '../orders/UPIQrModal'
 
 const UNIFIED_CHAT_ENDPOINT = 'ai-chat/unified-chat'
 const MEDICINES_ENDPOINT = 'ai-chat/medicines'
@@ -156,6 +158,10 @@ export default function UnifiedChatShell() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [medicineList, setMedicineList] = useState([])
   const [pendingOrder, setPendingOrder] = useState(null)
+  const [pendingDelivery, setPendingDelivery] = useState(null)
+  const [showPaymentStep, setShowPaymentStep] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('cod')
+  const [showUpiModal, setShowUpiModal] = useState(false)
   const addMessageRef = useRef(null)
   const addMessage = useCallback((role, content, isHtml = false, orderData = null) => {
     setMessages((prev) => {
@@ -297,8 +303,8 @@ export default function UnifiedChatShell() {
   }, [prompt, medicineList])
 
   const processOrderWithPayload = useCallback(
-    async (payload, delivery = null) => {
-      const fullPayload = { ...payload, ...delivery }
+    async (payload, delivery = null, pm = 'cod') => {
+      const fullPayload = { ...payload, ...delivery, payment_method: pm }
       try {
         const res = await api.post(PROCESS_ORDER_ENDPOINT, fullPayload)
         const data = res.data
@@ -780,21 +786,68 @@ export default function UnifiedChatShell() {
       {pendingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="font-semibold text-slate-900 mb-3">Delivery Address</h3>
-            <p className="text-sm text-slate-600 mb-4">Please provide where we should deliver your order.</p>
-            <DeliveryAddressForm
-              onSubmit={async (delivery) => {
-                setOrderProcessing(true)
-                await processOrderWithPayload(pendingOrder, delivery)
-                setPendingOrder(null)
-                setOrderProcessing(false)
-              }}
-              onCancel={() => setPendingOrder(null)}
-              loading={orderProcessing}
-            />
+            {!showPaymentStep ? (
+              <>
+                <h3 className="font-semibold text-slate-900 mb-3">{t('common.deliveryAddress')}</h3>
+                <p className="text-sm text-slate-600 mb-4">{t('delivery.provideAddress')}</p>
+                <DeliveryAddressForm
+                  onSubmit={(delivery) => {
+                    setPendingDelivery(delivery)
+                    setShowPaymentStep(true)
+                  }}
+                  onCancel={() => { setPendingOrder(null); setPendingDelivery(null) }}
+                  loading={false}
+                />
+              </>
+            ) : (
+              <div className="space-y-4">
+                <PaymentMethodStep value={paymentMethod} onChange={setPaymentMethod} />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowPaymentStep(false); setPendingDelivery(null) }}
+                    className="flex-1 py-2.5 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (paymentMethod === 'upi') {
+                        setShowUpiModal(true)
+                        return
+                      }
+                      setOrderProcessing(true)
+                      await processOrderWithPayload(pendingOrder, pendingDelivery, 'cod')
+                      setPendingOrder(null)
+                      setPendingDelivery(null)
+                      setShowPaymentStep(false)
+                      setOrderProcessing(false)
+                    }}
+                    disabled={orderProcessing}
+                    className="flex-1 py-2.5 bg-mint-500 hover:bg-mint-600 disabled:opacity-60 text-white rounded-xl font-semibold text-sm"
+                  >
+                    {orderProcessing ? t('common.loading') : t('common.placeOrder')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
+      <UPIQrModal
+        open={showUpiModal}
+        onClose={() => setShowUpiModal(false)}
+        totalAmount={0}
+        onPaid={async () => {
+          setShowUpiModal(false)
+          setOrderProcessing(true)
+          await processOrderWithPayload(pendingOrder, pendingDelivery, 'upi')
+          setPendingOrder(null)
+          setPendingDelivery(null)
+          setShowPaymentStep(false)
+          setOrderProcessing(false)
+        }}
+      />
       </div>
     </div>
   )

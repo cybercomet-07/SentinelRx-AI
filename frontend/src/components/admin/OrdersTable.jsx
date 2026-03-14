@@ -19,7 +19,7 @@ export default function OrdersTable({ orders, onRefresh }) {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
-            {['Order ID', 'User', 'Address', 'Medicines', 'Total', 'Status', 'Update'].map(h => (
+            {['Order ID', 'User', 'Address', 'Medicines', 'Total', 'Payment', 'Status', 'Update'].map(h => (
               <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
             ))}
           </tr>
@@ -39,6 +39,7 @@ export default function OrdersTable({ orders, onRefresh }) {
                 <span className="line-clamp-2">{o.items?.map(i => `${i.medicine_name} ×${i.quantity}`).join(', ') || '—'}</span>
               </td>
               <td className="px-4 py-3 font-semibold text-mint-700">₹{o.total_amount ?? o.total ?? 0}</td>
+              <td className="px-4 py-3 text-gray-600 text-xs">{(o.payment_method === 'upi' ? 'UPI' : o.payment_method === 'cod' ? 'COD' : o.payment_method) || '—'}</td>
               <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
               <td className="px-4 py-3">
                 <select
