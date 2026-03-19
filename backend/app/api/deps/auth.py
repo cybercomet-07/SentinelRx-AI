@@ -34,7 +34,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
 
     # Attach the JWT role (selected at login) to the user object so require_roles can use it
-    jwt_role_str = payload.get("role", user.role.value)
+    jwt_role_str = (payload.get("role") or user.role.value).upper()
     try:
         user._jwt_role = UserRole(jwt_role_str)
     except ValueError:
