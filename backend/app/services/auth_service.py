@@ -12,9 +12,10 @@ from app.models.user import User, UserRole
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 
 
-def _build_token_response(user: User) -> TokenResponse:
+def _build_token_response(user: User, role_override: str | None = None) -> TokenResponse:
     settings = get_settings()
-    claims = {"email": user.email, "role": user.role.value}
+    effective_role = role_override if role_override in ("user", "admin") else user.role.value
+    claims = {"email": user.email, "role": effective_role}
     access_token = create_token(
         subject=str(user.id),
         token_type="access",
@@ -62,7 +63,7 @@ def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
-    return _build_token_response(user)
+    return _build_token_response(user, role_override=payload.selected_role)
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:

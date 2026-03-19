@@ -22,6 +22,7 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
+    selected_role: str | None = Field(default=None, description="Role the user selected at login: 'user' or 'admin'")
 
 
 class GoogleLoginRequest(BaseModel):

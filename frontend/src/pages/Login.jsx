@@ -138,22 +138,14 @@ export default function Login() {
 
     setLoading(true)
     try {
-      const res = await authService.login(email, password)
+      const res = await authService.login(email, password, role)
       const token = res.data.access_token
       localStorage.setItem('sentinelrx_token', token)
       const meRes = await authService.me()
-      const backendRole = (meRes.data.role || 'user').toLowerCase()
-      if (role === 'admin' && backendRole !== 'admin') {
-        toast.error('This is not an admin account. Switch to User role.')
-        setLoading(false)
-        return
-      }
-      // Use selected role for session & redirect (user with both roles can choose which panel)
-      const effectiveRole = role
-      const userData = { ...meRes.data, role: effectiveRole }
+      const userData = { ...meRes.data, role }
       login(userData, token)
       toast.success(`Welcome back, ${userData.name}!`)
-      navigate(effectiveRole === 'admin' ? '/admin/dashboard' : '/user/quick-start')
+      navigate(role === 'admin' ? '/admin/dashboard' : '/user/quick-start')
     } catch (err) {
       let msg = err.response?.data?.error?.message || (typeof err.response?.data?.detail === 'string' ? err.response.data.detail : null) || err.message || 'Invalid credentials'
       if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {

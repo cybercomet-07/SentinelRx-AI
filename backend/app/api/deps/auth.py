@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -32,12 +32,22 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
+
+    # Attach the JWT role (selected at login) to the user object so require_roles can use it
+    jwt_role_str = payload.get("role", user.role.value)
+    try:
+        user._jwt_role = UserRole(jwt_role_str)
+    except ValueError:
+        user._jwt_role = user.role
+
     return user
 
 
 def require_roles(*allowed_roles: UserRole) -> Callable:
     def dependency(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in allowed_roles:
+        # Use the role from JWT token (selected at login), not from DB
+        effective_role = getattr(current_user, "_jwt_role", current_user.role)
+        if effective_role not in allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return current_user
 

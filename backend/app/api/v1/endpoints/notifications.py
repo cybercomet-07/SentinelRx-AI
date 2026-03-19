@@ -19,7 +19,8 @@ def list_notifications_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
 ):
-    return list_notifications_for_user(db, current_user, page, limit)
+    jwt_role = getattr(current_user, "_jwt_role", current_user.role)
+    return list_notifications_for_user(db, current_user, page, limit, jwt_role=jwt_role)
 
 
 @router.patch("/{notification_id}/read", response_model=NotificationRead)

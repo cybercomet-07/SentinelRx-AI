@@ -255,12 +255,16 @@ export default function NotificationsPage() {
         </div>
         {notificationsError ? (
           <ErrorState message={t('common.unableToLoadNotifications')} onRetry={loadAll} />
-        ) : notifications.length === 0 ? (
+        ) : (() => {
+          // In user mode, hide admin-only notification types (SYSTEM=new order received, LOW_STOCK, EXPIRING_MEDICINE)
+          const adminOnlyTypes = ['SYSTEM', 'LOW_STOCK', 'EXPIRING_MEDICINE']
+          const visibleNotifs = isAdmin ? notifications : notifications.filter(n => !adminOnlyTypes.includes(n.typ))
+          return visibleNotifs.length === 0 ? (
           <p className="text-sm text-gray-400">{t('common.noNewNotifications')}</p>
         ) : (
           <>
             <div className="space-y-3">
-              {notifications.map((n) => (
+              {visibleNotifs.map((n) => (
                 <div
                   key={n.id}
                   className={`flex items-start gap-3 p-4 rounded-xl border card-lift ${
@@ -285,7 +289,7 @@ export default function NotificationsPage() {
             </div>
             <Pagination page={notifPage} limit={NOTIF_LIMIT} total={notifTotal} onPageChange={setNotifPage} />
           </>
-        )}
+        )})()}
       </section>
     </div>
   )

@@ -68,7 +68,7 @@ def notify_admins_new_order(
             user_id=admin.id,
             title="New order received",
             message=f"Order {order_id} placed by {customer_name} via {src_label}. Total: ₹{total_str}.",
-            typ=NotificationType.ORDER,
+            typ=NotificationType.SYSTEM,
         )
 
 
@@ -146,8 +146,12 @@ def notify_low_stock_to_admins(
         )
 
 
-def list_notifications_for_user(db: Session, user: User, page: int, limit: int) -> NotificationListResponse:
+def list_notifications_for_user(db: Session, user: User, page: int, limit: int, jwt_role=None) -> NotificationListResponse:
     query = db.query(Notification).filter(Notification.user_id == user.id)
+    # When logged in as User, hide admin-only notification types (new order alerts, low stock, expiry)
+    if jwt_role is not None and str(jwt_role.value if hasattr(jwt_role, 'value') else jwt_role).upper() == "USER":
+        query = query.filter(Notification.typ.in_([NotificationType.ORDER, NotificationType.REFILL, NotificationType.SYSTEM])
+        ).filter(~Notification.title.in_(["New order received", "Low stock alert", "Medicine expiring soon"]))
     total = query.count()
     rows = (
         query.order_by(Notification.created_at.desc())
