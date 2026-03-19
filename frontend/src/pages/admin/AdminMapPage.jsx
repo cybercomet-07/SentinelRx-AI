@@ -93,7 +93,7 @@ export default function AdminMapPage() {
   if (loading) return <Loader center />
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <MapSection ordersWithLocation={ordersWithLocation} />
 
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">

@@ -132,7 +132,7 @@ export default function PrescriptionsPage() {
   return (
     <div className="h-full flex flex-col lg:flex-row overflow-hidden">
       {/* Left: Create & My Prescriptions */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-6 lg:border-r lg:border-gray-200 lg:max-w-md">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:border-r lg:border-gray-200 lg:max-w-md">
         <div className="flex gap-2 mb-4">
           <button
             type="button"

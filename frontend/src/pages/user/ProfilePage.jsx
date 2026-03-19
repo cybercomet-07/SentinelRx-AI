@@ -134,8 +134,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto flex flex-col items-center">
-      <div className="card-lift bg-white border border-gray-100 rounded-2xl p-8 shadow-soft w-full">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto flex flex-col items-center">
+      <div className="card-lift bg-white border border-gray-100 rounded-2xl p-4 sm:p-8 shadow-soft w-full">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-semibold shadow-lg">
             {form.name?.[0]?.toUpperCase() || 'U'}

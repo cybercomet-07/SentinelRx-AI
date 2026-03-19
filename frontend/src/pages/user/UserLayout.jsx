@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Sidebar from '../../components/layout/Sidebar'
@@ -20,12 +21,13 @@ export default function UserLayout() {
   const { pathname } = useLocation()
   const titleKey = TITLE_KEYS[pathname]
   const title = titleKey ? t(titleKey) : t('sidebar.dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={title} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

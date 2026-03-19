@@ -80,7 +80,7 @@ export default function UnifiedChatShell() {
   }), [t, i18n.language])
   const [sessions, setSessions] = useState([])
   const [currentSessionId, setCurrentSessionId] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' && window.innerWidth >= 768)
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const menuRef = useRef(null)
@@ -513,12 +513,19 @@ export default function UnifiedChatShell() {
   }, [currentSessionId, t, welcomeMessage])
 
   return (
-    <div className="flex h-full bg-slate-50/80">
+    <div className="flex h-full bg-slate-50/80 relative">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       {/* Chat history sidebar - ChatGPT style */}
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-0'
-        } flex flex-col border-r border-slate-200 bg-white shrink-0 overflow-hidden transition-all duration-200`}
+        } flex flex-col border-r border-slate-200 bg-white shrink-0 overflow-hidden transition-all duration-200 md:relative fixed inset-y-0 left-0 z-40`}
       >
         <div className="shrink-0 p-3 border-b border-slate-100 flex items-center justify-between">
           <button

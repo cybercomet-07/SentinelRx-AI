@@ -13,8 +13,9 @@ export default function OrderHistoryTable({ orders }) {
     return pm === 'upi' ? 'UPI' : pm === 'cod' ? 'Cash on Delivery' : pm
   }
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
-      <table className="w-full text-sm">
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-soft overflow-hidden">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[600px]">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
             {headers.map((h, i) => (
@@ -35,6 +36,7 @@ export default function OrderHistoryTable({ orders }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

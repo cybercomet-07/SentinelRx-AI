@@ -341,7 +341,7 @@ export default function Login() {
                     placeholder="Street, area, city"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="signup-landmark" className="block text-xs font-semibold text-gray-600 mb-1.5">Landmark *</label>
                     <input id="signup-landmark" name="landmark" type="text" value={landmark} onChange={e => setLandmark(e.target.value)}

@@ -24,7 +24,7 @@ export default function AdminContactPage() {
   const totalPages = Math.ceil(total / limit) || 1
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-slate-900">Contact Submissions</h1>
         <p className="text-slate-500 mt-1">Messages sent by users via the Contact Us form.</p>

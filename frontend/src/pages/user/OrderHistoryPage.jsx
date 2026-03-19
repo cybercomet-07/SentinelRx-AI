@@ -39,7 +39,7 @@ export default function OrderHistoryPage() {
   if (loading && orders.length === 0) return <Loader center />
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <p className="text-sm text-gray-500">{t('common.ordersFound', { count: total })}</p>
       <OrderHistoryTable orders={orders} />
       <Pagination page={page} limit={LIMIT} total={total} onPageChange={handlePageChange} />

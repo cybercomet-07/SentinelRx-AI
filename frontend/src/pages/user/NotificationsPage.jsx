@@ -151,7 +151,7 @@ export default function NotificationsPage() {
   if (loading) return <Loader center />
 
   return (
-    <div className="p-6 space-y-8 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-8 max-w-2xl mx-auto">
       {!isAdmin && (
         <section className="card-lift bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
           <div className="flex items-center justify-between mb-4">

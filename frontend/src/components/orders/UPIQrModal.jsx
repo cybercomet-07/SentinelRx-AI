@@ -27,7 +27,7 @@ function DynamicQRDisplay({ upiUrl, label, size = 260 }) {
     return (
       <div className="text-center">
         <p className="text-sm font-semibold text-gray-700 mb-3">{label}</p>
-        <div className="flex items-center justify-center w-[260px] h-[260px] mx-auto border-2 border-gray-200 rounded-2xl bg-gray-50">
+        <div className="flex items-center justify-center w-full max-w-[220px] aspect-square mx-auto border-2 border-gray-200 rounded-2xl bg-gray-50">
           <span className="text-sm text-gray-500 px-4">Failed to generate QR</span>
         </div>
       </div>
@@ -37,7 +37,7 @@ function DynamicQRDisplay({ upiUrl, label, size = 260 }) {
   return (
     <div className="text-center">
       <p className="text-sm font-semibold text-gray-700 mb-3">{label}</p>
-      <div className="border-2 border-gray-200 rounded-2xl bg-white flex items-center justify-center overflow-hidden mx-auto shadow-sm p-3" style={{ width: size, height: size }}>
+      <div className="border-2 border-gray-200 rounded-2xl bg-white flex items-center justify-center overflow-hidden mx-auto shadow-sm p-3 w-full max-w-[220px] aspect-square">
         <img src={dataUrl} alt={`${label} UPI QR`} className="w-full h-full object-contain" />
       </div>
     </div>
@@ -83,7 +83,7 @@ export default function UPIQrModal({ open, onClose, totalAmount, onPaid }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"

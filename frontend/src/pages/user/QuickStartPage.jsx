@@ -52,7 +52,7 @@ export default function QuickStartPage() {
   }, [activeStep])
 
   return (
-    <div className="p-6 max-w-2xl mx-auto overflow-y-auto">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto overflow-y-auto">
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-slate-900">{t('quickStart.featuresRoadmap')}</h1>
         <p className="text-slate-600 mt-1">{t('quickStart.exploreWhat')}</p>

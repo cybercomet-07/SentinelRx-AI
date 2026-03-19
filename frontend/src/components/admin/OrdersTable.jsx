@@ -26,8 +26,9 @@ export default function OrdersTable({ orders, onRefresh }) {
   if (!orders?.length) return <div className="text-center py-16 text-gray-400">No orders found.</div>
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
-      <table className="w-full text-sm">
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-soft overflow-hidden">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[900px]">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
             {['Order ID', 'User', 'Address', 'Medicines', 'Total', 'Payment', 'Receipt', 'Status', 'Update'].map(h => (
@@ -76,6 +77,7 @@ export default function OrdersTable({ orders, onRefresh }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

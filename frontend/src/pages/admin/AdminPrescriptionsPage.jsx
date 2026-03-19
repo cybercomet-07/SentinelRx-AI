@@ -96,7 +96,7 @@ export default function AdminPrescriptionsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-6">
         <FileText size={24} className="text-mint-600" />
         <h1 className="text-xl font-semibold text-gray-900">Prescription Management</h1>

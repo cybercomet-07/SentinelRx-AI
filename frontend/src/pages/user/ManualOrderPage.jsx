@@ -41,7 +41,7 @@ export default function ManualOrderPage() {
     : [...new Set(medicines.map(m => m.category).filter(Boolean))]
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <div className="flex gap-3 flex-wrap">
         <div className="flex-1 min-w-48 relative">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -55,7 +55,7 @@ export default function ManualOrderPage() {
         <select
           value={category}
           onChange={e => setCategory(e.target.value)}
-          className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white"
+          className="w-full sm:w-auto border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white"
         >
           <option value="">{t('common.allCategories')}</option>
           {displayCategories.map(c => <option key={c} value={c}>{c}</option>)}

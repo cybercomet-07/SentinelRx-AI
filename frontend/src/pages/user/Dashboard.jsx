@@ -40,7 +40,7 @@ export default function Dashboard() {
   }, [])
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Welcome banner */}
       <div className="relative bg-gradient-to-r from-mint-500 to-sage-500 rounded-2xl p-6 overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] w-32 h-32 rounded-full bg-white/10" />

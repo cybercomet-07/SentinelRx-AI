@@ -15,14 +15,14 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full ${sizes[size]} bg-white rounded-2xl shadow-float border border-gray-100 animate-slide-up`}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+      <div className={`relative w-full ${sizes[size]} bg-white rounded-2xl shadow-float border border-gray-100 animate-slide-up flex flex-col max-h-[90vh]`}>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 shrink-0">
           <h3 className="text-lg font-semibold text-gray-900 font-display">{title}</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   )

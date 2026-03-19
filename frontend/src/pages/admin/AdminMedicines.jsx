@@ -65,7 +65,7 @@ export default function AdminMedicines() {
   if (error) return <ErrorState onRetry={() => load(searchInput.trim())} />
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       {lowStock > 0 && (
         <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 text-orange-700 px-4 py-3 rounded-xl text-sm">
           <AlertTriangle size={16} />

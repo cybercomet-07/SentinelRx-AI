@@ -29,7 +29,7 @@ export default function AdminUsers() {
   if (error) return <ErrorState onRetry={load} />
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <div className="relative max-w-sm">
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -40,8 +40,9 @@ export default function AdminUsers() {
         />
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
-        <table className="w-full text-sm">
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-soft overflow-hidden">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
               {['User', 'Email', 'Total Orders', 'Status'].map(h => (
@@ -71,6 +72,7 @@ export default function AdminUsers() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

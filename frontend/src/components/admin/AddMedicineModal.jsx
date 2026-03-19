@@ -47,7 +47,7 @@ export default function AddMedicineModal({ open, onClose, onSuccess }) {
   return (
     <Modal open={open} onClose={onClose} title="Add New Medicine">
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {fields.map(({ k, label, placeholder, type = 'text' }) => (
             <div key={k} className={k === 'name' ? 'col-span-2' : ''}>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>

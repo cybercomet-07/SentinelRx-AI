@@ -49,7 +49,7 @@ export default function AdminOrders() {
   if (error) return <ErrorState onRetry={load} />
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilter('')}
