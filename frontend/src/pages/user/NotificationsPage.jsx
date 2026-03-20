@@ -119,7 +119,11 @@ export default function NotificationsPage() {
       setShowCreateForm(false)
       await fetchAlerts()
     } catch (err) {
-      toast.error(err.response?.data?.error?.message ?? err.response?.data?.detail ?? t('common.failedToCreateAlert'))
+      const data = err.response?.data
+      const msg = data?.error?.message
+        ?? (Array.isArray(data?.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join('; ') : data?.detail)
+      const fallback = !err.response ? t('common.networkErrorCheckBackend') : t('common.failedToCreateAlert')
+      toast.error(msg || fallback)
     } finally {
       setCreating(false)
     }

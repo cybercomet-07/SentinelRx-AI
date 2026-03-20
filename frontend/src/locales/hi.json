@@ -34,6 +34,7 @@
     "suggestedRefillAfterPurchase": "सुझाई गई रीफिल तिथि अंतिम खरीद के बाद होनी चाहिए",
     "refillAlertCreated": "रीफिल अलर्ट बनाया गया",
     "failedToCreateAlert": "अलर्ट बनाने में विफल",
+    "networkErrorCheckBackend": "सर्वर तक पहुँच नहीं सकी। कनेक्शन जाँचें और सुनिश्चित करें कि बैकएंड चल रहा है।",
     "markedAsComplete": "पूर्ण के रूप में चिह्नित",
     "failedToMarkComplete": "पूर्ण चिह्नित करने में विफल",
     "alertRemoved": "अलर्ट हटाया गया",

@@ -34,6 +34,7 @@
     "suggestedRefillAfterPurchase": "Suggested refill date must be after last purchase",
     "refillAlertCreated": "Refill alert created",
     "failedToCreateAlert": "Failed to create alert",
+    "networkErrorCheckBackend": "Could not reach server. Check your connection and that the backend is running.",
     "markedAsComplete": "Marked as complete",
     "failedToMarkComplete": "Failed to mark complete",
     "alertRemoved": "Alert removed",
