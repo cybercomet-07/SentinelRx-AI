@@ -4,6 +4,14 @@ import { Bell } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { notificationService } from '../../services/notificationService'
 
+const ROLE_NOTIF_PATH = {
+  user:           '/user/notifications',
+  admin:          '/admin/notifications',
+  doctor:         '/doctor/notifications',
+  hospital_admin: '/hospital/notifications',
+  ngo:            '/ngo/notifications',
+}
+
 function fetchUnreadCount(setCount) {
   notificationService.getAll()
     .then(r => {
@@ -14,19 +22,21 @@ function fetchUnreadCount(setCount) {
     .catch(() => {})
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ className = '' }) {
   const [count, setCount] = useState(0)
   const location = useLocation()
-  const { isAdmin } = useAuth()
-  const notificationsPath = isAdmin ? '/admin/notifications' : '/user/notifications'
+  const { user, isAdmin } = useAuth()
+  const role = user?.role || 'user'
+  const notificationsPath = ROLE_NOTIF_PATH[role] || '/user/notifications'
 
   useEffect(() => {
+    if (!user) return
     fetchUnreadCount(setCount)
-  }, [])
+  }, [user])
 
-  // Refetch when user visits notifications page (they get marked as read there)
+  // Refetch when user visits any notifications page
   useEffect(() => {
-    if (location.pathname === '/user/notifications' || location.pathname === '/admin/notifications') {
+    if (Object.values(ROLE_NOTIF_PATH).includes(location.pathname)) {
       fetchUnreadCount(setCount)
     }
   }, [location.pathname])
@@ -38,17 +48,17 @@ export default function NotificationBell() {
     return () => window.removeEventListener('notifications-updated', handler)
   }, [])
 
-  // Poll for new notifications (e.g. new orders) when admin is on dashboard
+  // Poll every 30 s for all roles
   useEffect(() => {
-    if (!isAdmin) return
+    if (!user) return
     const interval = setInterval(() => fetchUnreadCount(setCount), 30000)
     return () => clearInterval(interval)
-  }, [isAdmin])
+  }, [user])
 
   return (
     <Link
       to={notificationsPath}
-      className="relative p-2.5 hover:bg-slate-100 rounded-xl transition-colors duration-200 inline-flex items-center justify-center cursor-pointer group"
+      className={`relative p-2.5 hover:bg-slate-100 rounded-xl transition-colors duration-200 inline-flex items-center justify-center cursor-pointer group ${className}`}
       aria-label="Notifications"
     >
       <Bell size={20} className="text-slate-600 group-hover:text-slate-900" strokeWidth={2} />

@@ -23,7 +23,8 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(false)
 
   const fetchCart = useCallback(async () => {
-    if (!user || user?.role === 'admin') return
+    // Cart is only available for patients (USER role). Skip for all other roles to avoid 403s.
+    if (!user || user?.role !== 'user') return
     try {
       const res = await cartService.getCart()
       const data = res.data
@@ -42,11 +43,13 @@ export function CartProvider({ children }) {
     }
   }, [user, fetchCart])
 
+  const isPatient = user?.role === 'user'
+
   const addItem = async (medicine, qty = 1) => {
     const medicineId = medicine?.medicine_id ?? medicine?.id
     if (!medicineId) return
 
-    if (user) {
+    if (user && isPatient) {
       try {
         await cartService.addItem(medicineId, qty)
         toast.success('Added to cart')
@@ -70,7 +73,7 @@ export function CartProvider({ children }) {
   }
 
   const removeItem = async (id) => {
-    if (user) {
+    if (user && isPatient) {
       try {
         await cartService.removeItem(id)
         toast.success('Removed from cart')
@@ -91,7 +94,7 @@ export function CartProvider({ children }) {
     const item = items.find(i => i.id === id)
     if (!item) return
 
-    if (user) {
+    if (user && isPatient) {
       try {
         await cartService.removeItem(id)
         await cartService.addItem(item.medicine_id ?? item.id, qty)

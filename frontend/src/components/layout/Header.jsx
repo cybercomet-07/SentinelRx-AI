@@ -2,6 +2,7 @@ import { Menu, ShoppingCart } from 'lucide-react'
 import { useCart } from '../../hooks/useCart'
 import { useAuth } from '../../hooks/useAuth'
 import NotificationBell from '../notifications/NotificationBell'
+import LanguageSwitcher from '../ui/LanguageSwitcher'
 
 export default function Header({ title, onMenuClick }) {
   const { count, setOpen } = useCart()
@@ -21,6 +22,7 @@ export default function Header({ title, onMenuClick }) {
       <h1 className="font-display font-semibold text-slate-900 text-base md:text-lg flex-1 tracking-tight truncate">{title}</h1>
 
       <div className="flex items-center gap-1">
+        <LanguageSwitcher className="mr-1" />
         <NotificationBell />
         {!isAdmin && (
           <button
