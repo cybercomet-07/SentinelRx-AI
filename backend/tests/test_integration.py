@@ -22,19 +22,33 @@ def client() -> TestClient:
     return _get_client()
 
 
+def _register_payload(email: str, password: str = "TestPass123!", name: str = "Test User") -> dict:
+    return {
+        "name": name,
+        "email": email,
+        "password": password,
+        "phone": "9876543210",
+        "address": "123 Test Street, Test City",
+        "landmark": "Near Test Mall",
+        "pin_code": "400001",
+        "date_of_birth": "1990-01-15",
+    }
+
+
 @pytest.fixture
 def user_token(client: TestClient) -> str:
     """Register and login as USER, return access token."""
     email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
-    client.post(
+    reg = client.post(
         "/api/v1/auth/register",
-        json={"name": "Test User", "email": email, "password": "TestPass123!"},
+        json=_register_payload(email, "TestPass123!"),
     )
+    assert reg.status_code == 200, reg.json()
     r = client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": "TestPass123!"},
     )
-    assert r.status_code == 200
+    assert r.status_code == 200, r.json()
     return r.json()["access_token"]
 
 
@@ -59,7 +73,7 @@ def admin_token(client: TestClient) -> str:
         "/api/v1/auth/login",
         json={"email": email, "password": "AdminPass123!"},
     )
-    assert r.status_code == 200
+    assert r.status_code == 200, r.json()
     return r.json()["access_token"]
 
 
@@ -72,7 +86,7 @@ def test_register_and_login(client: TestClient):
     email = f"newuser_{uuid.uuid4().hex[:8]}@example.com"
     r = client.post(
         "/api/v1/auth/register",
-        json={"name": "New User", "email": email, "password": "SecurePass123!"},
+        json=_register_payload(email, "SecurePass123!", "New User"),
     )
     assert r.status_code == 200
     data = r.json()
@@ -95,13 +109,14 @@ def test_auth_me(client: TestClient, user_token: str):
     assert data["role"] == "USER"
 
 
-def test_refresh_token(client: TestClient, user_token: str):
-    # Login gives us refresh_token; we need it
+def test_refresh_token(client: TestClient):
+    # Register gives us refresh_token; we need it
     email = f"refresh_{uuid.uuid4().hex[:8]}@example.com"
     reg = client.post(
         "/api/v1/auth/register",
-        json={"name": "Refresh User", "email": email, "password": "RefreshPass123!"},
+        json=_register_payload(email, "RefreshPass123!", "Refresh User"),
     )
+    assert reg.status_code == 200, reg.json()
     refresh = reg.json()["refresh_token"]
     r = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
     assert r.status_code == 200

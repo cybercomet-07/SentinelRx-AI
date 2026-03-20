@@ -1,13 +1,14 @@
 import os
+from pathlib import Path
 
 import pytest
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
-# Use psycopg (v3) URL; override before app import so tests use it
-os.environ.setdefault(
-    "DATABASE_URL",
-    "postgresql+psycopg://postgres:postgres@localhost:5432/sentinelrx",
-)
+# Load .env so DATABASE_URL and other vars are available; allow all logins for tests
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(_env_path)
+os.environ["ALLOW_ALL_LOGINS"] = "true"
 
 from app.main import app
 

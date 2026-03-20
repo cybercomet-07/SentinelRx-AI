@@ -70,7 +70,8 @@ ALLOWED_TEST_EMAILS = {
 
 
 def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
-    if payload.email.lower() not in ALLOWED_TEST_EMAILS:
+    settings = get_settings()
+    if not settings.allow_all_logins and payload.email.lower() not in ALLOWED_TEST_EMAILS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access restricted. Only authorised test accounts can log in during this phase.",

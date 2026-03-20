@@ -52,6 +52,12 @@ async def lifespan(app: FastAPI):
         start_refill_reminder_thread()
     except Exception as exc:  # pragma: no cover
         logger.warning("Refill reminder thread not started: %s", exc)
+    # Start refill call thread (Twilio calls at reminder_time on refill date)
+    try:
+        from app.tasks.refill_call_task import start_refill_call_thread
+        start_refill_call_thread()
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Refill call thread not started: %s", exc)
     yield
     # Shutdown (if needed)
 

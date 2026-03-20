@@ -11,6 +11,7 @@ export const refillAlertService = {
       medicine_id: payload.medicine_id,
       last_purchase_date: payload.last_purchase_date,
       suggested_refill_date: payload.suggested_refill_date,
+      reminder_time: payload.reminder_time || null,
     }),
 
   complete: (id) => api.patch(`/refill-alerts/${id}/complete`),

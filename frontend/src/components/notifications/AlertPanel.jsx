@@ -30,6 +30,9 @@ export function RefillAlertCard({ alert, onReorder, onComplete, onDelete }) {
           </p>
           <p className="text-xs text-orange-600 mt-0.5">
             Suggested refill: {new Date(alert.suggested_refill_date).toLocaleDateString()}
+            {alert.reminder_time && (
+              <span className="ml-1 text-blue-600">· Call at {alert.reminder_time}</span>
+            )}
           </p>
         </div>
         <div className="flex flex-col gap-1 shrink-0">

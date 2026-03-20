@@ -284,6 +284,8 @@
     "describeSymptoms": "Describe your symptoms. We'll suggest OTC medicines from our inventory with dosage limits.",
     "disclaimer": "Sleep aids, antibiotics & blood pressure meds require a doctor's prescription.",
     "typeOrSpeakSymptoms": "Type or speak symptoms",
-    "searchingMedicineIndex": "Searching our medicine index..."
+    "searchingMedicineIndex": "Searching our medicine index...",
+    "reminderTimeCall": "Call reminder time (optional)",
+    "reminderTimeCallHint": "You'll get a phone call at this time on refill date. Add phone in profile."
   }
 }

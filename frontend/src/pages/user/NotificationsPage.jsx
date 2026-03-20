@@ -29,6 +29,7 @@ export default function NotificationsPage() {
     medicine_id: '',
     last_purchase_date: '',
     suggested_refill_date: '',
+    reminder_time: '',
   })
 
   const [alertsError, setAlertsError] = useState(false)
@@ -114,7 +115,7 @@ export default function NotificationsPage() {
     try {
       await refillAlertService.create(form)
       toast.success(t('common.refillAlertCreated'))
-      setForm({ medicine_id: '', last_purchase_date: '', suggested_refill_date: '' })
+      setForm({ medicine_id: '', last_purchase_date: '', suggested_refill_date: '', reminder_time: '' })
       setShowCreateForm(false)
       await fetchAlerts()
     } catch (err) {
@@ -210,6 +211,17 @@ export default function NotificationsPage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('prescriptions.reminderTimeCall')}</label>
+                <input
+                  type="time"
+                  value={form.reminder_time}
+                  onChange={(e) => setForm((f) => ({ ...f, reminder_time: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  title="Optional: Get a phone call at this time on refill date"
+                />
+                <p className="text-xs text-gray-400 mt-0.5">{t('prescriptions.reminderTimeCallHint')}</p>
               </div>
               <div className="flex gap-2">
                 <button

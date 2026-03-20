@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # .env is in backend/ - resolve path so it's always found regardless of cwd
@@ -10,6 +11,7 @@ _ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
 class Settings(BaseSettings):
     app_name: str = "SentinelRx-AI Backend"
     app_env: str = "development"
+    allow_all_logins: bool = False  # When True, bypass ALLOWED_TEST_EMAILS (for tests)
     api_v1_prefix: str = "/api/v1"
     database_url: str
 
@@ -29,6 +31,9 @@ class Settings(BaseSettings):
     cloudinary_api_secret: str | None = None
     razorpay_key_id: str | None = None
     razorpay_key_secret: str | None = None
+    twilio_account_sid: str | None = None
+    twilio_auth_token: str | None = None
+    twilio_phone_number: str | None = Field(None, validation_alias="TWILIO_NUMBER")
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

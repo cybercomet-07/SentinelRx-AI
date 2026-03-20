@@ -20,6 +20,7 @@ def _build_refill_read(alert: RefillAlert, medicine_name: str) -> RefillAlertRea
         medicine_name=medicine_name,
         last_purchase_date=alert.last_purchase_date,
         suggested_refill_date=alert.suggested_refill_date,
+        reminder_time=alert.reminder_time,
         is_completed=alert.is_completed,
         is_due=not alert.is_completed and alert.suggested_refill_date <= today,
     )
@@ -35,11 +36,15 @@ def create_refill_alert(db: Session, user: User, payload: RefillAlertCreate) -> 
     if not medicine:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Medicine not found")
 
+    rt = (payload.reminder_time or "").strip() or None
+    if rt and len(rt) < 4:
+        rt = None
     alert = RefillAlert(
         user_id=user.id,
         medicine_id=payload.medicine_id,
         last_purchase_date=payload.last_purchase_date,
         suggested_refill_date=payload.suggested_refill_date,
+        reminder_time=rt,
     )
     db.add(alert)
     db.commit()
