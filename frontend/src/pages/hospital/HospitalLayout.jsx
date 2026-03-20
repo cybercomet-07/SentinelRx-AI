@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Menu, X, Building2, LayoutDashboard, Users, BedDouble, Pill, Receipt, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
+import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
   { to: '/hospital/dashboard',     icon: LayoutDashboard, key: 'hospital.dashboard' },
@@ -92,7 +93,7 @@ export default function HospitalLayout() {
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'hospital.portal')}</h1>
           <LanguageSwitcher className="mr-1" />
-          <Bell size={20} className="text-slate-500 cursor-pointer hover:text-orange-600" />
+          <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>
       </div>

@@ -109,7 +109,7 @@ export default function AppRouter() {
         <Route path="beds" element={<BedsPage />} />
         <Route path="inventory" element={<HospitalInventoryPage />} />
         <Route path="billing" element={<ComingSoon title="Billing" phase="Phase 4" />} />
-        <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 4" />} />
+        <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<ComingSoon title="Hospital Settings" phase="Phase 4" />} />
       </Route>
 
@@ -120,7 +120,7 @@ export default function AppRouter() {
         <Route path="beneficiaries" element={<BeneficiariesPage />} />
         <Route path="blood-camps" element={<BloodCampsPage />} />
         <Route path="donations" element={<DonationsPage />} />
-        <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 5" />} />
+        <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<ComingSoon title="NGO Profile" phase="Phase 5" />} />
       </Route>
 

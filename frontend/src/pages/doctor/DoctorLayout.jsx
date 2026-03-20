@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
+import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
   { to: '/doctor/dashboard',     icon: LayoutDashboard, key: 'doctor.dashboard' },
@@ -95,7 +96,7 @@ export default function DoctorLayout() {
           </button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'doctor.portal')}</h1>
           <LanguageSwitcher className="mr-1" />
-          <Bell size={20} className="text-slate-500 cursor-pointer hover:text-blue-600" />
+          <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto">
           <Outlet />

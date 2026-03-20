@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Menu, X, HeartHandshake, LayoutDashboard, Users, Droplets, Gift, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
+import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
   { to: '/ngo/dashboard',     icon: LayoutDashboard, key: 'ngo.dashboard' },
@@ -90,7 +91,7 @@ export default function NGOLayout() {
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'ngo.portal')}</h1>
           <LanguageSwitcher className="mr-1" />
-          <Bell size={20} className="text-slate-500 cursor-pointer hover:text-green-600" />
+          <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>
       </div>
