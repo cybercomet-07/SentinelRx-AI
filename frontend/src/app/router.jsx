@@ -30,14 +30,23 @@ import AdminPrescriptionsPage from '../pages/admin/AdminPrescriptionsPage'
 // Doctor
 import DoctorLayout from '../pages/doctor/DoctorLayout'
 import DoctorDashboard from '../pages/doctor/DoctorDashboard'
+import AppointmentsPage from '../pages/doctor/AppointmentsPage'
+import DoctorPatientsPage from '../pages/doctor/PatientsPage'
+import DoctorProfilePage from '../pages/doctor/DoctorProfilePage'
 
 // Hospital Admin
 import HospitalLayout from '../pages/hospital/HospitalLayout'
 import HospitalDashboard from '../pages/hospital/HospitalDashboard'
+import BedsPage from '../pages/hospital/BedsPage'
+import AdmissionsPage from '../pages/hospital/AdmissionsPage'
+import HospitalInventoryPage from '../pages/hospital/HospitalInventoryPage'
 
 // NGO
 import NGOLayout from '../pages/ngo/NGOLayout'
 import NGODashboard from '../pages/ngo/NGODashboard'
+import BeneficiariesPage from '../pages/ngo/BeneficiariesPage'
+import BloodCampsPage from '../pages/ngo/BloodCampsPage'
+import DonationsPage from '../pages/ngo/DonationsPage'
 
 export default function AppRouter() {
   return (
@@ -77,20 +86,20 @@ export default function AppRouter() {
       <Route path="/doctor" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/doctor/dashboard" replace />} />
         <Route path="dashboard" element={<DoctorDashboard />} />
-        <Route path="appointments" element={<ComingSoon title="Appointments" phase="Phase 1" />} />
-        <Route path="patients" element={<ComingSoon title="My Patients" phase="Phase 1" />} />
-        <Route path="prescriptions" element={<ComingSoon title="Prescriptions" phase="Phase 1" />} />
-        <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 1" />} />
-        <Route path="profile" element={<ComingSoon title="Doctor Profile" phase="Phase 1" />} />
+        <Route path="appointments" element={<AppointmentsPage />} />
+        <Route path="patients" element={<DoctorPatientsPage />} />
+        <Route path="prescriptions" element={<ComingSoon title="Prescriptions" phase="Phase 2" />} />
+        <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 2" />} />
+        <Route path="profile" element={<DoctorProfilePage />} />
       </Route>
 
       {/* Hospital Admin Dashboard */}
       <Route path="/hospital" element={<ProtectedRoute allowedRoles={['hospital_admin']}><HospitalLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/hospital/dashboard" replace />} />
         <Route path="dashboard" element={<HospitalDashboard />} />
-        <Route path="patients" element={<ComingSoon title="Patient Management" phase="Phase 4" />} />
-        <Route path="beds" element={<ComingSoon title="Bed Management" phase="Phase 4" />} />
-        <Route path="inventory" element={<ComingSoon title="Medicine Inventory" phase="Phase 4" />} />
+        <Route path="patients" element={<AdmissionsPage />} />
+        <Route path="beds" element={<BedsPage />} />
+        <Route path="inventory" element={<HospitalInventoryPage />} />
         <Route path="billing" element={<ComingSoon title="Billing" phase="Phase 4" />} />
         <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 4" />} />
         <Route path="profile" element={<ComingSoon title="Hospital Settings" phase="Phase 4" />} />
@@ -100,9 +109,9 @@ export default function AppRouter() {
       <Route path="/ngo" element={<ProtectedRoute allowedRoles={['ngo']}><NGOLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/ngo/dashboard" replace />} />
         <Route path="dashboard" element={<NGODashboard />} />
-        <Route path="beneficiaries" element={<ComingSoon title="Beneficiaries" phase="Phase 5" />} />
-        <Route path="blood-camps" element={<ComingSoon title="Blood Camps" phase="Phase 5" />} />
-        <Route path="donations" element={<ComingSoon title="Donation Drives" phase="Phase 5" />} />
+        <Route path="beneficiaries" element={<BeneficiariesPage />} />
+        <Route path="blood-camps" element={<BloodCampsPage />} />
+        <Route path="donations" element={<DonationsPage />} />
         <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 5" />} />
         <Route path="profile" element={<ComingSoon title="NGO Profile" phase="Phase 5" />} />
       </Route>

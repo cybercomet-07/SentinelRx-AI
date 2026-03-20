@@ -14,3 +14,7 @@ from app.models.refill_alert import RefillAlert
 from app.models.user import User
 from app.models.contact_message import ContactMessage
 from app.models.medicine_indication import MedicineIndication
+from app.models.doctor_profile import DoctorProfile
+from app.models.appointment import Appointment
+from app.models.hospital import HospitalBed, HospitalAdmission
+from app.models.ngo import NGOBeneficiary, NGOBloodCamp, NGODonationDrive

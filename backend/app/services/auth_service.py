@@ -59,7 +59,22 @@ def register_user(db: Session, payload: RegisterRequest) -> TokenResponse:
     return _build_token_response(user)
 
 
+# ── Testing mode: only these accounts may log in ────────────────────────────
+ALLOWED_TEST_EMAILS = {
+    "patient@sentinelrx.ai",
+    "admin@sentinelrx.ai",
+    "doctor@sentinelrx.ai",
+    "hospital@sentinelrx.ai",
+    "ngo@sentinelrx.ai",
+}
+
+
 def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
+    if payload.email.lower() not in ALLOWED_TEST_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access restricted. Only authorised test accounts can log in during this phase.",
+        )
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
