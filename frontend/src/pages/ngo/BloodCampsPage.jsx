@@ -3,7 +3,7 @@ import { ngoService } from '../../services/ngoService'
 import Loader from '../../components/ui/Loader'
 import ErrorState from '../../components/ui/ErrorState'
 import toast from 'react-hot-toast'
-import { Plus, Droplets } from 'lucide-react'
+import { Plus, Droplets, Pipette, Check, X } from 'lucide-react'
 
 const STATUS_CONFIG = {
   UPCOMING:  { label: 'Upcoming',  class: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
@@ -78,6 +78,10 @@ export default function BloodCampsPage() {
   const [error, setError] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [updating, setUpdating] = useState(null)
+  // unitInput: { [campId]: string } — tracks the inline input value per card
+  const [unitInput, setUnitInput] = useState({})
+  // showUnitInput: campId currently showing the input box
+  const [showUnitInput, setShowUnitInput] = useState(null)
 
   const load = () => {
     setError(false); setLoading(true)
@@ -96,6 +100,20 @@ export default function BloodCampsPage() {
       setCamps(prev => prev.map(c => c.id === id ? updated.data : c))
       toast.success(`Marked as ${status.toLowerCase()}`)
     } catch { toast.error('Failed to update') }
+    finally { setUpdating(null) }
+  }
+
+  const saveUnits = async (camp) => {
+    const val = parseInt(unitInput[camp.id] ?? '')
+    if (isNaN(val) || val < 0) return toast.error('Enter a valid number of units')
+    setUpdating(camp.id)
+    try {
+      const updated = await ngoService.updateBloodCamp(camp.id, { collected_units: val })
+      setCamps(prev => prev.map(c => c.id === camp.id ? updated.data : c))
+      setShowUnitInput(null)
+      setUnitInput(prev => ({ ...prev, [camp.id]: '' }))
+      toast.success(`Updated: ${val} units collected`)
+    } catch { toast.error('Failed to update units') }
     finally { setUpdating(null) }
   }
 
@@ -142,7 +160,41 @@ export default function BloodCampsPage() {
                 <p className="text-xs text-slate-400 mt-1">{c.volunteers} volunteers · {c.progress_pct}% complete</p>
               </div>
 
-              {/* Action buttons */}
+              {/* Inline unit collection input */}
+              {(c.status === 'ONGOING' || c.status === 'UPCOMING') && (
+                showUnitInput === c.id ? (
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 flex items-center gap-1 border border-red-200 rounded-lg px-2 py-1 bg-red-50">
+                      <Droplets size={13} className="text-red-400 flex-shrink-0" />
+                      <input
+                        type="number"
+                        min="0"
+                        value={unitInput[c.id] ?? ''}
+                        onChange={e => setUnitInput(prev => ({ ...prev, [c.id]: e.target.value }))}
+                        placeholder={`Current: ${c.collected_units}`}
+                        className="w-full bg-transparent text-xs text-slate-700 focus:outline-none"
+                        autoFocus
+                      />
+                      <span className="text-xs text-slate-400 flex-shrink-0">units</span>
+                    </div>
+                    <button onClick={() => saveUnits(c)} disabled={updating === c.id}
+                      className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50">
+                      <Check size={13} />
+                    </button>
+                    <button onClick={() => setShowUnitInput(null)}
+                      className="p-1.5 rounded-lg bg-gray-100 text-slate-500 hover:bg-gray-200">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowUnitInput(c.id)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors">
+                    <Pipette size={12} /> Update Collected Units
+                  </button>
+                )
+              )}
+
+              {/* Status action buttons */}
               <div className="flex gap-2 pt-1">
                 {c.status === 'UPCOMING' && (
                   <button onClick={() => markStatus(c.id, 'ONGOING')} disabled={updating === c.id}

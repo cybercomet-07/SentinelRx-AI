@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Bell, CheckCheck } from 'lucide-react'
-import { doctorService } from '../../services/doctorService'
+import { notificationService } from '../../services/notificationService'
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -19,7 +19,7 @@ export default function DoctorNotificationsPage() {
 
   const load = () => {
     setLoading(true)
-    doctorService.getNotifications()
+    notificationService.getAll()
       .then(r => setItems(r.data.items || []))
       .catch(() => toast.error('Unable to load notifications'))
       .finally(() => setLoading(false))
@@ -29,15 +29,17 @@ export default function DoctorNotificationsPage() {
 
   const markRead = async (id) => {
     try {
-      await doctorService.markNotifRead(id)
+      await notificationService.markRead(id)
       setItems(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+      window.dispatchEvent(new Event('notifications-updated'))
     } catch { /* silent */ }
   }
 
   const markAll = async () => {
     const unread = items.filter(n => !n.is_read)
-    await Promise.all(unread.map(n => doctorService.markNotifRead(n.id)))
+    await Promise.all(unread.map(n => notificationService.markRead(n.id)))
     setItems(prev => prev.map(n => ({ ...n, is_read: true })))
+    window.dispatchEvent(new Event('notifications-updated'))
     toast.success('All marked as read')
   }
 

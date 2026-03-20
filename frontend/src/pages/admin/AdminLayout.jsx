@@ -5,14 +5,15 @@ import Sidebar from '../../components/layout/Sidebar'
 import Header from '../../components/layout/Header'
 
 const TITLE_KEYS = {
-  '/admin/dashboard': 'admin.dashboard',
-  '/admin/medicines': 'admin.medicineManagement',
-  '/admin/orders': 'admin.ordersManagement',
-  '/admin/prescriptions': 'admin.prescriptionManagement',
-  '/admin/notifications': 'nav.notifications',
-  '/admin/map': 'sidebar.deliveryMap',
-  '/admin/users': 'admin.userManagement',
-  '/admin/profile': 'nav.profile',
+  '/admin/dashboard':           'admin.superDashboard',
+  '/admin/pharmacy-dashboard':  'admin.dashboard',
+  '/admin/medicines':           'admin.medicineManagement',
+  '/admin/orders':              'admin.ordersManagement',
+  '/admin/prescriptions':       'admin.prescriptionManagement',
+  '/admin/notifications':       'nav.notifications',
+  '/admin/map':                 'sidebar.deliveryMap',
+  '/admin/users':               'admin.userManagement',
+  '/admin/profile':             'nav.profile',
 }
 
 export default function AdminLayout() {

@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut, ShieldCheck } from 'lucide-react'
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, LogOut, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
-import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
@@ -12,9 +11,7 @@ const NAV_KEYS = [
   { to: '/doctor/appointments',  icon: CalendarDays,    key: 'doctor.appointments' },
   { to: '/doctor/patients',      icon: Users,           key: 'doctor.patients' },
   { to: '/doctor/prescriptions', icon: FileText,        key: 'doctor.prescriptions' },
-  { to: '/doctor/govt-schemes',  icon: ShieldCheck,     key: 'doctor.govtSchemes' },
   { to: '/doctor/notifications', icon: Bell,            key: 'doctor.notifications' },
-  { to: '/doctor/profile',       icon: Settings,        key: 'doctor.profile' },
 ]
 
 const TITLE_KEYS = {
@@ -22,10 +19,10 @@ const TITLE_KEYS = {
   '/doctor/appointments':  'doctor.appointments',
   '/doctor/patients':      'doctor.patients',
   '/doctor/prescriptions': 'doctor.prescriptions',
-  '/doctor/govt-schemes':  'doctor.govtSchemes',
   '/doctor/notifications': 'doctor.notifications',
   '/doctor/profile':       'doctor.profile',
 }
+
 
 export default function DoctorLayout() {
   const { user, logout } = useAuth()
@@ -75,14 +72,16 @@ export default function DoctorLayout() {
 
         <div className="p-4 border-t border-slate-100">
           <Link to="/doctor/profile" onClick={() => setSidebarOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors group"
+            title="View Profile">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
               {user?.name?.[0]?.toUpperCase() || 'D'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{user?.name || 'Doctor'}</p>
               <p className="text-xs text-blue-500 font-medium">{t('doctor.portal')}</p>
             </div>
+            <ChevronRight size={14} className="text-blue-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
             <LogOut size={16} strokeWidth={2} />{t('common.signOut')}
@@ -97,7 +96,6 @@ export default function DoctorLayout() {
             <Menu size={20} />
           </button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'doctor.portal')}</h1>
-          <LanguageSwitcher className="mr-1" />
           <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto">

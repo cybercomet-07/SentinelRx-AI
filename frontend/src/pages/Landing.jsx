@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
-  Activity, MessageSquare, ShieldCheck, Bell, BarChart3,
+  MessageSquare, ShieldCheck, Bell, BarChart3,
   Package, ArrowRight, Zap, Brain, Clock, Mail
 } from 'lucide-react'
 
@@ -72,9 +72,7 @@ function Navbar() {
     }`}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center shadow-sm">
-            <Activity size={16} className="text-white" />
-          </div>
+          <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-9 w-9 object-contain drop-shadow-sm" />
           <span className="font-display font-bold text-gray-900 text-lg tracking-tight">
             Sentinel<span className="text-teal-600">Rx</span> AI
           </span>
@@ -105,9 +103,7 @@ function Hero() {
           className="inline-flex items-center gap-4 mb-8 opacity-0 animate-hero-title"
           style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}
         >
-          <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Activity size={32} className="text-white" strokeWidth={2.5} />
-          </div>
+          <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-16 w-16 md:h-20 md:w-20 object-contain drop-shadow-xl" />
           <h1 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight">
             Sentinel<span className="text-teal-600">Rx</span> AI
           </h1>
@@ -216,9 +212,7 @@ function HowItWorks() {
         {/* Chat preview */}
         <div className="mt-16 bg-white rounded-3xl border border-gray-100 shadow-card p-6 max-w-lg mx-auto">
           <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100">
-            <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
-              <Activity size={13} className="text-white" />
-            </div>
+            <img src="/sentinelrx-logo.png" alt="SentinelRx" className="w-7 h-7 object-contain" />
             <span className="text-sm font-semibold text-gray-700">SentinelRx AI Chat</span>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-400" />
@@ -266,10 +260,8 @@ function ContactSection() {
         </div>
         <div className="bg-slate-50 rounded-3xl border border-teal-100 p-10 max-w-2xl mx-auto text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
-              <Activity size={24} className="text-white" />
-            </div>
-            <h3 className="font-display font-bold text-gray-900 text-xl">AI Pharmacy</h3>
+            <img src="/sentinelrx-logo.png" alt="SentinelRx" className="w-12 h-12 object-contain drop-shadow-sm" />
+            <h3 className="font-display font-bold text-gray-900 text-xl">SentinelRx AI</h3>
           </div>
           <a href="mailto:ainpharmacyofficial@gmail.com" className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-semibold text-lg transition-colors">
             <Mail size={20} />
@@ -323,9 +315,7 @@ function Footer() {
     <footer className="bg-slate-900 text-slate-400 py-10">
       <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center">
-            <Activity size={14} className="text-white" />
-          </div>
+          <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-8 w-8 object-contain brightness-0 invert opacity-90" />
           <span className="font-display font-bold text-white text-base">
             Sentinel<span className="text-teal-400">Rx</span> AI
           </span>

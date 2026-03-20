@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, Activity, Shield, User, ArrowLeft, UserPlus, LogIn, ChevronDown } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, UserPlus, LogIn, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
@@ -12,11 +12,51 @@ import i18n from '../i18n'
 const SPLINE_EMBED_URL = 'https://my.spline.design/genkubgreetingrobot-ZifrhwRHpj4D389o6wERaW9o/'
 
 const ROLES = [
-  { value: 'user',           label: '🏥 Patient',        subtitle: 'Order medicines & track health',   btn: 'bg-teal-500 hover:bg-teal-600' },
-  { value: 'doctor',         label: '👨‍⚕️ Doctor',          subtitle: 'Manage patients & consultations',  btn: 'bg-blue-500 hover:bg-blue-600' },
-  { value: 'hospital_admin', label: '🏨 Hospital Admin',  subtitle: 'Manage hospital operations',       btn: 'bg-orange-500 hover:bg-orange-600' },
-  { value: 'ngo',            label: '🤝 NGO',             subtitle: 'Manage drives & beneficiaries',    btn: 'bg-green-500 hover:bg-green-600' },
-  { value: 'admin',          label: '🛡️ Super Admin',     subtitle: 'Platform management & analytics',  btn: 'bg-violet-600 hover:bg-violet-700' },
+  {
+    value: 'user',
+    label: 'Patient',
+    subtitle: 'Order medicines & track health',
+    emoji: '🏥',
+    dot: 'bg-teal-500',
+    badge: 'bg-teal-50 text-teal-700 border-teal-200',
+    btn: 'bg-teal-500 hover:bg-teal-600',
+  },
+  {
+    value: 'doctor',
+    label: 'Doctor',
+    subtitle: 'Manage patients & consultations',
+    emoji: '👨‍⚕️',
+    dot: 'bg-blue-500',
+    badge: 'bg-blue-50 text-blue-700 border-blue-200',
+    btn: 'bg-blue-500 hover:bg-blue-600',
+  },
+  {
+    value: 'hospital_admin',
+    label: 'Hospital Admin',
+    subtitle: 'Manage hospital operations',
+    emoji: '🏨',
+    dot: 'bg-orange-500',
+    badge: 'bg-orange-50 text-orange-700 border-orange-200',
+    btn: 'bg-orange-500 hover:bg-orange-600',
+  },
+  {
+    value: 'ngo',
+    label: 'NGO',
+    subtitle: 'Manage drives & beneficiaries',
+    emoji: '🤝',
+    dot: 'bg-green-500',
+    badge: 'bg-green-50 text-green-700 border-green-200',
+    btn: 'bg-green-500 hover:bg-green-600',
+  },
+  {
+    value: 'admin',
+    label: 'Super Admin',
+    subtitle: 'Platform management & analytics',
+    emoji: '🛡️',
+    dot: 'bg-violet-500',
+    badge: 'bg-violet-50 text-violet-700 border-violet-200',
+    btn: 'bg-violet-600 hover:bg-violet-700',
+  },
 ]
 
 const ROLE_REDIRECTS = {
@@ -46,6 +86,8 @@ export default function Login() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [backendOk, setBackendOk] = useState(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -74,6 +116,16 @@ export default function Login() {
       .then(() => setBackendOk(true))
       .catch(() => setBackendOk(false))
       .finally(() => clearTimeout(t))
+  }, [])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const selectedRole = ROLES.find(r => r.value === role)
@@ -180,12 +232,12 @@ export default function Login() {
         <div className="relative z-10 flex flex-col h-full">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                <Activity size={22} className="text-white" />
+              <div className="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/25 p-1.5">
+                <img src="/sentinelrx-logo.png" alt="SentinelRx" className="w-full h-full object-contain" />
               </div>
               <div>
                 <p className="font-display font-bold text-white text-xl leading-none">SentinelRx AI</p>
-                <p className="text-white/60 text-xs mt-0.5">Pharmacy Platform</p>
+                <p className="text-white/60 text-xs mt-0.5">Healthcare Platform</p>
               </div>
             </div>
             <Link to="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors">
@@ -208,9 +260,7 @@ export default function Login() {
               </Link>
             </div>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center">
-                <Activity size={17} className="text-white" />
-              </div>
+              <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-9 w-9 object-contain drop-shadow-sm" />
               <span className="font-display text-gray-900 text-lg font-bold">SentinelRx AI</span>
             </div>
           </div>
@@ -248,26 +298,55 @@ export default function Login() {
             )}
           </div>
 
-          {/* Role selector dropdown */}
-          <div className="mb-6">
+          {/* Role selector — custom dropdown */}
+          <div className="mb-6" ref={dropdownRef}>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.selectRole')}</p>
             <div className="relative">
-              <select
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                className="w-full appearance-none border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white pr-10 cursor-pointer"
+              {/* Trigger */}
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(o => !o)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 bg-white text-left transition-all ${
+                  dropdownOpen ? 'border-teal-400 ring-2 ring-teal-100' : 'border-gray-200 hover:border-gray-300'
+                }`}
               >
-                {ROLES.map(({ value, label, subtitle }) => (
-                  <option key={value} value={value}>{label} — {subtitle}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${selectedRole?.dot}`} />
+                <span className="text-xl leading-none">{selectedRole?.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-gray-800">{selectedRole?.label}</span>
+                  <span className="block text-xs text-gray-400 truncate">{selectedRole?.subtitle}</span>
+                </div>
+                <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown panel */}
+              {dropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
+                  {ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => { setRole(r.value); setDropdownOpen(false) }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                        role === r.value ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${r.dot}`} />
+                      <span className="text-xl leading-none">{r.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-sm font-semibold text-gray-800">{r.label}</span>
+                        <span className="block text-xs text-gray-400">{r.subtitle}</span>
+                      </div>
+                      {role === r.value && (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${r.badge} shrink-0`}>
+                          Selected
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            {role && (
-              <p className="mt-2 text-xs text-gray-400">
-                {ROLES.find(r => r.value === role)?.subtitle}
-              </p>
-            )}
           </div>
 
           {/* Preferred Language - show for both signin and signup so login page uses user's choice */}
@@ -398,8 +477,8 @@ export default function Login() {
               {loading
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t('auth.pleaseWait')}</>
                 : mode === 'signup'
-                  ? <><UserPlus size={16} /> Create {selectedRole?.label} Account</>
-                  : <><LogIn size={16} /> Sign in as {selectedRole?.label}</>
+                  ? <><UserPlus size={16} /> Create {selectedRole?.emoji} {selectedRole?.label} Account</>
+                  : <><LogIn size={16} /> Sign in as {selectedRole?.emoji} {selectedRole?.label}</>
               }
             </button>
           </form>
