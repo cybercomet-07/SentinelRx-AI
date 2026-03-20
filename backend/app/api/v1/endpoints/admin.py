@@ -167,48 +167,59 @@ def get_super_admin_stats(
     pending_appts       = db.query(Appointment).filter(Appointment.status == "PENDING").count()
     confirmed_appts     = db.query(Appointment).filter(Appointment.status == "CONFIRMED").count()
 
-    # ── Hospital ──────────────────────────────────────────────────────────────
-    total_beds          = db.query(HospitalBed).count()
-    available_beds      = db.query(HospitalBed).filter(HospitalBed.status == BedStatus.AVAILABLE).count()
-    occupied_beds       = db.query(HospitalBed).filter(HospitalBed.status == BedStatus.OCCUPIED).count()
-    total_admissions    = db.query(HospitalAdmission).count()
-    active_admissions   = db.query(HospitalAdmission).filter(
-        HospitalAdmission.status == AdmissionStatus.ADMITTED).count()
-    total_visits        = db.query(PatientVisit).count()
-    hospital_meds       = db.query(HospitalMedicine).count()
-    total_bills         = db.query(HospitalBill).count()
-    billing_revenue     = db.query(HospitalBill).with_entities(
-        func.sum(HospitalBill.amount_paid)
-    ).scalar() or 0.0
-    pending_bills       = db.query(HospitalBill).filter(HospitalBill.payment_status == "PENDING").count()
+    # ── Hospital (resilient: tables may not exist on older DBs) ─────────────────
+    try:
+        total_beds          = db.query(HospitalBed).count()
+        available_beds      = db.query(HospitalBed).filter(HospitalBed.status == BedStatus.AVAILABLE).count()
+        occupied_beds       = db.query(HospitalBed).filter(HospitalBed.status == BedStatus.OCCUPIED).count()
+        total_admissions    = db.query(HospitalAdmission).count()
+        active_admissions   = db.query(HospitalAdmission).filter(
+            HospitalAdmission.status == AdmissionStatus.ADMITTED).count()
+        total_visits        = db.query(PatientVisit).count()
+        hospital_meds       = db.query(HospitalMedicine).count()
+        total_bills         = db.query(HospitalBill).count()
+        billing_revenue     = db.query(HospitalBill).with_entities(
+            func.sum(HospitalBill.amount_paid)
+        ).scalar() or 0.0
+        pending_bills       = db.query(HospitalBill).filter(HospitalBill.payment_status == "PENDING").count()
+        recent_admissions   = db.query(HospitalAdmission).order_by(
+            HospitalAdmission.admit_date.desc()).limit(5).all()
+        recent_admissions_list = [
+            {"id": str(a.id)[:8], "patient": a.patient_name, "ward": (a.bed.ward if a.bed else None) or "—",
+             "status": a.status.value if a.status is not None else "—", "date": str(a.admit_date)}
+            for a in recent_admissions
+        ]
+    except Exception as e:
+        logger.warning("Super-stats hospital section failed: %s", e)
+        total_beds = available_beds = occupied_beds = total_admissions = active_admissions = 0
+        total_visits = hospital_meds = total_bills = pending_bills = 0
+        billing_revenue = 0.0
+        recent_admissions_list = []
 
-    # ── NGO ───────────────────────────────────────────────────────────────────
-    total_beneficiaries   = db.query(NGOBeneficiary).count()
-    scheme_eligible       = db.query(NGOBeneficiary).filter(NGOBeneficiary.scheme_eligible == True).count()
-    total_blood_camps     = db.query(NGOBloodCamp).count()
-    units_collected       = db.query(NGOBloodCamp).with_entities(
-        func.sum(NGOBloodCamp.collected_units)
-    ).scalar() or 0
-    total_drives          = db.query(NGODonationDrive).count()
-    ngo_donations_raised  = db.query(NGODonationDrive).with_entities(
-        func.sum(NGODonationDrive.raised_amount)
-    ).scalar() or 0.0
+    # ── NGO (resilient) ───────────────────────────────────────────────────────
+    try:
+        total_beneficiaries   = db.query(NGOBeneficiary).count()
+        scheme_eligible       = db.query(NGOBeneficiary).filter(NGOBeneficiary.scheme_eligible == True).count()
+        total_blood_camps     = db.query(NGOBloodCamp).count()
+        units_collected       = db.query(NGOBloodCamp).with_entities(
+            func.sum(NGOBloodCamp.collected_units)
+        ).scalar() or 0
+        total_drives          = db.query(NGODonationDrive).count()
+        ngo_donations_raised  = db.query(NGODonationDrive).with_entities(
+            func.sum(NGODonationDrive.raised_amount)
+        ).scalar() or 0.0
+    except Exception as e:
+        logger.warning("Super-stats NGO section failed: %s", e)
+        total_beneficiaries = scheme_eligible = total_blood_camps = total_drives = 0
+        units_collected = 0
+        ngo_donations_raised = 0.0
 
-    # ── Recent activity: last 5 orders ────────────────────────────────────────
+    # ── Recent orders ────────────────────────────────────────────────────────
     recent_orders = db.query(Order).order_by(Order.created_at.desc()).limit(5).all()
     recent_orders_list = [
         {"id": str(o.id)[:8], "user": o.user_name, "amount": o.total_amount,
          "status": o.status.value, "date": str(o.created_at)[:10]}
         for o in recent_orders
-    ]
-
-    # ── Recent admissions ─────────────────────────────────────────────────────
-    recent_admissions = db.query(HospitalAdmission).order_by(
-        HospitalAdmission.admit_date.desc()).limit(5).all()
-    recent_admissions_list = [
-        {"id": str(a.id)[:8], "patient": a.patient_name, "ward": a.ward or "—",
-         "status": a.status.value if a.status else "—", "date": str(a.admit_date)}
-        for a in recent_admissions
     ]
 
     return {
