@@ -65,6 +65,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+# Ensure production Vercel frontend is always allowed
+_vercel_prod = "https://sentinelrx-ai.vercel.app"
+if _vercel_prod not in origins:
+    origins.append(_vercel_prod)
 # Allow any localhost port for dev + any vercel.app subdomain for production
 app.add_middleware(
     CORSMiddleware,
