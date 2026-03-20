@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut, Activity } from 'lucide-react'
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 
 const NAV = [
