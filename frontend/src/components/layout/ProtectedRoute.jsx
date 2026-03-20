@@ -2,7 +2,15 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import Loader from '../ui/Loader'
 
-export default function ProtectedRoute({ children, adminOnly = false }) {
+const ROLE_HOME = {
+  user:           '/user/quick-start',
+  admin:          '/admin/dashboard',
+  doctor:         '/doctor/dashboard',
+  hospital_admin: '/hospital/dashboard',
+  ngo:            '/ngo/dashboard',
+}
+
+export default function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -13,8 +21,13 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
       </div>
     )
   }
+
   if (!user) return <Navigate to="/login" replace />
-  if (adminOnly && user.role !== 'admin') return <Navigate to="/user/chat" replace />
+
+  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
+    const home = ROLE_HOME[user.role?.toLowerCase()] || '/user/quick-start'
+    return <Navigate to={home} replace />
+  }
 
   return children
 }

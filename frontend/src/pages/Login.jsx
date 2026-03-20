@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, Activity, Shield, User, ArrowLeft, UserPlus, LogIn } from 'lucide-react'
+import { Eye, EyeOff, Activity, Shield, User, ArrowLeft, UserPlus, LogIn, ChevronDown } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
@@ -12,27 +12,20 @@ import i18n from '../i18n'
 const SPLINE_EMBED_URL = 'https://my.spline.design/genkubgreetingrobot-ZifrhwRHpj4D389o6wERaW9o/'
 
 const ROLES = [
-  {
-    value: 'user',
-    label: 'User',
-    subtitle: 'Order medicines & track',
-    icon: User,
-    active: 'border-teal-400 bg-teal-50 text-teal-700',
-    inactive: 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50',
-    dot: 'bg-teal-400',
-    btn: 'bg-teal-500 hover:bg-teal-600',
-  },
-  {
-    value: 'admin',
-    label: 'Admin',
-    subtitle: 'Manage inventory & orders',
-    icon: Shield,
-    active: 'border-violet-400 bg-violet-50 text-violet-700',
-    inactive: 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50',
-    dot: 'bg-violet-400',
-    btn: 'bg-violet-600 hover:bg-violet-700',
-  },
+  { value: 'user',           label: '🏥 Patient',        subtitle: 'Order medicines & track health',   btn: 'bg-teal-500 hover:bg-teal-600' },
+  { value: 'doctor',         label: '👨‍⚕️ Doctor',          subtitle: 'Manage patients & consultations',  btn: 'bg-blue-500 hover:bg-blue-600' },
+  { value: 'hospital_admin', label: '🏨 Hospital Admin',  subtitle: 'Manage hospital operations',       btn: 'bg-orange-500 hover:bg-orange-600' },
+  { value: 'ngo',            label: '🤝 NGO',             subtitle: 'Manage drives & beneficiaries',    btn: 'bg-green-500 hover:bg-green-600' },
+  { value: 'admin',          label: '🛡️ Super Admin',     subtitle: 'Platform management & analytics',  btn: 'bg-violet-600 hover:bg-violet-700' },
 ]
+
+const ROLE_REDIRECTS = {
+  user:           '/user/quick-start',
+  doctor:         '/doctor/dashboard',
+  hospital_admin: '/hospital/dashboard',
+  ngo:            '/ngo/dashboard',
+  admin:          '/admin/dashboard',
+}
 
 export default function Login() {
   const { t } = useTranslation()
@@ -145,7 +138,7 @@ export default function Login() {
       const userData = { ...meRes.data, role }
       login(userData, token)
       toast.success(`Welcome back, ${userData.name}!`)
-      navigate(role === 'admin' ? '/admin/dashboard' : '/user/quick-start')
+      navigate(ROLE_REDIRECTS[role] || '/user/quick-start')
     } catch (err) {
       let msg = err.response?.data?.error?.message || (typeof err.response?.data?.detail === 'string' ? err.response.data.detail : null) || err.message || 'Invalid credentials'
       if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
@@ -255,29 +248,26 @@ export default function Login() {
             )}
           </div>
 
-          {/* Role selector cards */}
+          {/* Role selector dropdown */}
           <div className="mb-6">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.selectRole')}</p>
-            <div className="grid grid-cols-2 gap-3">
-              {ROLES.map(({ value, label, subtitle, icon: Icon, active, inactive, dot }) => {
-                const isActive = role === value
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setRole(value)}
-                    className={`relative flex flex-col items-start gap-1 p-4 rounded-2xl border-2 transition-all duration-200 text-left ${isActive ? active : inactive}`}
-                  >
-                    {isActive && <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${dot}`} />}
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-1 ${isActive ? 'bg-current/10' : 'bg-gray-100'}`}>
-                      <Icon size={16} className={isActive ? 'opacity-80' : 'text-gray-400'} />
-                    </div>
-                    <span className="font-semibold text-sm leading-none">{label}</span>
-                    <span className={`text-xs leading-tight ${isActive ? 'opacity-60' : 'text-gray-400'}`}>{subtitle}</span>
-                  </button>
-                )
-              })}
+            <div className="relative">
+              <select
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="w-full appearance-none border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white pr-10 cursor-pointer"
+              >
+                {ROLES.map(({ value, label, subtitle }) => (
+                  <option key={value} value={value}>{label} — {subtitle}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
+            {role && (
+              <p className="mt-2 text-xs text-gray-400">
+                {ROLES.find(r => r.value === role)?.subtitle}
+              </p>
+            )}
           </div>
 
           {/* Preferred Language - show for both signin and signup so login page uses user's choice */}
@@ -405,8 +395,8 @@ export default function Login() {
               {loading
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t('auth.pleaseWait')}</>
                 : mode === 'signup'
-                  ? <><UserPlus size={16} /> {selectedRole?.value === 'admin' ? t('auth.createAdminAccount') : t('auth.createUserAccount')}</>
-                  : <><LogIn size={16} /> {selectedRole?.value === 'admin' ? t('auth.signInAsAdmin') : t('auth.signInAsUser')}</>
+                  ? <><UserPlus size={16} /> Create {selectedRole?.label} Account</>
+                  : <><LogIn size={16} /> Sign in as {selectedRole?.label}</>
               }
             </button>
           </form>

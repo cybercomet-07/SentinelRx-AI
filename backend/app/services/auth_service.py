@@ -15,7 +15,8 @@ from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 def _build_token_response(user: User, role_override: str | None = None) -> TokenResponse:
     settings = get_settings()
     normalized = role_override.upper() if role_override else None
-    effective_role = normalized if normalized in ("USER", "ADMIN") else user.role.value
+    valid_roles = {r.value for r in UserRole}
+    effective_role = normalized if normalized in valid_roles else user.role.value
     claims = {"email": user.email, "role": effective_role}
     access_token = create_token(
         subject=str(user.id),
