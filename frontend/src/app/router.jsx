@@ -19,6 +19,7 @@ import ContactUsPage from '../pages/user/ContactUsPage'
 import FindDoctorPage from '../pages/user/FindDoctorPage'
 import BookAppointmentPage from '../pages/user/BookAppointmentPage'
 import MyAppointmentsPage from '../pages/user/MyAppointmentsPage'
+import GovtSchemesPage from '../pages/shared/GovtSchemesPage'
 
 // Super Admin
 import AdminLayout from '../pages/admin/AdminLayout'
@@ -72,6 +73,7 @@ export default function AppRouter() {
         <Route path="find-doctor" element={<FindDoctorPage />} />
         <Route path="book-appointment/:doctorId" element={<BookAppointmentPage />} />
         <Route path="appointments" element={<MyAppointmentsPage />} />
+        <Route path="govt-schemes" element={<GovtSchemesPage />} />
         <Route path="contact" element={<ContactUsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -97,6 +99,7 @@ export default function AppRouter() {
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="patients" element={<DoctorPatientsPage />} />
         <Route path="prescriptions" element={<DoctorPrescriptionsPage />} />
+        <Route path="govt-schemes" element={<GovtSchemesPage />} />
         <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<DoctorProfilePage />} />
       </Route>

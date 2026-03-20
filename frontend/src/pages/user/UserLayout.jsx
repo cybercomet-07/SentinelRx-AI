@@ -12,6 +12,7 @@ const TITLE_KEYS = {
   '/user/orders': 'nav.orderHistory',
   '/user/find-doctor': 'nav.findDoctor',
   '/user/appointments': 'nav.myAppointments',
+  '/user/govt-schemes': 'nav.govtSchemes',
   '/user/notifications': 'nav.notifications',
   '/user/prescriptions': 'nav.prescriptions',
   '/user/profile': 'nav.profile',
