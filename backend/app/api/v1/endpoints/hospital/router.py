@@ -236,8 +236,8 @@ def hospital_inventory(
     return {
         "items": [{
             "id": str(m.id), "name": m.name, "category": m.category,
-            "price": m.price, "stock": m.stock, "expiry_date": str(m.expiry_date) if m.expiry_date else None,
-            "requires_prescription": m.requires_prescription,
+            "price": m.price, "stock": m.quantity, "expiry_date": str(m.expiry_date) if m.expiry_date else None,
+            "requires_prescription": getattr(m, 'requires_prescription', False),
         } for m in medicines],
         "total": len(medicines)
     }
