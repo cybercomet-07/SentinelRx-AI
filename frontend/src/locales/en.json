@@ -111,6 +111,8 @@
     "prescriptions": "Prescriptions",
     "contactUs": "Contact Us",
     "dashboard": "Dashboard",
+    "systemOverview": "System Overview",
+    "pharmacyDashboard": "Pharmacy Dashboard",
     "medicines": "Medicines",
     "orders": "Orders",
     "deliveryMap": "Delivery Map",
@@ -118,7 +120,8 @@
     "contactSubmissions": "Contact Submissions"
   },
   "admin": {
-    "dashboard": "Dashboard",
+    "dashboard": "Pharmacy Dashboard",
+    "superDashboard": "System Overview",
     "medicineManagement": "Medicine Management",
     "ordersManagement": "Orders Management",
     "prescriptionManagement": "Prescription Management",
@@ -152,8 +155,11 @@
     "dashboard": "Dashboard",
     "beds": "Bed Management",
     "admissions": "Admissions",
-    "inventory": "Inventory",
+    "visits": "Patient Visits",
+    "medicines": "Medicine Stock",
+    "inventory": "Pharmacy Inventory",
     "billing": "Billing",
+    "govtSchemes": "Govt Schemes",
     "notifications": "Notifications",
     "profile": "Settings",
     "portal": "Hospital Portal"

@@ -4,7 +4,6 @@ import { useAuth } from '../../hooks/useAuth'
 import { useTranslation } from 'react-i18next'
 import { Menu, X, HeartHandshake, LayoutDashboard, Users, Droplets, Gift, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
-import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
@@ -90,7 +89,6 @@ export default function NGOLayout() {
         <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-green-100 sticky top-0 z-30 flex items-center px-4 md:px-6 gap-3 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'ngo.portal')}</h1>
-          <LanguageSwitcher className="mr-1" />
           <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>

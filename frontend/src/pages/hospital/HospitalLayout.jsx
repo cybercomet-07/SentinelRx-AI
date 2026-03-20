@@ -2,17 +2,19 @@ import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, Building2, LayoutDashboard, Users, BedDouble, Pill, Receipt, Bell, Settings, LogOut } from 'lucide-react'
+import { Menu, X, Building2, LayoutDashboard, Users, BedDouble, Pill, Receipt, Bell, Settings, LogOut, FlaskConical, CalendarClock, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
-import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 import NotificationBell from '../../components/notifications/NotificationBell'
 
 const NAV_KEYS = [
   { to: '/hospital/dashboard',     icon: LayoutDashboard, key: 'hospital.dashboard' },
   { to: '/hospital/patients',      icon: Users,           key: 'hospital.admissions' },
   { to: '/hospital/beds',          icon: BedDouble,       key: 'hospital.beds' },
+  { to: '/hospital/visits',        icon: CalendarClock,   key: 'hospital.visits' },
+  { to: '/hospital/medicines',     icon: FlaskConical,    key: 'hospital.medicines' },
   { to: '/hospital/inventory',     icon: Pill,            key: 'hospital.inventory' },
   { to: '/hospital/billing',       icon: Receipt,         key: 'hospital.billing' },
+  { to: '/hospital/govt-schemes',  icon: ShieldCheck,     key: 'hospital.govtSchemes' },
   { to: '/hospital/notifications', icon: Bell,            key: 'hospital.notifications' },
   { to: '/hospital/profile',       icon: Settings,        key: 'hospital.profile' },
 ]
@@ -21,8 +23,11 @@ const TITLE_KEYS = {
   '/hospital/dashboard':     'hospital.dashboard',
   '/hospital/patients':      'hospital.admissions',
   '/hospital/beds':          'hospital.beds',
+  '/hospital/visits':        'hospital.visits',
+  '/hospital/medicines':     'hospital.medicines',
   '/hospital/inventory':     'hospital.inventory',
   '/hospital/billing':       'hospital.billing',
+  '/hospital/govt-schemes':  'hospital.govtSchemes',
   '/hospital/notifications': 'hospital.notifications',
   '/hospital/profile':       'hospital.profile',
 }
@@ -92,7 +97,6 @@ export default function HospitalLayout() {
         <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-orange-100 sticky top-0 z-30 flex items-center px-4 md:px-6 gap-3 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
           <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'hospital.portal')}</h1>
-          <LanguageSwitcher className="mr-1" />
           <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>

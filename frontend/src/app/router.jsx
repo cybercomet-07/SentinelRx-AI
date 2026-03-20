@@ -24,6 +24,7 @@ import GovtSchemesPage from '../pages/shared/GovtSchemesPage'
 // Super Admin
 import AdminLayout from '../pages/admin/AdminLayout'
 import AdminDashboard from '../pages/admin/AdminDashboard'
+import SuperAdminDashboard from '../pages/admin/SuperAdminDashboard'
 import AdminMedicines from '../pages/admin/AdminMedicines'
 import AdminOrders from '../pages/admin/AdminOrders'
 import AdminMapPage from '../pages/admin/AdminMapPage'
@@ -46,6 +47,9 @@ import HospitalDashboard from '../pages/hospital/HospitalDashboard'
 import BedsPage from '../pages/hospital/BedsPage'
 import AdmissionsPage from '../pages/hospital/AdmissionsPage'
 import HospitalInventoryPage from '../pages/hospital/HospitalInventoryPage'
+import HospitalMedicinesPage from '../pages/hospital/HospitalMedicinesPage'
+import PatientVisitsPage from '../pages/hospital/PatientVisitsPage'
+import HospitalBillingPage from '../pages/hospital/HospitalBillingPage'
 
 // NGO
 import NGOLayout from '../pages/ngo/NGOLayout'
@@ -81,7 +85,8 @@ export default function AppRouter() {
       {/* Super Admin Dashboard */}
       <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="dashboard" element={<SuperAdminDashboard />} />
+        <Route path="pharmacy-dashboard" element={<AdminDashboard />} />
         <Route path="medicines" element={<AdminMedicines />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="notifications" element={<NotificationsPage />} />
@@ -99,7 +104,6 @@ export default function AppRouter() {
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="patients" element={<DoctorPatientsPage />} />
         <Route path="prescriptions" element={<DoctorPrescriptionsPage />} />
-        <Route path="govt-schemes" element={<GovtSchemesPage />} />
         <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<DoctorProfilePage />} />
       </Route>
@@ -110,8 +114,11 @@ export default function AppRouter() {
         <Route path="dashboard" element={<HospitalDashboard />} />
         <Route path="patients" element={<AdmissionsPage />} />
         <Route path="beds" element={<BedsPage />} />
+        <Route path="visits" element={<PatientVisitsPage />} />
+        <Route path="medicines" element={<HospitalMedicinesPage />} />
         <Route path="inventory" element={<HospitalInventoryPage />} />
-        <Route path="billing" element={<ComingSoon title="Billing" phase="Phase 4" />} />
+        <Route path="billing" element={<HospitalBillingPage />} />
+        <Route path="govt-schemes" element={<GovtSchemesPage />} />
         <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<ComingSoon title="Hospital Settings" phase="Phase 4" />} />
       </Route>

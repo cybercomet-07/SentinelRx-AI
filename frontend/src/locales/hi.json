@@ -111,6 +111,8 @@
     "prescriptions": "प्रिस्क्रिप्शन",
     "contactUs": "संपर्क करें",
     "dashboard": "डैशबोर्ड",
+    "systemOverview": "सिस्टम अवलोकन",
+    "pharmacyDashboard": "फार्मेसी डैशबोर्ड",
     "medicines": "दवाएं",
     "orders": "ऑर्डर",
     "deliveryMap": "डिलीवरी मैप",
@@ -118,7 +120,8 @@
     "contactSubmissions": "संपर्क जमा"
   },
   "admin": {
-    "dashboard": "डैशबोर्ड",
+    "dashboard": "फार्मेसी डैशबोर्ड",
+    "superDashboard": "सिस्टम अवलोकन",
     "medicineManagement": "दवा प्रबंधन",
     "ordersManagement": "ऑर्डर प्रबंधन",
     "prescriptionManagement": "प्रिस्क्रिप्शन प्रबंधन",
@@ -152,8 +155,11 @@
     "dashboard": "डैशबोर्ड",
     "beds": "बेड प्रबंधन",
     "admissions": "भर्ती",
-    "inventory": "इन्वेंटरी",
+    "visits": "मरीज़ विज़िट",
+    "medicines": "दवा स्टॉक",
+    "inventory": "फार्मेसी इन्वेंटरी",
     "billing": "बिलिंग",
+    "govtSchemes": "सरकारी योजनाएं",
     "notifications": "सूचनाएं",
     "profile": "सेटिंग्स",
     "portal": "हॉस्पिटल पोर्टल"

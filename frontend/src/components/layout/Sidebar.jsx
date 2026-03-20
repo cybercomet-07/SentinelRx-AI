@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
   Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail, Rocket, X,
-  Stethoscope, CalendarDays, ShieldCheck,
+  Stethoscope, CalendarDays, ShieldCheck, BarChart2,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -22,14 +22,15 @@ const userLinkKeys = [
 ]
 
 const adminLinkKeys = [
-  { to: '/admin/dashboard', icon: LayoutDashboard, key: 'sidebar.dashboard' },
-  { to: '/admin/medicines', icon: Pill, key: 'sidebar.medicines' },
-  { to: '/admin/orders', icon: ClipboardList, key: 'sidebar.orders' },
-  { to: '/admin/prescriptions', icon: FileText, key: 'sidebar.prescriptions' },
-  { to: '/admin/notifications', icon: Bell, key: 'sidebar.notifications' },
-  { to: '/admin/map', icon: MapPin, key: 'sidebar.deliveryMap' },
-  { to: '/admin/users', icon: Users, key: 'sidebar.users' },
-  { to: '/admin/contact', icon: Mail, key: 'sidebar.contactSubmissions' },
+  { to: '/admin/dashboard',          icon: Activity,      key: 'sidebar.systemOverview' },
+  { to: '/admin/pharmacy-dashboard', icon: BarChart2,     key: 'sidebar.pharmacyDashboard' },
+  { to: '/admin/medicines',          icon: Pill,          key: 'sidebar.medicines' },
+  { to: '/admin/orders',             icon: ClipboardList, key: 'sidebar.orders' },
+  { to: '/admin/prescriptions',      icon: FileText,      key: 'sidebar.prescriptions' },
+  { to: '/admin/notifications',      icon: Bell,          key: 'sidebar.notifications' },
+  { to: '/admin/map',                icon: MapPin,        key: 'sidebar.deliveryMap' },
+  { to: '/admin/users',              icon: Users,         key: 'sidebar.users' },
+  { to: '/admin/contact',            icon: Mail,          key: 'sidebar.contactSubmissions' },
 ]
 
 export default function Sidebar({ open, onClose }) {
