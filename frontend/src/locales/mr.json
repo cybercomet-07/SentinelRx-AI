@@ -106,6 +106,7 @@
     "orderHistory": "ऑर्डर इतिहास",
     "findDoctor": "डॉक्टर शोधा",
     "myAppointments": "माझ्या अपॉइंटमेंट",
+    "govtSchemes": "शासकीय योजना",
     "notifications": "अधिसूचना",
     "prescriptions": "प्रिस्क्रिप्शन",
     "contactUs": "संपर्क करा",
@@ -131,6 +132,7 @@
     "orderHistory": "ऑर्डर इतिहास",
     "findDoctor": "डॉक्टर शोधा",
     "myAppointments": "माझ्या अपॉइंटमेंट",
+    "govtSchemes": "शासकीय योजना",
     "notifications": "अधिसूचना",
     "prescriptions": "प्रिस्क्रिप्शन",
     "profile": "प्रोफाइल",
@@ -141,6 +143,7 @@
     "appointments": "अपॉइंटमेंट",
     "patients": "रुग्ण",
     "prescriptions": "प्रिस्क्रिप्शन",
+    "govtSchemes": "शासकीय योजना",
     "notifications": "अधिसूचना",
     "profile": "प्रोफाइल",
     "portal": "डॉक्टर पोर्टल"

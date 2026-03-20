@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut } from 'lucide-react'
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Users, FileText, Bell, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 import NotificationBell from '../../components/notifications/NotificationBell'
@@ -12,6 +12,7 @@ const NAV_KEYS = [
   { to: '/doctor/appointments',  icon: CalendarDays,    key: 'doctor.appointments' },
   { to: '/doctor/patients',      icon: Users,           key: 'doctor.patients' },
   { to: '/doctor/prescriptions', icon: FileText,        key: 'doctor.prescriptions' },
+  { to: '/doctor/govt-schemes',  icon: ShieldCheck,     key: 'doctor.govtSchemes' },
   { to: '/doctor/notifications', icon: Bell,            key: 'doctor.notifications' },
   { to: '/doctor/profile',       icon: Settings,        key: 'doctor.profile' },
 ]
@@ -21,6 +22,7 @@ const TITLE_KEYS = {
   '/doctor/appointments':  'doctor.appointments',
   '/doctor/patients':      'doctor.patients',
   '/doctor/prescriptions': 'doctor.prescriptions',
+  '/doctor/govt-schemes':  'doctor.govtSchemes',
   '/doctor/notifications': 'doctor.notifications',
   '/doctor/profile':       'doctor.profile',
 }

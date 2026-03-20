@@ -106,6 +106,7 @@
     "orderHistory": "Order History",
     "findDoctor": "Find a Doctor",
     "myAppointments": "My Appointments",
+    "govtSchemes": "Govt Schemes",
     "notifications": "Notifications",
     "prescriptions": "Prescriptions",
     "contactUs": "Contact Us",
@@ -131,6 +132,7 @@
     "orderHistory": "Order History",
     "findDoctor": "Find a Doctor",
     "myAppointments": "My Appointments",
+    "govtSchemes": "Govt Schemes",
     "notifications": "Notifications",
     "prescriptions": "Prescriptions",
     "profile": "Profile",
@@ -141,6 +143,7 @@
     "appointments": "Appointments",
     "patients": "Patients",
     "prescriptions": "Prescriptions",
+    "govtSchemes": "Govt Schemes",
     "notifications": "Notifications",
     "profile": "Profile",
     "portal": "Doctor Portal"
