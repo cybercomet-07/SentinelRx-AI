@@ -291,13 +291,14 @@ export default function Login() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
 
             {mode === 'signup' && (
               <div>
                 <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-600 mb-1.5">{t('auth.fullLegalName')} *</label>
                 <input id="signup-name" name="name" type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
+                  autoComplete="off"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
               </div>
             )}
@@ -306,6 +307,7 @@ export default function Login() {
               <label htmlFor="login-email" className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address</label>
               <input id="login-email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="you@email.com"
+                autoComplete="off"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" required />
             </div>
 
@@ -361,6 +363,7 @@ export default function Login() {
               <div className="relative">
                 <input id="login-password" name="password" type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm pr-11 focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 bg-white transition-all placeholder-gray-300" />
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors">
