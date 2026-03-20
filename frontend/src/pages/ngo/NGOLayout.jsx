@@ -1,31 +1,34 @@
 import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useTranslation } from 'react-i18next'
 import { Menu, X, HeartHandshake, LayoutDashboard, Users, Droplets, Gift, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 
-const NAV = [
-  { to: '/ngo/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/ngo/beneficiaries', icon: Users,           label: 'Beneficiaries' },
-  { to: '/ngo/blood-camps',   icon: Droplets,        label: 'Blood Camps' },
-  { to: '/ngo/donations',     icon: Gift,            label: 'Donation Drives' },
-  { to: '/ngo/notifications', icon: Bell,            label: 'Notifications' },
-  { to: '/ngo/profile',       icon: Settings,        label: 'NGO Profile' },
+const NAV_KEYS = [
+  { to: '/ngo/dashboard',     icon: LayoutDashboard, key: 'ngo.dashboard' },
+  { to: '/ngo/beneficiaries', icon: Users,           key: 'ngo.beneficiaries' },
+  { to: '/ngo/blood-camps',   icon: Droplets,        key: 'ngo.bloodCamps' },
+  { to: '/ngo/donations',     icon: Gift,            key: 'ngo.donations' },
+  { to: '/ngo/notifications', icon: Bell,            key: 'ngo.notifications' },
+  { to: '/ngo/profile',       icon: Settings,        key: 'ngo.profile' },
 ]
 
-const TITLES = {
-  '/ngo/dashboard':     'NGO Dashboard',
-  '/ngo/beneficiaries': 'Beneficiaries',
-  '/ngo/blood-camps':   'Blood Camps',
-  '/ngo/donations':     'Donation Drives',
-  '/ngo/notifications': 'Notifications',
-  '/ngo/profile':       'NGO Profile',
+const TITLE_KEYS = {
+  '/ngo/dashboard':     'ngo.dashboard',
+  '/ngo/beneficiaries': 'ngo.beneficiaries',
+  '/ngo/blood-camps':   'ngo.bloodCamps',
+  '/ngo/donations':     'ngo.donations',
+  '/ngo/notifications': 'ngo.notifications',
+  '/ngo/profile':       'ngo.profile',
 }
 
 export default function NGOLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
@@ -46,21 +49,21 @@ export default function NGOLayout() {
             </div>
             <div>
               <p className="font-semibold text-slate-900 text-base leading-tight">SentinelRx AI</p>
-              <p className="text-xs text-green-600 font-medium">NGO Portal</p>
+              <p className="text-xs text-green-600 font-medium">{t('ngo.portal')}</p>
             </div>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 rounded-lg text-slate-400"><X size={18} /></button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {NAV.map(({ to, icon: Icon, label }) => (
+          {NAV_KEYS.map(({ to, icon: Icon, key }) => (
             <NavLink key={to} to={to} onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive ? 'bg-green-50 text-green-700 border border-green-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent'
               )}
             >
-              <Icon size={18} strokeWidth={2} />{label}
+              <Icon size={18} strokeWidth={2} />{t(key)}
             </NavLink>
           ))}
         </nav>
@@ -73,11 +76,11 @@ export default function NGOLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{user?.name || 'NGO'}</p>
-              <p className="text-xs text-green-600 font-medium">NGO</p>
+              <p className="text-xs text-green-600 font-medium">{t('ngo.portal')}</p>
             </div>
           </Link>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
-            <LogOut size={16} strokeWidth={2} />Sign Out
+            <LogOut size={16} strokeWidth={2} />{t('common.signOut')}
           </button>
         </div>
       </aside>
@@ -85,7 +88,8 @@ export default function NGOLayout() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-green-100 sticky top-0 z-30 flex items-center px-4 md:px-6 gap-3 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
-          <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{TITLES[pathname] || 'NGO Portal'}</h1>
+          <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'ngo.portal')}</h1>
+          <LanguageSwitcher className="mr-1" />
           <Bell size={20} className="text-slate-500 cursor-pointer hover:text-green-600" />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>

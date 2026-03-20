@@ -104,6 +104,8 @@
     "aiChat": "AI चॅट",
     "browseMedicines": "औषधे पहा",
     "orderHistory": "ऑर्डर इतिहास",
+    "findDoctor": "डॉक्टर शोधा",
+    "myAppointments": "माझ्या अपॉइंटमेंट",
     "notifications": "अधिसूचना",
     "prescriptions": "प्रिस्क्रिप्शन",
     "contactUs": "संपर्क करा",
@@ -127,10 +129,40 @@
     "aiAssistant": "AI सहाय्यक",
     "browseMedicines": "औषधे पहा",
     "orderHistory": "ऑर्डर इतिहास",
+    "findDoctor": "डॉक्टर शोधा",
+    "myAppointments": "माझ्या अपॉइंटमेंट",
     "notifications": "अधिसूचना",
     "prescriptions": "प्रिस्क्रिप्शन",
     "profile": "प्रोफाइल",
     "contact": "संपर्क करा"
+  },
+  "doctor": {
+    "dashboard": "डॅशबोर्ड",
+    "appointments": "अपॉइंटमेंट",
+    "patients": "रुग्ण",
+    "prescriptions": "प्रिस्क्रिप्शन",
+    "notifications": "अधिसूचना",
+    "profile": "प्रोफाइल",
+    "portal": "डॉक्टर पोर्टल"
+  },
+  "hospital": {
+    "dashboard": "डॅशबोर्ड",
+    "beds": "बेड व्यवस्थापन",
+    "admissions": "प्रवेश",
+    "inventory": "इन्व्हेंटरी",
+    "billing": "बिलिंग",
+    "notifications": "अधिसूचना",
+    "profile": "सेटिंग्ज",
+    "portal": "हॉस्पिटल पोर्टल"
+  },
+  "ngo": {
+    "dashboard": "डॅशबोर्ड",
+    "beneficiaries": "लाभार्थी",
+    "bloodCamps": "रक्तदान शिबिर",
+    "donations": "देणगी",
+    "notifications": "अधिसूचना",
+    "profile": "प्रोफाइल",
+    "portal": "NGO पोर्टल"
   },
   "quickStart": {
     "featuresRoadmap": "फीचर्स रोडमॅप",

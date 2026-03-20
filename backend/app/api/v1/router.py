@@ -15,6 +15,7 @@ from app.api.v1.endpoints.contact import router as contact_router
 from app.api.v1.endpoints.doctor.router import router as doctor_router
 from app.api.v1.endpoints.hospital.router import router as hospital_router
 from app.api.v1.endpoints.ngo.router import router as ngo_router
+from app.api.v1.endpoints.patient.router import router as patient_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -33,3 +34,4 @@ api_router.include_router(contact_router)
 api_router.include_router(doctor_router)
 api_router.include_router(hospital_router)
 api_router.include_router(ngo_router)
+api_router.include_router(patient_router)

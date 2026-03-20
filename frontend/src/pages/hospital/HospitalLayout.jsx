@@ -1,33 +1,36 @@
 import { useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useTranslation } from 'react-i18next'
 import { Menu, X, Building2, LayoutDashboard, Users, BedDouble, Pill, Receipt, Bell, Settings, LogOut } from 'lucide-react'
 import clsx from 'clsx'
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 
-const NAV = [
-  { to: '/hospital/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/hospital/patients',   icon: Users,           label: 'Patients' },
-  { to: '/hospital/beds',       icon: BedDouble,       label: 'Bed Management' },
-  { to: '/hospital/inventory',  icon: Pill,            label: 'Medicine Inventory' },
-  { to: '/hospital/billing',    icon: Receipt,         label: 'Billing' },
-  { to: '/hospital/notifications', icon: Bell,         label: 'Notifications' },
-  { to: '/hospital/profile',    icon: Settings,        label: 'Settings' },
+const NAV_KEYS = [
+  { to: '/hospital/dashboard',     icon: LayoutDashboard, key: 'hospital.dashboard' },
+  { to: '/hospital/patients',      icon: Users,           key: 'hospital.admissions' },
+  { to: '/hospital/beds',          icon: BedDouble,       key: 'hospital.beds' },
+  { to: '/hospital/inventory',     icon: Pill,            key: 'hospital.inventory' },
+  { to: '/hospital/billing',       icon: Receipt,         key: 'hospital.billing' },
+  { to: '/hospital/notifications', icon: Bell,            key: 'hospital.notifications' },
+  { to: '/hospital/profile',       icon: Settings,        key: 'hospital.profile' },
 ]
 
-const TITLES = {
-  '/hospital/dashboard':     'Hospital Dashboard',
-  '/hospital/patients':      'Patient Management',
-  '/hospital/beds':          'Bed Management',
-  '/hospital/inventory':     'Medicine Inventory',
-  '/hospital/billing':       'Billing',
-  '/hospital/notifications': 'Notifications',
-  '/hospital/profile':       'Settings',
+const TITLE_KEYS = {
+  '/hospital/dashboard':     'hospital.dashboard',
+  '/hospital/patients':      'hospital.admissions',
+  '/hospital/beds':          'hospital.beds',
+  '/hospital/inventory':     'hospital.inventory',
+  '/hospital/billing':       'hospital.billing',
+  '/hospital/notifications': 'hospital.notifications',
+  '/hospital/profile':       'hospital.profile',
 }
 
 export default function HospitalLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
@@ -48,21 +51,21 @@ export default function HospitalLayout() {
             </div>
             <div>
               <p className="font-semibold text-slate-900 text-base leading-tight">SentinelRx AI</p>
-              <p className="text-xs text-orange-500 font-medium">Hospital Admin</p>
+              <p className="text-xs text-orange-500 font-medium">{t('hospital.portal')}</p>
             </div>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 rounded-lg text-slate-400"><X size={18} /></button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {NAV.map(({ to, icon: Icon, label }) => (
+          {NAV_KEYS.map(({ to, icon: Icon, key }) => (
             <NavLink key={to} to={to} onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive ? 'bg-orange-50 text-orange-700 border border-orange-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent'
               )}
             >
-              <Icon size={18} strokeWidth={2} />{label}
+              <Icon size={18} strokeWidth={2} />{t(key)}
             </NavLink>
           ))}
         </nav>
@@ -75,11 +78,11 @@ export default function HospitalLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{user?.name || 'Hospital Admin'}</p>
-              <p className="text-xs text-orange-500 font-medium">Hospital Admin</p>
+              <p className="text-xs text-orange-500 font-medium">{t('hospital.portal')}</p>
             </div>
           </Link>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
-            <LogOut size={16} strokeWidth={2} />Sign Out
+            <LogOut size={16} strokeWidth={2} />{t('common.signOut')}
           </button>
         </div>
       </aside>
@@ -87,7 +90,8 @@ export default function HospitalLayout() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-orange-100 sticky top-0 z-30 flex items-center px-4 md:px-6 gap-3 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100"><Menu size={20} /></button>
-          <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{TITLES[pathname] || 'Hospital Portal'}</h1>
+          <h1 className="font-semibold text-slate-900 text-base md:text-lg flex-1 truncate">{t(TITLE_KEYS[pathname] || 'hospital.portal')}</h1>
+          <LanguageSwitcher className="mr-1" />
           <Bell size={20} className="text-slate-500 cursor-pointer hover:text-orange-600" />
         </header>
         <main className="flex-1 overflow-auto"><Outlet /></main>

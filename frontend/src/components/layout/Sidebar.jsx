@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import {
   MessageSquare, ShoppingBag, History, Bell, FileText, LayoutDashboard,
-  Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail, Rocket, X
+  Pill, ClipboardList, Users, LogOut, Activity, MapPin, Mail, Rocket, X,
+  Stethoscope, CalendarDays,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -12,6 +13,8 @@ const userLinkKeys = [
   { to: '/user/chat', icon: MessageSquare, key: 'sidebar.aiChat' },
   { to: '/user/medicines', icon: ShoppingBag, key: 'sidebar.browseMedicines' },
   { to: '/user/orders', icon: History, key: 'sidebar.orderHistory' },
+  { to: '/user/find-doctor', icon: Stethoscope, key: 'sidebar.findDoctor' },
+  { to: '/user/appointments', icon: CalendarDays, key: 'sidebar.myAppointments' },
   { to: '/user/notifications', icon: Bell, key: 'sidebar.notifications' },
   { to: '/user/prescriptions', icon: FileText, key: 'sidebar.prescriptions' },
   { to: '/user/contact', icon: Mail, key: 'sidebar.contactUs' },

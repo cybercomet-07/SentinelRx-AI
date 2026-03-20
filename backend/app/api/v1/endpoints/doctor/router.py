@@ -10,7 +10,8 @@ from app.api.deps.auth import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.doctor_profile import DoctorProfile
-from app.models.appointment import Appointment
+from app.models.appointment import Appointment, AppointmentStatus
+from app.models.notification import Notification, NotificationType
 
 router = APIRouter(prefix="/doctor", tags=["Doctor"])
 
@@ -37,7 +38,20 @@ class AppointmentStatusUpdate(BaseModel):
     prescription_issued: Optional[str] = None
 
 
+class PrescriptionCreate(BaseModel):
+    appointment_id: str
+    prescription_text: str
+    medicines: Optional[str] = None
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _push_notification(db: Session, user_id, title: str, message: str):
+    notif = Notification(
+        id=uuid.uuid4(), user_id=user_id, title=title, message=message,
+        typ=NotificationType.SYSTEM,
+    )
+    db.add(notif)
 
 def _profile_dict(p: DoctorProfile, user: User) -> dict:
     return {
@@ -130,13 +144,83 @@ def update_appointment(
     ).first()
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    appt.status = data.status.upper()
+    new_status = data.status.upper()
+    appt.status = new_status
     if data.notes:
         appt.notes = data.notes
     if data.prescription_issued:
         appt.prescription_issued = data.prescription_issued
+
+    # Notify patient when status changes
+    patient = db.query(User).filter(User.id == appt.patient_id).first()
+    if patient:
+        if new_status == "CONFIRMED":
+            _push_notification(
+                db, patient.id,
+                "Appointment Confirmed",
+                f"Dr. {current_user.name} confirmed your appointment on {appt.appointment_date} at {appt.time_slot}.",
+            )
+        elif new_status == "COMPLETED":
+            _push_notification(
+                db, patient.id,
+                "Appointment Completed",
+                f"Your appointment with Dr. {current_user.name} on {appt.appointment_date} has been marked complete.",
+            )
+        elif new_status == "CANCELLED":
+            _push_notification(
+                db, patient.id,
+                "Appointment Cancelled",
+                f"Dr. {current_user.name} has cancelled your appointment on {appt.appointment_date} at {appt.time_slot}.",
+            )
+
     db.commit()
     return _appt_dict(appt, db)
+
+
+@router.post("/appointments/{appt_id}/prescription")
+def issue_prescription(
+    appt_id: str,
+    data: PrescriptionCreate,
+    current_user: User = Depends(require_roles(UserRole.DOCTOR)),
+    db: Session = Depends(get_db),
+):
+    appt = db.query(Appointment).filter(
+        Appointment.id == appt_id,
+        Appointment.doctor_id == current_user.id,
+    ).first()
+    if not appt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    rx_text = data.prescription_text
+    if data.medicines:
+        rx_text = f"{data.medicines}\n\n{data.prescription_text}"
+    appt.prescription_issued = rx_text
+    if appt.status == AppointmentStatus.CONFIRMED:
+        appt.status = AppointmentStatus.COMPLETED
+
+    # Notify patient
+    patient = db.query(User).filter(User.id == appt.patient_id).first()
+    if patient:
+        _push_notification(
+            db, patient.id,
+            "Prescription Issued",
+            f"Dr. {current_user.name} has issued a prescription for your appointment on {appt.appointment_date}.",
+        )
+
+    db.commit()
+    return _appt_dict(appt, db)
+
+
+@router.get("/prescriptions")
+def list_prescriptions(
+    current_user: User = Depends(require_roles(UserRole.DOCTOR)),
+    db: Session = Depends(get_db),
+):
+    """Return all appointments where a prescription was issued by this doctor."""
+    items = db.query(Appointment).filter(
+        Appointment.doctor_id == current_user.id,
+        Appointment.prescription_issued.isnot(None),
+    ).order_by(Appointment.appointment_date.desc()).all()
+    return {"items": [_appt_dict(a, db) for a in items], "total": len(items)}
 
 
 @router.get("/patients")

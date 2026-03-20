@@ -17,7 +17,7 @@ def list_notifications_endpoint(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN, UserRole.DOCTOR, UserRole.HOSPITAL_ADMIN, UserRole.NGO)),
 ):
     jwt_role = getattr(current_user, "_jwt_role", current_user.role)
     return list_notifications_for_user(db, current_user, page, limit, jwt_role=jwt_role)
@@ -27,6 +27,6 @@ def list_notifications_endpoint(
 def mark_notification_read_endpoint(
     notification_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN)),
+    current_user: User = Depends(require_roles(UserRole.USER, UserRole.ADMIN, UserRole.DOCTOR, UserRole.HOSPITAL_ADMIN, UserRole.NGO)),
 ):
     return mark_notification_read(db, current_user, notification_id)

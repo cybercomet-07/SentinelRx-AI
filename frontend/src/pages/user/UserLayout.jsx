@@ -10,6 +10,8 @@ const TITLE_KEYS = {
   '/user/chat': 'nav.aiAssistant',
   '/user/medicines': 'nav.browseMedicines',
   '/user/orders': 'nav.orderHistory',
+  '/user/find-doctor': 'nav.findDoctor',
+  '/user/appointments': 'nav.myAppointments',
   '/user/notifications': 'nav.notifications',
   '/user/prescriptions': 'nav.prescriptions',
   '/user/profile': 'nav.profile',

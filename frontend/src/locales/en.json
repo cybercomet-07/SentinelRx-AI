@@ -104,6 +104,8 @@
     "aiChat": "AI Chat",
     "browseMedicines": "Browse Medicines",
     "orderHistory": "Order History",
+    "findDoctor": "Find a Doctor",
+    "myAppointments": "My Appointments",
     "notifications": "Notifications",
     "prescriptions": "Prescriptions",
     "contactUs": "Contact Us",
@@ -127,10 +129,40 @@
     "aiAssistant": "AI Assistant",
     "browseMedicines": "Browse Medicines",
     "orderHistory": "Order History",
+    "findDoctor": "Find a Doctor",
+    "myAppointments": "My Appointments",
     "notifications": "Notifications",
     "prescriptions": "Prescriptions",
     "profile": "Profile",
     "contact": "Contact Us"
+  },
+  "doctor": {
+    "dashboard": "Dashboard",
+    "appointments": "Appointments",
+    "patients": "Patients",
+    "prescriptions": "Prescriptions",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "portal": "Doctor Portal"
+  },
+  "hospital": {
+    "dashboard": "Dashboard",
+    "beds": "Bed Management",
+    "admissions": "Admissions",
+    "inventory": "Inventory",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "profile": "Settings",
+    "portal": "Hospital Portal"
+  },
+  "ngo": {
+    "dashboard": "Dashboard",
+    "beneficiaries": "Beneficiaries",
+    "bloodCamps": "Blood Camps",
+    "donations": "Donations",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "portal": "NGO Portal"
   },
   "quickStart": {
     "featuresRoadmap": "Features Roadmap",

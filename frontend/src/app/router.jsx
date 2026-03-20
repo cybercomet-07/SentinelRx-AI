@@ -16,6 +16,9 @@ import NotificationsPage from '../pages/user/NotificationsPage'
 import PrescriptionsPage from '../pages/user/PrescriptionsPage'
 import ProfilePage from '../pages/user/ProfilePage'
 import ContactUsPage from '../pages/user/ContactUsPage'
+import FindDoctorPage from '../pages/user/FindDoctorPage'
+import BookAppointmentPage from '../pages/user/BookAppointmentPage'
+import MyAppointmentsPage from '../pages/user/MyAppointmentsPage'
 
 // Super Admin
 import AdminLayout from '../pages/admin/AdminLayout'
@@ -33,6 +36,8 @@ import DoctorDashboard from '../pages/doctor/DoctorDashboard'
 import AppointmentsPage from '../pages/doctor/AppointmentsPage'
 import DoctorPatientsPage from '../pages/doctor/PatientsPage'
 import DoctorProfilePage from '../pages/doctor/DoctorProfilePage'
+import DoctorPrescriptionsPage from '../pages/doctor/DoctorPrescriptionsPage'
+import DoctorNotificationsPage from '../pages/doctor/DoctorNotificationsPage'
 
 // Hospital Admin
 import HospitalLayout from '../pages/hospital/HospitalLayout'
@@ -64,6 +69,9 @@ export default function AppRouter() {
         <Route path="orders" element={<OrderHistoryPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prescriptions" element={<PrescriptionsPage />} />
+        <Route path="find-doctor" element={<FindDoctorPage />} />
+        <Route path="book-appointment/:doctorId" element={<BookAppointmentPage />} />
+        <Route path="appointments" element={<MyAppointmentsPage />} />
         <Route path="contact" element={<ContactUsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -88,8 +96,8 @@ export default function AppRouter() {
         <Route path="dashboard" element={<DoctorDashboard />} />
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="patients" element={<DoctorPatientsPage />} />
-        <Route path="prescriptions" element={<ComingSoon title="Prescriptions" phase="Phase 2" />} />
-        <Route path="notifications" element={<ComingSoon title="Notifications" phase="Phase 2" />} />
+        <Route path="prescriptions" element={<DoctorPrescriptionsPage />} />
+        <Route path="notifications" element={<DoctorNotificationsPage />} />
         <Route path="profile" element={<DoctorProfilePage />} />
       </Route>
 
