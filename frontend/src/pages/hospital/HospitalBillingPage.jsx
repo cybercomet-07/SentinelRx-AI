@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Search, Trash2, Receipt, X, Camera, QrCode, Banknote, CheckCircle, Clock, AlertCircle, Shield, IndianRupee } from 'lucide-react'
 import { hospitalService } from '../../services/hospitalService'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const GOVT_SCHEMES = [
   'No Scheme / Self-Pay',
@@ -45,6 +47,7 @@ const EMPTY_FORM = {
 export default function HospitalBillingPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -56,10 +59,11 @@ export default function HospitalBillingPage() {
   const fileRef = useRef()
 
   const load = () => {
+    setError(false)
     setLoading(true)
     hospitalService.getBills({ search, payment_status: statusFilter || undefined })
       .then(r => setItems(r.data.items || []))
-      .catch(() => toast.error('Failed to load bills'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -159,7 +163,11 @@ export default function HospitalBillingPage() {
       </div>
 
       {/* Bills list */}
-      {loading ? (
+      {loading && items.length === 0 ? (
+        <Loader center />
+      ) : error && items.length === 0 ? (
+        <ErrorState message="Failed to load bills." onRetry={load} />
+      ) : loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">

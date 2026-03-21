@@ -4,6 +4,7 @@ import { ngoService } from '../../services/ngoService'
 import { Users, Droplets, Gift, IndianRupee, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const CAMP_STATUS = { UPCOMING: 'bg-yellow-50 text-yellow-700', ONGOING: 'bg-blue-50 text-blue-700', COMPLETED: 'bg-green-50 text-green-700', CANCELLED: 'bg-red-50 text-red-600' }
 
@@ -13,18 +14,25 @@ export default function NGODashboard() {
   const [camps, setCamps] = useState([])
   const [drives, setDrives] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
+    setError(false)
+    setLoading(true)
     Promise.all([ngoService.getStats(), ngoService.getBloodCamps(), ngoService.getDonations()])
       .then(([s, c, d]) => {
         setStats(s.data)
         setCamps((c.data?.items || []).slice(0, 3))
         setDrives((d.data?.items || []).filter(x => x.status === 'ONGOING').slice(0, 3))
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(load, [])
 
   if (loading) return <Loader center />
+  if (error) return <ErrorState message="Unable to load dashboard." onRetry={load} />
 
   const STAT_CARDS = [
     { label: 'Beneficiaries',    value: stats?.total_beneficiaries ?? 0, icon: Users,       color: 'bg-green-50 text-green-600',  border: 'border-green-100' },

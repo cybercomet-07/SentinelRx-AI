@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Search, Pencil, Trash2, CalendarClock, User, X, Calendar, Phone, Shield } from 'lucide-react'
 import { hospitalService } from '../../services/hospitalService'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const GOVT_SCHEMES = [
   'No Scheme / Self-Pay',
@@ -40,6 +42,7 @@ const EMPTY_FORM = {
 export default function PatientVisitsPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [showUpcoming, setShowUpcoming] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -49,10 +52,11 @@ export default function PatientVisitsPage() {
   const [expanded, setExpanded] = useState(null)
 
   const load = () => {
+    setError(false)
     setLoading(true)
     hospitalService.getVisits({ search, upcoming: showUpcoming || undefined })
       .then(r => setItems(r.data.items || []))
-      .catch(() => toast.error('Failed to load visits'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -102,6 +106,9 @@ export default function PatientVisitsPage() {
 
   const upcomingCount = items.filter(v => v.next_visit_date && new Date(v.next_visit_date) >= new Date()).length
 
+  if (loading && items.length === 0) return <Loader center />
+  if (error && items.length === 0) return <ErrorState message="Failed to load visits." onRetry={load} />
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       {/* Header */}
@@ -140,6 +147,8 @@ export default function PatientVisitsPage() {
       {/* Cards */}
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
+      ) : error ? (
+        <ErrorState message="Failed to load visits." onRetry={load} />
       ) : items.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
           <User size={40} className="text-slate-300 mx-auto mb-3" />

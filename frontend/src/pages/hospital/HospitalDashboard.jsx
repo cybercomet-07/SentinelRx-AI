@@ -4,6 +4,7 @@ import { hospitalService } from '../../services/hospitalService'
 import { Users, BedDouble, Activity, Receipt, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const STATUS_COLOR = { ADMITTED: 'bg-orange-50 text-orange-700', DISCHARGED: 'bg-green-50 text-green-700', TRANSFERRED: 'bg-blue-50 text-blue-700' }
 
@@ -12,14 +13,21 @@ export default function HospitalDashboard() {
   const [stats, setStats] = useState(null)
   const [admissions, setAdmissions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
+    setError(false)
+    setLoading(true)
     Promise.all([hospitalService.getStats(), hospitalService.getAdmissions({ status: 'ADMITTED' })])
       .then(([s, a]) => { setStats(s.data); setAdmissions((a.data?.items || []).slice(0, 5)) })
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(load, [])
 
   if (loading) return <Loader center />
+  if (error) return <ErrorState message="Unable to load dashboard." onRetry={load} />
 
   const STAT_CARDS = [
     { label: 'Current Patients', value: stats?.current_patients ?? 0,    icon: Users,     color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },

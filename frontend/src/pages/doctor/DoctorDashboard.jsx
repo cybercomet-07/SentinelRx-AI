@@ -4,6 +4,7 @@ import { doctorService } from '../../services/doctorService'
 import { CalendarDays, Users, CheckCircle, Clock, Star, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const STATUS_BADGE = {
   CONFIRMED: 'bg-blue-50 text-blue-700',
@@ -18,18 +19,25 @@ export default function DoctorDashboard() {
   const [stats, setStats] = useState(null)
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
+    setError(false)
+    setLoading(true)
     Promise.all([doctorService.getStats(), doctorService.getAppointments()])
       .then(([s, a]) => {
         setStats(s.data)
         const today = new Date().toISOString().slice(0, 10)
         setAppointments((a.data?.items || []).filter(x => x.appointment_date === today))
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(load, [])
 
   if (loading) return <Loader center />
+  if (error) return <ErrorState message="Unable to load dashboard." onRetry={load} />
 
   const STAT_CARDS = [
     { label: "Today's Appointments", value: stats?.today_appointments ?? 0,    icon: CalendarDays, color: 'bg-blue-50 text-blue-600',   border: 'border-blue-100' },

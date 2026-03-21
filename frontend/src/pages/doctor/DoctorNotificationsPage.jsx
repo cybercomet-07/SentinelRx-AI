@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Bell, CheckCheck } from 'lucide-react'
 import { notificationService } from '../../services/notificationService'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -16,16 +18,21 @@ function timeAgo(dateStr) {
 export default function DoctorNotificationsPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   const load = () => {
+    setError(false)
     setLoading(true)
     notificationService.getAll()
       .then(r => setItems(r.data.items || []))
-      .catch(() => toast.error('Unable to load notifications'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
   useEffect(load, [])
+
+  if (loading && items.length === 0) return <Loader center />
+  if (error && items.length === 0) return <ErrorState message="Unable to load notifications." onRetry={load} />
 
   const markRead = async (id) => {
     try {

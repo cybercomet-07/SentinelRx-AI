@@ -3,23 +3,30 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FileText, User, Calendar, Search, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { doctorService } from '../../services/doctorService'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 export default function DoctorPrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
   const navigate = useNavigate()
 
   const load = () => {
+    setError(false)
     setLoading(true)
     doctorService.getPrescriptions()
       .then(r => setPrescriptions(r.data.items || []))
-      .catch(() => toast.error('Unable to load prescriptions'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
   useEffect(load, [])
+
+  if (loading && prescriptions.length === 0) return <Loader center />
+  if (error && prescriptions.length === 0) return <ErrorState message="Unable to load prescriptions." onRetry={load} />
 
   const filtered = prescriptions.filter(p => {
     const s = search.toLowerCase()

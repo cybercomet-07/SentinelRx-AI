@@ -187,10 +187,11 @@ export default function Login() {
       const token = res.data.access_token
       localStorage.setItem('sentinelrx_token', token)
       const meRes = await authService.me()
-      const userData = { ...meRes.data, role }
+      const actualRole = meRes.data.role?.toLowerCase() || role
+      const userData = { ...meRes.data, role: actualRole }
       login(userData, token)
       toast.success(`Welcome back, ${userData.name}!`)
-      navigate(ROLE_REDIRECTS[role] || '/user/quick-start')
+      navigate(ROLE_REDIRECTS[actualRole] || '/user/quick-start')
     } catch (err) {
       let msg = err.response?.data?.error?.message || (typeof err.response?.data?.detail === 'string' ? err.response.data.detail : null) || err.message || 'Invalid credentials'
       if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {

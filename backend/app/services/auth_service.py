@@ -68,10 +68,19 @@ ALLOWED_TEST_EMAILS = {
     "ngo@sentinelrx.ai",
 }
 
+EXPECTED_DEMO_ROLES = {
+    "patient@sentinelrx.ai": UserRole.USER,
+    "admin@sentinelrx.ai": UserRole.ADMIN,
+    "doctor@sentinelrx.ai": UserRole.DOCTOR,
+    "hospital@sentinelrx.ai": UserRole.HOSPITAL_ADMIN,
+    "ngo@sentinelrx.ai": UserRole.NGO,
+}
+
 
 def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
     settings = get_settings()
-    if not settings.allow_all_logins and payload.email.lower() not in ALLOWED_TEST_EMAILS:
+    email_norm = payload.email.lower()
+    if not settings.allow_all_logins and email_norm not in ALLOWED_TEST_EMAILS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access restricted. Only authorised test accounts can log in during this phase.",
@@ -81,7 +90,15 @@ def login_user(db: Session, payload: LoginRequest) -> TokenResponse:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
-    return _build_token_response(user, role_override=payload.selected_role)
+
+    # Self-heal role drift for fixed judging/demo accounts.
+    expected_role = EXPECTED_DEMO_ROLES.get(email_norm)
+    if expected_role and user.role != expected_role:
+        user.role = expected_role
+        db.commit()
+        db.refresh(user)
+
+    return _build_token_response(user, role_override=user.role.value)
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
@@ -98,7 +115,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
-    return _build_token_response(user)
+    return _build_token_response(user, role_override=user.role.value)
 
 
 def login_with_google(db: Session, token: str) -> TokenResponse:

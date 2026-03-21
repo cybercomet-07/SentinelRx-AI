@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Search, Pencil, Trash2, AlertTriangle, Pill, X, Package } from 'lucide-react'
 import { hospitalService } from '../../services/hospitalService'
+import Loader from '../../components/ui/Loader'
+import ErrorState from '../../components/ui/ErrorState'
 
 const EMPTY_FORM = {
   name: '', category: '', quantity: 0, unit: 'tablets',
@@ -14,6 +16,7 @@ const CATEGORIES = ['Antibiotics', 'Analgesics', 'Antacids', 'Antivirals', 'Vita
 export default function HospitalMedicinesPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -21,10 +24,11 @@ export default function HospitalMedicinesPage() {
   const [saving, setSaving] = useState(false)
 
   const load = () => {
+    setError(false)
     setLoading(true)
     hospitalService.getMedicines({ search })
       .then(r => setItems(r.data.items || []))
-      .catch(() => toast.error('Failed to load medicines'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
 
@@ -94,7 +98,11 @@ export default function HospitalMedicinesPage() {
       </div>
 
       {/* Table */}
-      {loading ? (
+      {loading && items.length === 0 ? (
+        <Loader center />
+      ) : error && items.length === 0 ? (
+        <ErrorState message="Failed to load medicines." onRetry={load} />
+      ) : loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
