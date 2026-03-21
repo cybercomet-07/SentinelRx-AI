@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.v1.router import api_router
 from app.core.exceptions import (
@@ -69,7 +70,7 @@ origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 _vercel_prod = "https://sentinelrx-ai.vercel.app"
 if _vercel_prod not in origins:
     origins.append(_vercel_prod)
-# Allow any localhost port for dev + any vercel.app subdomain for production
+# CORS: allow Vercel frontend + localhost
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -79,6 +80,21 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+
+class AddCORSHeadersMiddleware(BaseHTTPMiddleware):
+    """Ensure CORS headers on all responses (fallback if CORSMiddleware misses)."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        origin = request.headers.get("origin", "")
+        if origin and ("vercel.app" in origin or "localhost" in origin or "127.0.0.1" in origin):
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+
+app.add_middleware(AddCORSHeadersMiddleware)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 
