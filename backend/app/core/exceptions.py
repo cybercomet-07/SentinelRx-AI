@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 
 def http_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -27,12 +31,15 @@ def validation_exception_handler(request: Request, exc: Exception) -> JSONRespon
 
 def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all for unhandled exceptions."""
+    logger.exception("Unhandled exception: %s", exc)
     msg = "An unexpected error occurred."
-    # In development, surface DB/connection errors so user can fix them
+    # Surface known error patterns for easier debugging
     err_str = str(exc).lower()
     if "connection" in err_str or "database" in err_str or "psycopg" in err_str or "password authentication" in err_str:
         msg = "Database connection failed. Ensure PostgreSQL is running and DATABASE_URL in .env is correct."
     elif "operational" in err_str:
         msg = "Database unavailable. Start PostgreSQL and check DATABASE_URL."
+    elif "column" in err_str and ("does not exist" in err_str or "reminder_time" in err_str or "call_reminder" in err_str):
+        msg = "Database schema outdated. Run: alembic upgrade head"
     body = {"error": {"code": "INTERNAL_ERROR", "message": msg}}
     return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=body)
