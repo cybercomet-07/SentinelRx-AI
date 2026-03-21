@@ -47,6 +47,13 @@ async def lifespan(app: FastAPI):
         logger.info("Medicine indications seeded")
     except Exception as exc:  # pragma: no cover
         logger.warning("Medicine indications seed skipped: %s", exc)
+    # Seed 27 beds per hospital admin (ensures available beds for dashboard)
+    try:
+        from app.db.seed_hospital_beds import seed_hospital_beds
+        seed_hospital_beds()
+        logger.info("Hospital beds seeded")
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Hospital beds seed skipped: %s", exc)
     # Start refill reminder background thread (sends emails 5 days before refill date)
     try:
         from app.tasks.refill_reminder_task import start_refill_reminder_thread
