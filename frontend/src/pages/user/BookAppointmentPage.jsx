@@ -6,6 +6,7 @@ import {
   Star, IndianRupee, CheckCircle,
 } from 'lucide-react'
 import { patientService } from '../../services/patientService'
+import { getErrorMessage } from '../../utils/apiError'
 
 const TIME_SLOTS = [
   '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
@@ -52,7 +53,7 @@ export default function BookAppointmentPage() {
       })
       setDone(true)
     } catch (e) {
-      toast.error(e?.response?.data?.detail || 'Failed to book appointment')
+      toast.error(getErrorMessage(e, 'Failed to book appointment'))
     } finally {
       setSubmitting(false)
     }

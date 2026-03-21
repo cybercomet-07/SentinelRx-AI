@@ -66,6 +66,12 @@ async def lifespan(app: FastAPI):
         start_refill_call_thread()
     except Exception as exc:  # pragma: no cover
         logger.warning("Refill call thread not started: %s", exc)
+    # Start call schedule thread (Twilio calls at user-specified times)
+    try:
+        from app.tasks.call_schedule_task import start_call_schedule_thread
+        start_call_schedule_thread()
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Call schedule thread not started: %s", exc)
     yield
     # Shutdown (if needed)
 

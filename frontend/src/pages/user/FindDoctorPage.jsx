@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Search, Star, MapPin, Clock, IndianRupee, Stethoscope, ChevronRight, User } from 'lucide-react'
+import { Search, Star, MapPin, Clock, IndianRupee, Stethoscope, ChevronRight, User, RefreshCw } from 'lucide-react'
 import { patientService } from '../../services/patientService'
 
 const SPECIALIZATIONS = [
@@ -12,17 +12,21 @@ const SPECIALIZATIONS = [
 export default function FindDoctorPage() {
   const [doctors, setDoctors] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedSpec, setSelectedSpec] = useState('All')
   const navigate = useNavigate()
 
-  useEffect(() => {
+  const loadDoctors = () => {
+    setError(false)
     setLoading(true)
     patientService.listDoctors()
       .then(r => setDoctors(r.data.items || []))
-      .catch(() => toast.error('Unable to load doctors'))
+      .catch(() => { setError(true); toast.error('Unable to load doctors') })
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(loadDoctors, [])
 
   const filtered = doctors.filter(d => {
     const matchSpec = selectedSpec === 'All' || d.specialization === selectedSpec
@@ -74,6 +78,14 @@ export default function FindDoctorPage() {
         <div className="text-center py-16 text-slate-400">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           Loading doctors...
+        </div>
+      ) : error ? (
+        <div className="text-center py-16">
+          <Stethoscope size={40} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500 font-medium">Unable to load doctors</p>
+          <button onClick={loadDoctors} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
+            <RefreshCw size={16} /> Retry
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">

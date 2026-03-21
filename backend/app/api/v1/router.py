@@ -11,6 +11,7 @@ from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.orders import router as orders_router
 from app.api.v1.endpoints.prescriptions import router as prescriptions_router, admin_router as prescriptions_admin_router
 from app.api.v1.endpoints.refill_alerts import router as refill_alerts_router
+from app.api.v1.endpoints.call_schedules import router as call_schedules_router
 from app.api.v1.endpoints.contact import router as contact_router
 from app.api.v1.endpoints.doctor.router import router as doctor_router
 from app.api.v1.endpoints.hospital.router import router as hospital_router
@@ -30,6 +31,7 @@ api_router.include_router(orders_router)
 api_router.include_router(prescriptions_router)
 api_router.include_router(prescriptions_admin_router)
 api_router.include_router(refill_alerts_router)
+api_router.include_router(call_schedules_router)
 api_router.include_router(contact_router)
 api_router.include_router(doctor_router)
 api_router.include_router(hospital_router)
