@@ -1,8 +1,7 @@
 # Architecture Decision Records (ADR)
 
-Decisions made during SentinelRx-AI development.
+Decisions made during SentinelRx-AI development.\
 
----
 
 ## ADR-1: JWT over Firebase Auth
 
