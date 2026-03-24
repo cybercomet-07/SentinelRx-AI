@@ -6,8 +6,6 @@ AI-powered pharmacy platform with medicine ordering, symptom-based recommendatio
 
 ## 1. High-Level Overview
 
-Patients order medicines via chat (text + voice), browse the catalogue, manage prescriptions, and receive refill alerts. An AI agent validates orders, checks stock, and confirms execution. Admins manage inventory, orders, and users.
-
 **Stack:**
 - **Frontend:** React 18, Vite, Tailwind CSS
 - **Backend:** FastAPI, SQLAlchemy, Pydantic
