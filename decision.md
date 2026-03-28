@@ -1,72 +1,109 @@
 # Architecture Decision Records (ADR)
 
-Decisions made during SentinelRx-AI development.\
-
-
-## ADR-1: JWT over Firebase Auth
-
-**Context:** Need user authentication for user and admin roles.
-
-**Decision:** Use JWT (JSON Web Tokens) with a secret key stored in `.env`.
-
-**Rationale:** Simpler setup, no external Firebase dependency, full control over tokens and expiry. Backend validates JWT on each request.
+Decisions for **SentinelRx-AI** (current codebase). Update this file when you change auth, hosting, or data stores.
 
 ---
 
-## ADR-2: PostgreSQL over SQLite
+## ADR-1: JWT authentication (no Firebase)
 
-**Context:** Database for users, medicines, orders, prescriptions.
+**Context:** Need authenticated sessions for web clients and role-specific APIs.
 
-**Decision:** Use PostgreSQL via SQLAlchemy.
+**Decision:** Issue JWT access + refresh tokens server-side; validate with a shared secret (`JWT_SECRET_KEY`). No Firebase.
 
-**Rationale:** Production-ready, supports concurrent writes, better for scaling. SQLite was used in early prototypes.
-
----
-
-## ADR-3: Groq + Cohere for AI
-
-**Context:** Need LLMs for order extraction and symptom-based recommendations.
-
-**Decision:** Groq for Order Agent (fast inference), Cohere for SentinelRX-AI symptom agent.
-
-**Rationale:** Groq offers low-latency responses for order flow. Cohere provides strong multilingual and reasoning capabilities for medical suggestions.
+**Rationale:** Simple to deploy, full control, works well with FastAPI dependencies. Tokens carry user id; role comes from DB.
 
 ---
 
-## ADR-4: Brevo for Email
+## ADR-2: PostgreSQL as primary database
 
-**Context:** Order confirmation emails with PDF invoices.
+**Context:** Users, orders, medicines, hospital/NGO entities, migrations.
 
-**Decision:** Use Brevo (Sendinblue) for transactional email.
+**Decision:** PostgreSQL via SQLAlchemy; Alembic for migrations.
 
-**Rationale:** Reliable delivery, simple API, supports attachments. ReportLab generates PDF invoices server-side.
-
----
-
-## ADR-5: Quick Start as Post-Login Landing
-
-**Context:** User onboarding after login.
-
-**Decision:** Redirect to `/user/quick-start` instead of dashboard. Quick Start shows a roadmap of features (Symptoms Tips, Browse Medicines, Order History, etc.).
-
-**Rationale:** New users benefit from a guided overview before diving into chat or medicines. Dashboard remains available at `/user/dashboard`.
+**Rationale:** Production-grade concurrency and tooling; aligns with managed DB on Render/Neon.
 
 ---
 
-## ADR-6: Two AI Agents Side-by-Side
+## ADR-3: Groq + Cohere for AI features
 
-**Context:** Chat UI design.
+**Context:** Order extraction / chat agent and symptom-based recommendations.
 
-**Decision:** Show Order Agent and SentinelRX-AI side-by-side in one chat page.
+**Decision:** Groq for fast order-style flows; Cohere for richer symptom / recommendation flows.
 
-**Rationale:** Users can switch between ordering by name and getting symptom-based recommendations without leaving the page.
+**Rationale:** Team already integrated both; Groq latency fits interactive chat.
 
 ---
 
-## ADR-7: Web Speech API for Voice
+## ADR-4: Brevo for transactional email
 
-**Context:** Voice input and TTS for chat.
+**Context:** Order confirmations and PDF invoices.
 
-**Decision:** Use browser Web Speech API (SpeechRecognition, SpeechSynthesis).
+**Decision:** Brevo API + ReportLab-generated PDFs attached where implemented.
 
+**Rationale:** Reliable transactional email without running an SMTP server.
 
+---
+
+## ADR-5: Multi-role product model
+
+**Context:** One product serves patients, platform admin, doctors, hospitals, NGOs.
+
+**Decision:** Single `users` table with `UserRole` enum; separate API routers per domain (`admin`, `doctor`, `hospital`, `ngo`, `patient`).
+
+**Rationale:** One identity store; clear route boundaries; frontend role selector + protected routes.
+
+---
+
+## ADR-6: Authorize API access using database role
+
+**Context:** Login UI lets users pick a “portal” role; JWT may also carry a role claim for display.
+
+**Decision:** `require_roles(...)` checks **`current_user.role` from the database**, not only the JWT display role.
+
+**Rationale:** Prevents 403 drift when DB role and selected UI role disagree; demo/judging accounts stay consistent after seeding.
+
+---
+
+## ADR-7: Quick Start as default patient landing
+
+**Context:** Post-login experience for end users.
+
+**Decision:** Patient flow often lands on `/user/quick-start` (onboarding-style) with dashboard and other routes available from navigation.
+
+**Rationale:** Guided first run; reduces confusion before chat and ordering.
+
+---
+
+## ADR-8: Two AI agents in one chat experience
+
+**Context:** Users both “order by name” and “ask by symptoms.”
+
+**Decision:** Combined chat UX with distinct agent behavior (implementation in unified chat components + `ai_chat` API).
+
+**Rationale:** Single page avoids context switching for users.
+
+---
+
+## ADR-9: Web Speech API for voice (browser)
+
+**Context:** Voice input/output without native apps.
+
+**Decision:** Browser Web Speech API where enabled.
+
+**Rationale:** No extra service for basic voice; works for demos in supported browsers.
+
+---
+
+## ADR-10: Frontend API base via `VITE_API_URL`
+
+**Context:** Local dev uses Vite proxy; production must hit deployed backend.
+
+**Decision:** `VITE_API_URL` drives Axios `baseURL` (see `frontend/src/utils/constants.js`).
+
+**Rationale:** One build for all environments; avoids hardcoding production URLs.
+
+---
+
+## How to add a new ADR
+
+Use the same sections: **Context**, **Decision**, **Rationale**, and link the PR or issue if applicable.
