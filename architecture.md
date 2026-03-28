@@ -1,86 +1,106 @@
+
+---
+
+## `architecture.md` (or `arch.md` — same content)
+
+```markdown
 # SentinelRx-AI — Architecture
 
-
-
----
-
-## 1. High-Level Overview
-
-**Stack:**
-- **Frontend:** React 18, Vite, Tailwind CSS
-- **Backend:** FastAPI, SQLAlchemy, Pydantic
-- **Database:** PostgreSQL
-- **AI:** Groq (Order Agent), Cohere (SentinelRX-AI symptom agent)
-- **Email:** Brevo (order confirmation + invoice PDF)
-- **Auth:** JWT (no Firebase)
+End-to-end view of the current codebase: multi-role healthcare + pharmacy platform.
 
 ---
 
-## 2. Architecture Layers
+## 1. High-level overview
 
-### User Layer
-- Chat UI (text + voice via Web Speech API)
-- Browse Medicines, Cart, Checkout
-- Order History, Refill Alerts, Prescriptions
-- Quick Start (onboarding roadmap)
-- Contact Us
+**Clients:** Single-page app (React) talks to a **FastAPI** backend over HTTPS. The API uses **JWT** in the `Authorization: Bearer` header. **Role-based access** is enforced per route using the authenticated user’s **role in the database** (`User.role`: `USER`, `ADMIN`, `DOCTOR`, `HOSPITAL_ADMIN`, `NGO`).
 
-### Frontend Layer (React + Vite)
-- Chat interface with two agents: Order Agent + SentinelRX-AI
-- Voice input with TTS and multilingual prompts
-- User and Admin dashboards
-- Axios API communication
-- Environment-based API URL (`VITE_API_URL`)
+**Major domains:**
 
-### Backend Layer (FastAPI)
-- FastAPI, SQLAlchemy ORM, Pydantic schemas
-- CORS middleware
-- JWT authentication
-- Environment variables (`.env`)
-- Structured error handling
-
-### AI Agent Layer
-- **Order Agent (Groq):** Extract medicine names and quantities from chat, validate stock, confirm orders
-- **SentinelRX-AI (Cohere):** Symptom-based medicine recommendations from inventory
-- **Symptom Recommendation:** Prescription upload flow with OTC suggestions
-- Multilingual support (Hindi, Marathi, Tamil, etc.)
-
-### Database Layer (PostgreSQL)
-- Users, Medicines, Orders, Order Items
-- Cart, Refill Alerts, Notifications
-- Prescriptions, Contact submissions
-- Chat history (separate tables per agent)
-
-### Email Layer (Brevo)
-- Order confirmation emails
-- PDF invoice attachment (ReportLab)
-- Refill alert reminders
+- **Pharmacy / patient:** medicines, cart, orders, prescriptions, refill alerts, notifications, AI chat (order + symptom flows).
+- **Admin:** medicines, orders, users, maps, analytics, contact messages, prescriptions oversight.
+- **Doctor:** appointments, patients, prescriptions.
+- **Hospital:** beds, admissions, visits, hospital medicines, billing, inventory views.
+- **NGO:** beneficiaries, blood camps, donation drives.
+- **Patient (appointments):** book/find doctors (patient router).
 
 ---
 
-## 3. End-to-End Workflow
+## 2. Stack
 
-1. User logs in → redirected to Quick Start
-2. User chats (text/voice) → Order Agent or SentinelRX-AI
-3. AI extracts intent, checks stock, returns order preview
-4. User confirms → Backend creates order, updates stock
-5. Brevo sends confirmation email with PDF invoice
-6. Order appears in Order History
-
----
-
-## 4. Security & Best Practices
-
-- Environment variables for all API keys
-- No hardcoded secrets
-- Pydantic request validation
-- CORS configured
-- JWT with role-based access (user/admin)
+| Concern | Choice |
+|---------|--------|
+| UI | React 18, Vite, Tailwind, React Router |
+| API | FastAPI, Pydantic v2, Uvicorn |
+| ORM / DB | SQLAlchemy 2.x, PostgreSQL |
+| Migrations | Alembic |
+| Auth | JWT (`python-jose`), bcrypt passwords |
+| HTTP client | Axios (`frontend/src/services/api.js`) |
+| AI | Groq (LangChain), Cohere |
+| Email | Brevo + ReportLab PDFs |
+| Optional | Twilio (scheduled calls), Cloudinary (images) |
 
 ---
 
-## 5. Deployment
+## 3. Request flow
 
-- **Backend:** Render / Railway
-- **Frontend:** Vercel / Netlify
-- **Database:** Managed PostgreSQL (e.g. Supabase, Neon)
+1. User opens SPA (e.g. Vercel). Static assets load; API calls go to `VITE_API_URL` + `/api/v1/...` (see `frontend/src/utils/constants.js`).
+2. Login → `POST /api/v1/auth/login` → returns `access_token` + `refresh_token`; client stores token and calls `GET /api/v1/auth/me` for profile.
+3. Protected routes use `Depends(require_roles(...))` in FastAPI; the current user is loaded from JWT `sub` (user id) and **authorized by `User.role` in PostgreSQL**.
+4. CORS: configured in `backend/app/main.py` for local dev and production origins (e.g. `*.vercel.app`).
+
+---
+
+## 4. Backend layout
+
+- **`app/main.py`** — FastAPI app, CORS, lifespan (startup seeds / tasks as configured).
+- **`app/api/v1/router.py`** — Mounts routers: `auth`, `admin`, `medicines`, `orders`, `cart`, `notifications`, `prescriptions`, `refill_alerts`, `call_schedules`, `contact`, `doctor`, `hospital`, `ngo`, `patient`, `ai_chat`, `analytics`, `health`.
+- **`app/api/deps/auth.py`** — `get_current_user`, `require_roles`.
+- **`app/services/`** — Auth, orders, AI, notifications, etc.
+- **`alembic/`** — Schema migrations; production may run `alembic upgrade head` at deploy.
+
+---
+
+## 5. Frontend layout
+
+- **`src/pages/`** — Route screens by area: `user/`, `admin/`, `doctor/`, `hospital/`, `ngo/`, `shared/`, `Login.jsx`, `Landing.jsx`.
+- **`src/services/`** — Axios modules per domain (`api.js` attaches Bearer token).
+- **`src/context/`** — Auth, cart, etc.
+- **i18n** — `i18next` for EN/HI/MR (and extensible).
+
+---
+
+## 6. AI & chat
+
+- **Unified chat shell** combines order and symptom flows; backend `ai_chat` endpoints persist history where implemented.
+- **Groq** — structured extraction / order agent style flows.
+- **Cohere** — symptom and recommendation style flows.
+
+Exact prompts and models live under `backend/app/services/` and related modules.
+
+---
+
+## 7. Deployment (typical)
+
+| Component | Platform | Notes |
+|-----------|----------|--------|
+| Frontend | Vercel | Set `VITE_API_URL` to full API base including `/api/v1` if your `constants.js` expects that pattern |
+| Backend | Render (or similar) | `DATABASE_URL`, `JWT_SECRET_KEY`, `CORS_ORIGINS`, secrets for AI/email |
+| DB | Neon / RDS / Supabase | PostgreSQL connection string |
+
+See **`DEPLOYMENT.md`** for the exact Vercel env value and Render checklist.
+
+---
+
+## 8. Security notes
+
+- Secrets only via environment variables; do not commit `.env`.
+- JWT secret must be strong in production.
+- Rate-limiting and WAF are platform-level (Vercel/Render) unless added in app.
+
+---
+
+## 9. Related docs
+
+- `README.md` — Quick start and repo map  
+- `decision.md` — ADRs  
+- `PROJECT_OVERVIEW.md` — Longer route/feature list  
