@@ -1,6 +1,6 @@
 # SentinelRx-AI — Architecture
 
-AI-powered pharmacy platform with medicine ordering, symptom-based recommendations, and admin management.
+
 
 ---
 
