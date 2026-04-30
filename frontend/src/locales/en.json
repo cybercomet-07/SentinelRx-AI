@@ -85,7 +85,9 @@
     "male": "Male",
     "female": "Female",
     "other": "Other",
-    "preferNotToSay": "Prefer not to say"
+    "preferNotToSay": "Prefer not to say",
+    "createPatientAccount": "Create patient account",
+    "patientSignupOnly": "Self-registration is for patients only. Use your own email address."
   },
   "languages": {
     "en": "English",

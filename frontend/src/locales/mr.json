@@ -85,7 +85,9 @@
     "male": "पुरुष",
     "female": "स्त्री",
     "other": "इतर",
-    "preferNotToSay": "सांगायला निवडत नाही"
+    "preferNotToSay": "सांगायला निवडत नाही",
+    "createPatientAccount": "रुग्ण खाते तयार करा",
+    "patientSignupOnly": "स्वयं-नोंदणी फक्त रुग्णांसाठी. तुमचा स्वतःचा ईमेल पत्ता वापरा."
   },
   "languages": {
     "en": "English",

@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.models.user import User, UserRole
+from sqlalchemy import func
 
 DEMO_USERS = [
     {
@@ -75,7 +76,7 @@ def main():
         print("  DEMO LOGIN CREDENTIALS")
         print("="*55)
         for u in DEMO_USERS:
-            existing = db.query(User).filter(User.email == u["email"]).first()
+            existing = db.query(User).filter(func.lower(User.email) == u["email"].lower()).first()
             if existing:
                 existing.role = u["role"]
                 existing.password_hash = hash_password(u["password"])

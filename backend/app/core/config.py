@@ -11,7 +11,7 @@ _ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
 class Settings(BaseSettings):
     app_name: str = "SentinelRx-AI Backend"
     app_env: str = "development"
-    allow_all_logins: bool = False  # When True, bypass ALLOWED_TEST_EMAILS (for tests)
+    allow_all_logins: bool = False  # When True, any user row may log in (used in tests via ALLOW_ALL_LOGINS)
     api_v1_prefix: str = "/api/v1"
     database_url: str
 

@@ -85,7 +85,9 @@
     "male": "पुरुष",
     "female": "महिला",
     "other": "अन्य",
-    "preferNotToSay": "कहना पसंद नहीं"
+    "preferNotToSay": "कहना पसंद नहीं",
+    "createPatientAccount": "मरीज़ खाता बनाएं",
+    "patientSignupOnly": "स्व-पंजीकरण केवल मरीज़ों के लिए है। अपना ईमेल पता उपयोग करें।"
   },
   "languages": {
     "en": "English",

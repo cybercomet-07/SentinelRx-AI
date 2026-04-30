@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowLeft, UserPlus, LogIn, ChevronDown, Check } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, UserPlus, LogIn, ChevronDown } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
@@ -96,8 +96,13 @@ export default function Login() {
     const modeFromState = location.state?.mode
     if (modeFromState === 'signup' || modeFromState === 'signin') {
       setMode(modeFromState)
+      if (modeFromState === 'signup') setRole('user')
     }
   }, [location.state])
+
+  useEffect(() => {
+    if (role !== 'user' && mode === 'signup') setMode('signin')
+  }, [role, mode])
 
   useEffect(() => {
     const stored = localStorage.getItem('sentinelrx_lang')
@@ -132,6 +137,7 @@ export default function Login() {
 
   const switchMode = (m) => {
     setMode(m)
+    if (m === 'signup') setRole('user')
     setName(''); setEmail(''); setPassword(''); setConfirm('')
     setPhone(''); setAddress(''); setLandmark(''); setPinCode(''); setDateOfBirth(''); setGender('')
   }
@@ -299,58 +305,62 @@ export default function Login() {
             )}
           </div>
 
-          {/* Role selector — custom dropdown */}
-          <div className="mb-6" ref={dropdownRef}>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.selectRole')}</p>
-            <div className="relative">
-              {/* Trigger */}
-              <button
-                type="button"
-                onClick={() => setDropdownOpen(o => !o)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 bg-white text-left transition-all ${
-                  dropdownOpen ? 'border-teal-400 ring-2 ring-teal-100' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${selectedRole?.dot}`} />
-                <span className="text-xl leading-none">{selectedRole?.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-gray-800">{selectedRole?.label}</span>
-                  <span className="block text-xs text-gray-400 truncate">{selectedRole?.subtitle}</span>
-                </div>
-                <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+          {/* Role for email/password; signup is patient-only */}
+          {mode === 'signin' ? (
+            <div className="mb-6" ref={dropdownRef}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.selectRole')}</p>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen(o => !o)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 bg-white text-left transition-all ${
+                    dropdownOpen ? 'border-teal-400 ring-2 ring-teal-100' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${selectedRole?.dot}`} />
+                  <span className="text-xl leading-none">{selectedRole?.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-gray-800">{selectedRole?.label}</span>
+                    <span className="block text-xs text-gray-400 truncate">{selectedRole?.subtitle}</span>
+                  </div>
+                  <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-              {/* Dropdown panel */}
-              {dropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
-                  {ROLES.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => { setRole(r.value); setDropdownOpen(false) }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                        role === r.value ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${r.dot}`} />
-                      <span className="text-xl leading-none">{r.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-gray-800">{r.label}</span>
-                        <span className="block text-xs text-gray-400">{r.subtitle}</span>
-                      </div>
-                      {role === r.value && (
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${r.badge} shrink-0`}>
-                          Selected
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
+                    {ROLES.map((r) => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => { setRole(r.value); setDropdownOpen(false) }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          role === r.value ? 'bg-gray-50' : ''
+                        }`}
+                      >
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${r.dot}`} />
+                        <span className="text-xl leading-none">{r.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-gray-800">{r.label}</span>
+                          <span className="block text-xs text-gray-400">{r.subtitle}</span>
+                        </div>
+                        {role === r.value && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${r.badge} shrink-0`}>
+                            Selected
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mb-6 rounded-xl border border-teal-100 bg-teal-50/70 px-4 py-3">
+              <p className="text-xs font-semibold text-teal-800 uppercase tracking-wider mb-1">{ROLES[0].label}</p>
+              <p className="text-sm text-teal-900/90 leading-snug">{t('auth.patientSignupOnly')}</p>
+            </div>
+          )}
 
-          {/* Preferred Language - show for both signin and signup so login page uses user's choice */}
           <div className="mb-6">
             <label htmlFor="login-lang" className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('auth.preferredLanguage')}</label>
             <select
@@ -478,7 +488,7 @@ export default function Login() {
               {loading
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t('auth.pleaseWait')}</>
                 : mode === 'signup'
-                  ? <><UserPlus size={16} /> Create {selectedRole?.emoji} {selectedRole?.label} Account</>
+                  ? <><UserPlus size={16} /> {t('auth.createPatientAccount')}</>
                   : <><LogIn size={16} /> Sign in as {selectedRole?.emoji} {selectedRole?.label}</>
               }
             </button>
