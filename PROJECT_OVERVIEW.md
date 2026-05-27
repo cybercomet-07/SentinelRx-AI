@@ -1,152 +1,241 @@
-# SentinelRx-AI — Full Project Overview
+# SentinelRx AI — Project Overview
 
-AI-powered pharmacy platform with medicine ordering, symptom-based recommendations, order confirmation emails with PDF invoices, and admin management.
-
----
-
-## Quick Start
-
-| Command | Description |
-|---------|-------------|
-| `.\run-backend.ps1` or `run-backend.bat` | Backend → http://localhost:8000 |
-| `.\run-frontend.ps1` or `run-frontend.bat` | Frontend → http://localhost:3005 |
-| `run-all.bat` | Start both servers |
-
-**Environment:** Copy `backend/.env.example` to `backend/.env`, set `DATABASE_URL`, `GROQ_API_KEY`, `COHERE_API_KEY`, `BREVO_API_KEY`.
-
-**Demo users:** `user@sentinelrx.ai` / `User1234` | `admin@example.com` / `AdminPass123!`
+AI-powered multi-role healthcare platform connecting patients, doctors, hospitals, NGOs, and platform administrators in one unified system.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Frontend | React 18, Vite, Tailwind CSS, React Router |
-| Backend | FastAPI, SQLAlchemy, Pydantic |
-| Database | PostgreSQL |
-| AI | Groq (Order Agent), Cohere (SentinelRX-AI symptom agent) |
-| Email | Brevo (order confirmation + invoice PDF) |
-| PDF | ReportLab (invoice generation) |
+|-------|-----------|
+| Frontend | React 18, Vite, Tailwind CSS, React Router v6 |
+| Backend | FastAPI, SQLAlchemy ORM, Pydantic, Alembic |
+| Database | PostgreSQL (Neon in production) |
+| Auth | JWT (python-jose) + bcrypt |
+| AI — Orders | Groq (LLaMA 3.3 70B) |
+| AI — Symptoms | Cohere (Command R+) |
+| Email + PDF | Brevo + ReportLab |
+| Phone Calls | Twilio (optional) |
+| Image Storage | Cloudinary (optional) |
+| Hosting | Vercel (frontend) + Render (backend) |
 
 ---
 
-## Features
+## Demo Accounts
 
-### User
-- **Auth** — Login, JWT, role-based routing
-- **Dashboard** — Refill count, recent orders, quick actions
-- **AI Chat** — Two agents side-by-side:
-  - **Order Agent** — Order medicines by name (voice & text), delivery address, cart flow
-  - **SentinelRX-AI** — Symptom-based medicine recommendations from inventory
-- **Browse Medicines** — Search, add to cart
-- **Cart** — DB-persisted, checkout with delivery address
-- **Order History** — Paginated list
-- **Refill Alerts** — Create, complete, delete
-- **Notifications** — Paginated list
-- **Prescriptions** — Create with image upload
+| Role | Email | Password |
+|------|-------|----------|
+| Patient | patient@sentinelrx.ai | Patient@123 |
+| Super Admin | admin@sentinelrx.ai | Admin@123 |
+| Doctor | doctor@sentinelrx.ai | Doctor@123 |
+| Hospital Admin | hospital@sentinelrx.ai | Hospital@123 |
+| NGO | ngo@sentinelrx.ai | NGO@1234 |
 
-### Admin
-- **Dashboard** — Stats, revenue chart, top medicines
-- **Medicines** — CRUD, low-stock banner
-- **Orders** — Filter by status, pagination, update status, delivery map
-- **Users** — List with search
-- **Delivery Map** — Orders with delivery pins
-
-### Order Confirmation
-- PDF invoice generation (ReportLab)
-- Email via Brevo with invoice attachment
-- Sent on cart checkout and AI chat order confirm
+Seed with: `python scripts/seed_demo_roles.py` + `python scripts/seed_medicines.py`
 
 ---
 
-## Routes
+## Frontend Routes
 
-| Path | Page | Role |
-|------|------|------|
-| `/` | Landing | Public |
-| `/login` | Login | Public |
-| `/user/quick-start` | Quick Start (onboarding roadmap) | User |
-| `/user/dashboard` | User Dashboard | User |
-| `/user/chat` | AI Chat (Order Agent + SentinelRX-AI) | User |
-| `/user/medicines` | Browse Medicines | User |
-| `/user/orders` | Order History | User |
-| `/user/notifications` | Refill Alerts + Notifications | User |
-| `/user/prescriptions` | Prescriptions | User |
-| `/user/contact` | Contact Us | User |
-| `/admin/dashboard` | Admin Dashboard | Admin |
-| `/admin/medicines` | Medicine Inventory | Admin |
-| `/admin/orders` | All Orders | Admin |
-| `/admin/map` | Delivery Map | Admin |
-| `/admin/users` | User List | Admin |
+### Public
+| Path | Page |
+|------|------|
+| `/` | Landing page |
+| `/login` | Universal login with role selector |
+
+### Patient (`/user/*`)
+| Path | Page |
+|------|------|
+| `/user/quick-start` | Onboarding roadmap (default after login) |
+| `/user/dashboard` | Patient dashboard |
+| `/user/chat` | AI Chat — Order Agent + Symptom Agent |
+| `/user/medicines` | Browse & search medicine catalog |
+| `/user/cart` | Shopping cart |
+| `/user/orders` | Order history |
+| `/user/notifications` | Refill alerts + notifications |
+| `/user/prescriptions` | Upload & manage prescriptions |
+| `/user/find-doctor` | Browse available doctors |
+| `/user/appointments` | My booked appointments |
+| `/user/govt-schemes` | Government health scheme info |
+| `/user/contact` | Contact us |
+
+### Doctor (`/doctor/*`)
+| Path | Page |
+|------|------|
+| `/doctor/dashboard` | Doctor dashboard — stats & today's queue |
+| `/doctor/appointments` | All appointments with status management |
+| `/doctor/patients` | Patient records & history |
+| `/doctor/prescriptions` | Issued prescriptions |
+| `/doctor/notifications` | Appointment notifications |
+| `/doctor/profile` | Doctor profile & specialization |
+
+### Hospital Admin (`/hospital/*`)
+| Path | Page |
+|------|------|
+| `/hospital/dashboard` | Bed stats, occupancy, revenue |
+| `/hospital/beds` | Bed management by ward |
+| `/hospital/admissions` | Patient admission & discharge lifecycle |
+| `/hospital/visits` | OPD visit records |
+| `/hospital/medicines` | Hospital medicine inventory (CRUD) |
+| `/hospital/inventory` | Read-only inventory view |
+| `/hospital/billing` | Bills — create, track, mark paid |
+| `/hospital/notifications` | Hospital notifications |
+
+### NGO (`/ngo/*`)
+| Path | Page |
+|------|------|
+| `/ngo/dashboard` | Beneficiary count, units collected, funds raised |
+| `/ngo/beneficiaries` | Beneficiary database with health records |
+| `/ngo/blood-camps` | Blood camp scheduling & unit tracking |
+| `/ngo/donations` | Donation drive management |
+| `/ngo/notifications` | NGO notifications |
+
+### Super Admin (`/admin/*`)
+| Path | Page |
+|------|------|
+| `/admin/dashboard` | System-wide analytics overview |
+| `/admin/pharmacy-dashboard` | Pharmacy-specific analytics & revenue |
+| `/admin/medicines` | Master medicine catalog CRUD |
+| `/admin/orders` | All orders across the platform |
+| `/admin/map` | Delivery map — geographic order tracking |
+| `/admin/users` | All users with role filter |
 
 ---
 
 ## API Endpoints (Base: `/api/v1`)
 
-| Module | Endpoints |
-|--------|-----------|
-| **Auth** | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `GET /auth/me` |
-| **Health** | `GET /health` |
-| **AI Chat** | `GET /ai-chat/medicines`, `POST /ai-chat/chat`, `POST /ai-chat/process-order`, `POST /ai-chat/symptom-chat` |
-| **Medicines** | `GET /medicines`, `GET /medicines/{id}`, `POST /medicines`, `PATCH /medicines/{id}`, `DELETE /medicines/{id}` |
-| **Cart** | `GET /cart`, `POST /cart/add`, `DELETE /cart/{item_id}` |
-| **Orders** | `POST /orders/create-from-cart`, `GET /orders/my`, `GET /orders` (admin), `PATCH /orders/{id}/status` |
-| **Notifications** | `GET /notifications`, `PATCH /notifications/{id}/read` |
-| **Refill Alerts** | `GET /refill-alerts`, `POST /refill-alerts`, `PATCH /refill-alerts/{id}/complete`, `DELETE /refill-alerts/{id}` |
-| **Prescriptions** | `POST /prescriptions`, `GET /prescriptions/{id}` |
-| **Admin** | `GET /admin/dashboard`, `GET /admin/chart-data`, `GET /admin/orders/map` |
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Register new user |
+| POST | `/auth/login` | Login → returns JWT tokens |
+| POST | `/auth/refresh` | Refresh access token |
+| GET | `/auth/me` | Get current user profile |
+
+### AI Chat
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/ai-chat/unified-chat` | Send message to Order Agent (Groq) |
+| POST | `/ai-chat/order/{id}/action` | Confirm or cancel an order preview |
+| POST | `/ai-chat/process-order` | Direct order processing |
+| GET | `/ai-chat/medicines` | Get medicines list for chat context |
+
+### Prescriptions & Symptoms
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/prescriptions` | Create prescription with image |
+| GET | `/prescriptions/{id}` | Get prescription |
+| POST | `/prescriptions/symptom-recommendation` | Symptom → medicine suggestions (Cohere) |
+
+### Medicines
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/medicines` | List / search medicine catalog |
+| GET | `/medicines/{id}` | Get medicine detail |
+| POST | `/medicines` | Create medicine (Admin) |
+| PATCH | `/medicines/{id}` | Update medicine (Admin) |
+| DELETE | `/medicines/{id}` | Delete medicine (Admin) |
+
+### Cart & Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/cart` | Get cart items |
+| POST | `/cart/add` | Add item to cart |
+| DELETE | `/cart/{item_id}` | Remove cart item |
+| POST | `/orders/create-from-cart` | Checkout → creates order + sends email |
+| GET | `/orders/my` | Patient's order history |
+| GET | `/orders` | All orders (Admin) |
+| PATCH | `/orders/{id}/status` | Update order status (Admin) |
+
+### Notifications & Refill Alerts
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/notifications` | Get notifications |
+| PATCH | `/notifications/{id}/read` | Mark as read |
+| GET | `/refill-alerts` | List refill alerts |
+| POST | `/refill-alerts` | Create refill alert |
+| PATCH | `/refill-alerts/{id}/complete` | Complete alert |
+| DELETE | `/refill-alerts/{id}` | Delete alert |
+
+### Doctor
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/doctor/appointments` | List doctor's appointments |
+| PUT | `/doctor/appointments/{id}` | Update appointment status |
+| GET | `/doctor/patients` | List patients |
+| POST | `/doctor/prescriptions` | Issue prescription |
+| GET | `/doctor/profile` | Get doctor profile |
+| PUT | `/doctor/profile` | Update doctor profile |
+
+### Patient Appointments
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/patient/doctors` | List available doctors |
+| POST | `/patient/appointments` | Book appointment |
+| GET | `/patient/appointments` | Patient's appointment history |
+
+### Hospital
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/hospital/beds` | List beds by ward |
+| POST | `/hospital/beds` | Add a bed |
+| PATCH | `/hospital/beds/{id}` | Update bed status |
+| GET | `/hospital/admissions` | List admissions |
+| POST | `/hospital/admissions` | Admit patient |
+| PUT | `/hospital/admissions/{id}` | Update / discharge patient |
+| GET | `/hospital/visits` | OPD visits |
+| POST | `/hospital/visits` | Record visit |
+| GET | `/hospital/medicines` | Hospital medicine inventory |
+| POST | `/hospital/medicines` | Add medicine to inventory |
+| GET | `/hospital/bills` | List bills |
+| POST | `/hospital/bills` | Create bill |
+| PATCH | `/hospital/bills/{id}` | Update bill status |
+| GET | `/hospital/dashboard` | Stats summary |
+
+### NGO
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/ngo/beneficiaries` | List beneficiaries |
+| POST | `/ngo/beneficiaries` | Add beneficiary |
+| PUT | `/ngo/beneficiaries/{id}` | Update beneficiary |
+| DELETE | `/ngo/beneficiaries/{id}` | Remove beneficiary |
+| GET | `/ngo/blood-camps` | List blood camps |
+| POST | `/ngo/blood-camps` | Create blood camp |
+| PUT | `/ngo/blood-camps/{id}` | Update camp |
+| GET | `/ngo/donations` | List donation drives |
+| POST | `/ngo/donations` | Create drive |
+| PUT | `/ngo/donations/{id}` | Update drive |
+| GET | `/ngo/dashboard` | NGO stats summary |
+
+### Admin
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/dashboard` | Platform-wide stats |
+| GET | `/admin/chart-data` | Revenue chart data |
+| GET | `/admin/orders/map` | Orders with delivery coordinates |
+| GET | `/admin/users` | All users |
 
 ---
 
-## Project Structure
-
-```
-SentinelRx-AI/
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── api/v1/endpoints/    # health, auth, ai_chat, admin, medicines, cart, orders, etc.
-│   │   ├── core/               # config, security, exceptions
-│   │   ├── db/                  # session, base
-│   │   ├── models/             # User, Order, Medicine, Cart, etc.
-│   │   ├── schemas/             # Pydantic schemas
-│   │   ├── services/           # order_service, ai_chat_service, symptom_chat_service, etc.
-│   │   └── invoice/            # invoice.py (PDF), invoice_service.py (email)
-│   ├── alembic/                # Migrations
-│   ├── scripts/                # seed_medicines, create_admin, etc.
-│   └── tests/
-├── frontend/
-│   └── src/
-│       ├── pages/              # Landing, Login, user/*, admin/*
-│       ├── components/         # chat, medicines, cart, orders, admin
-│       ├── services/           # api, authService, orderService, etc.
-│       └── context/            # AuthContext, CartContext
-├── run-backend.ps1 / .bat
-├── run-frontend.ps1 / .bat
-└── run-all.bat
-```
-
----
-
-## Environment Variables
-
-**Backend (`.env`):**
-- `DATABASE_URL` — PostgreSQL connection string
-- `GROQ_API_KEY` — Order Agent (Groq)
-- `COHERE_API_KEY` — SentinelRX-AI symptom agent
-- `BREVO_API_KEY` — Order confirmation email
-- `JWT_SECRET_KEY`, `JWT_ALGORITHM`
-
-**Frontend (`.env`):**
-- `VITE_API_URL` — Backend base URL (e.g. `http://127.0.0.1:8000`)
-
----
-
-## Scripts
+## Seed Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `run-seed-medicines.bat` | Seed medicines from CSV |
-| `backend/scripts/create_admin.py` | Create admin user |
-| `backend/scripts/seed_demo_users.py` | Seed demo users |
+| `seed_demo_roles.py` | Creates all 5 demo accounts (run first) |
+| `seed_medicines.py` | Populates medicine catalog |
+| `seed_medicine_indications.py` | Adds symptom indications to medicines |
+| `seed_demo_doctors.py` | Creates doctor profile + sample appointments |
+| `seed_hospital_beds.py` | Seeds 27 beds for hospital admin demo |
+
+---
+
+## Key Integrations
+
+| Service | Purpose | Required? |
+|---------|---------|-----------|
+| Groq | AI order extraction (LLaMA 3.3 70B) | Yes |
+| Cohere | Symptom recommendations (Command R+) | Yes |
+| Brevo | Transactional email + PDF invoice | Yes |
+| Twilio | Automated phone call reminders | Optional |
+| Cloudinary | Prescription/QR image uploads | Optional |
+| PostgreSQL | Primary database | Required |
