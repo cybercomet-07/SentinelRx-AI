@@ -366,8 +366,9 @@ copy .env.example .env  # Windows
 alembic upgrade head
 
 # Seed demo data
-python scripts/seed_demo_roles.py
-python scripts/seed_medicines.py
+python scripts/seed_demo_roles.py      # Creates all 5 demo accounts
+python scripts/seed_medicines.py       # Populates medicine catalog
+python scripts/seed_demo_doctors.py    # (Optional) Doctor profile + sample appointments
 
 # Start backend
 uvicorn app.main:app --reload
@@ -455,10 +456,11 @@ SentinelRx-AI/
 │
 ├── docs/                         # Documentation
 ├── README.md                     # This file
+├── EXPLAINER.md                  # Full pipeline & tech stack explainer
 ├── architecture.md               # Technical architecture
 ├── decision.md                   # Architecture decisions
 ├── DEPLOYMENT.md                 # Deployment guide
-└── PROJECT_OVERVIEW.md           # Extended feature docs
+└── PROJECT_OVERVIEW.md           # Feature list, API routes, extended reference
 ```
 
 ---
@@ -490,9 +492,9 @@ SentinelRx-AI/
 ```
 User Input: "I need 3 Paracetamol"
     ↓
-Frontend sends to: POST /ai_chat/order
+Frontend sends to: POST /api/v1/ai-chat/unified-chat
     ↓
-Backend extracts intent using Groq:
+Backend extracts intent using Groq (LLaMA 3.3 70B):
     - Action: order_medicines
     - Medicine: Paracetamol
     - Quantity: 3
@@ -505,12 +507,13 @@ Returns order preview:
     {
       "medicines": [{"name": "Paracetamol", "qty": 3, "price": 60}],
       "total": 60,
-      "status": "preview"
+      "status": "preview",
+      "order_id": "abc-123"
     }
     ↓
-User confirms
+User clicks Confirm
     ↓
-Backend: POST /ai_chat/confirm_order
+Frontend: POST /api/v1/ai-chat/order/abc-123/action  { action: "confirm" }
     ↓
 Creates order:
     - Order record (total: 60, status: PENDING)
@@ -581,6 +584,7 @@ See **DEPLOYMENT.md** for complete deployment guide.
 | Document | Purpose |
 |----------|---------|
 | **README.md** (this file) | Complete walkthrough for newcomers |
+| **EXPLAINER.md** | Full pipeline, tech stack, AI flow, DB design explainer |
 | **architecture.md** | Technical architecture, layers, data flow |
 | **decision.md** | Why we chose JWT, PostgreSQL, Groq, etc. |
 | **PROJECT_OVERVIEW.md** | Feature list, API routes, extended reference |

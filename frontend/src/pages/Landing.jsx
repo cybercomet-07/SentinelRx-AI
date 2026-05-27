@@ -33,7 +33,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: 'Role-Based Access',
-    desc: 'Separate portals for users and admins. Users order, track and get alerts. Admins manage inventory, orders and analytics.',
+    desc: 'Five dedicated portals — Patient, Doctor, Hospital Admin, NGO, and Super Admin. Each role sees only what they need, secured by JWT.',
     color: 'from-violet-400 to-purple-500',
     bg: 'bg-violet-50',
   },
