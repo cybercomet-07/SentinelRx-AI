@@ -2,7 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   MessageSquare, ShieldCheck, Bell, BarChart3,
-  Package, ArrowRight, Zap, Brain, Clock, Mail
+  Package, ArrowRight, Zap, Brain, Clock, Mail,
+  Stethoscope, Building2, Heart, Users, Activity,
+  BedDouble, Droplets, TrendingUp, CheckCircle2,
+  CalendarCheck, Pill, FileText, DollarSign
 } from 'lucide-react'
 
 const FEATURES = [
@@ -56,6 +59,353 @@ const HOW_IT_WORKS = [
   { step: '03', title: 'Confirm Order', desc: 'Review the order preview and tap Confirm. Done.' },
 ]
 
+const ROLE_TABS = [
+  {
+    id: 'patient',
+    label: 'Patient',
+    icon: Pill,
+    color: 'teal',
+    tagline: 'Order medicines, chat with AI, manage health',
+    features: [
+      { icon: Brain, text: 'AI Chat — order by voice or text' },
+      { icon: Bell, text: 'Smart refill reminders before you run out' },
+      { icon: FileText, text: 'Upload & manage prescriptions' },
+      { icon: CalendarCheck, text: 'Book doctor appointments' },
+    ],
+    preview: 'patient',
+  },
+  {
+    id: 'doctor',
+    label: 'Doctor',
+    icon: Stethoscope,
+    color: 'blue',
+    tagline: 'Manage patients, appointments, and prescriptions',
+    features: [
+      { icon: CalendarCheck, text: 'Today\'s appointment queue' },
+      { icon: Users, text: 'Full patient history per visit' },
+      { icon: FileText, text: 'Issue digital prescriptions' },
+      { icon: Bell, text: 'Notifications for new bookings' },
+    ],
+    preview: 'doctor',
+  },
+  {
+    id: 'hospital',
+    label: 'Hospital',
+    icon: Building2,
+    color: 'orange',
+    tagline: 'Beds, admissions, billing, and OPD visits',
+    features: [
+      { icon: BedDouble, text: 'Real-time bed availability by ward' },
+      { icon: Activity, text: 'Patient admission & discharge lifecycle' },
+      { icon: DollarSign, text: 'Billing with QR code payments' },
+      { icon: Package, text: 'Hospital medicine inventory' },
+    ],
+    preview: 'hospital',
+  },
+  {
+    id: 'ngo',
+    label: 'NGO',
+    icon: Heart,
+    color: 'green',
+    tagline: 'Beneficiaries, blood camps, and donation drives',
+    features: [
+      { icon: Users, text: 'Beneficiary database with health records' },
+      { icon: Droplets, text: 'Blood camp scheduling & unit tracking' },
+      { icon: TrendingUp, text: 'Donation drive progress & funds raised' },
+      { icon: ShieldCheck, text: 'Govt scheme eligibility tracking' },
+    ],
+    preview: 'ngo',
+  },
+  {
+    id: 'admin',
+    label: 'Super Admin',
+    icon: BarChart3,
+    color: 'violet',
+    tagline: 'Platform-wide oversight, analytics, and control',
+    features: [
+      { icon: BarChart3, text: 'Revenue charts & top medicines' },
+      { icon: Package, text: 'Master medicine catalog management' },
+      { icon: Activity, text: 'All orders across the platform' },
+      { icon: Users, text: 'User management across all roles' },
+    ],
+    preview: 'admin',
+  },
+]
+
+const COLOR_MAP = {
+  teal:   { tab: 'bg-teal-600 text-white',   inactive: 'text-teal-700 bg-teal-50 border-teal-200',   dot: 'bg-teal-500',   badge: 'bg-teal-100 text-teal-700',   bar: 'bg-teal-500',   ring: 'ring-teal-200' },
+  blue:   { tab: 'bg-blue-600 text-white',   inactive: 'text-blue-700 bg-blue-50 border-blue-200',   dot: 'bg-blue-500',   badge: 'bg-blue-100 text-blue-700',   bar: 'bg-blue-500',   ring: 'ring-blue-200' },
+  orange: { tab: 'bg-orange-500 text-white', inactive: 'text-orange-700 bg-orange-50 border-orange-200', dot: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-200' },
+  green:  { tab: 'bg-green-600 text-white',  inactive: 'text-green-700 bg-green-50 border-green-200',  dot: 'bg-green-500',  badge: 'bg-green-100 text-green-700',  bar: 'bg-green-500',  ring: 'ring-green-200' },
+  violet: { tab: 'bg-violet-600 text-white', inactive: 'text-violet-700 bg-violet-50 border-violet-200', dot: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700', bar: 'bg-violet-500', ring: 'ring-violet-200' },
+}
+
+function PatientPreview({ c }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {[{ label: 'Orders', val: '12' }, { label: 'Refills Due', val: '3' }, { label: 'Prescriptions', val: '5' }].map(s => (
+          <div key={s.label} className="flex-1 bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+            <p className={`text-xl font-bold ${c.dot.replace('bg-', 'text-')}`}>{s.val}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">AI Chat — Order Agent</p>
+        <div className="space-y-2">
+          <div className="flex justify-end"><div className={`${c.tab} text-xs px-3 py-1.5 rounded-xl rounded-tr-sm`}>I need 2 Paracetamol</div></div>
+          <div className="flex justify-start"><div className="bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-xl rounded-tl-sm">Found Paracetamol 500mg in stock ✓</div></div>
+          <div className="border border-gray-200 rounded-lg p-2 text-xs shadow-sm">
+            <p className="font-semibold text-gray-800">Order Preview · ₹24 total</p>
+            <p className="text-gray-500">Paracetamol 500mg × 2</p>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Refill Alerts</p>
+        {['Metformin 500mg — due in 3 days', 'Vitamin D3 — due in 7 days'].map(r => (
+          <div key={r} className="flex items-center gap-2 py-1">
+            <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+            <span className="text-xs text-gray-600">{r}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DoctorPreview({ c }) {
+  const appts = [
+    { name: 'Priya Sharma', time: '10:30 AM', reason: 'Fever', status: 'CONFIRMED' },
+    { name: 'Rahul Mehta', time: '11:00 AM', reason: 'Back Pain', status: 'PENDING' },
+    { name: 'Sneha Patil', time: '11:30 AM', reason: 'Checkup', status: 'CONFIRMED' },
+  ]
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {[{ label: "Today's", val: '8' }, { label: 'Patients', val: '124' }, { label: 'Prescriptions', val: '56' }].map(s => (
+          <div key={s.label} className="flex-1 bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+            <p className={`text-xl font-bold ${c.dot.replace('bg-', 'text-')}`}>{s.val}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Today's Appointments</p>
+        <div className="space-y-2">
+          {appts.map(a => (
+            <div key={a.name} className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-800">{a.name}</p>
+                <p className="text-xs text-gray-400">{a.time} · {a.reason}</p>
+              </div>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${a.status === 'CONFIRMED' ? c.badge : 'bg-amber-100 text-amber-700'}`}>{a.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-1">Issue Prescription</p>
+        <p className="text-xs text-gray-400">Paracetamol 500mg — 2× daily after meals</p>
+        <div className={`mt-2 text-[10px] font-semibold text-center py-1 rounded-lg ${c.tab}`}>Issue Prescription</div>
+      </div>
+    </div>
+  )
+}
+
+function HospitalPreview({ c }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {[{ label: 'Total Beds', val: '50' }, { label: 'Occupied', val: '32' }, { label: 'Available', val: '18' }].map(s => (
+          <div key={s.label} className="flex-1 bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+            <p className={`text-xl font-bold ${c.dot.replace('bg-', 'text-')}`}>{s.val}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Bed Availability by Ward</p>
+        {[{ ward: 'ICU', occ: 8, total: 10 }, { ward: 'General', occ: 18, total: 30 }, { ward: 'Private', occ: 6, total: 10 }].map(w => (
+          <div key={w.ward} className="mb-2">
+            <div className="flex justify-between text-xs text-gray-500 mb-0.5"><span>{w.ward}</span><span>{w.occ}/{w.total}</span></div>
+            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className={`h-full ${c.bar} rounded-full`} style={{ width: `${(w.occ / w.total) * 100}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Recent Admissions</p>
+        {[{ name: 'Amit Kumar', diag: 'Dengue', bed: 'G-015' }, { name: 'Rekha Singh', diag: 'Fracture', bed: 'P-003' }].map(a => (
+          <div key={a.name} className="flex items-center justify-between py-1">
+            <div><p className="text-xs font-medium text-gray-800">{a.name}</p><p className="text-xs text-gray-400">{a.diag}</p></div>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.badge}`}>Bed {a.bed}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function NgoPreview({ c }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {[{ label: 'Beneficiaries', val: '524' }, { label: 'Blood Units', val: '312' }, { label: 'Funds Raised', val: '₹2.4L' }].map(s => (
+          <div key={s.label} className="flex-1 bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+            <p className={`text-xl font-bold ${c.dot.replace('bg-', 'text-')}`}>{s.val}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Blood Camps</p>
+        {[{ name: 'Pune Blood Drive', date: 'Jun 5', target: 100, collected: 78 }, { name: 'Nashik Camp', date: 'Jun 12', target: 80, collected: 0 }].map(camp => (
+          <div key={camp.name} className="mb-2">
+            <div className="flex justify-between text-xs mb-0.5">
+              <span className="font-medium text-gray-700">{camp.name}</span>
+              <span className="text-gray-400">{camp.date}</span>
+            </div>
+            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className={`h-full ${c.bar} rounded-full`} style={{ width: `${(camp.collected / camp.target) * 100}%` }} />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-0.5">{camp.collected}/{camp.target} units collected</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-1">Donation Drive — Health For All</p>
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+          <div className={`h-full ${c.bar} rounded-full`} style={{ width: '64%' }} />
+        </div>
+        <p className="text-[10px] text-gray-400 mt-1">₹1,60,000 raised of ₹2,50,000 target (64%)</p>
+      </div>
+    </div>
+  )
+}
+
+function AdminPreview({ c }) {
+  const bars = [65, 45, 80, 55, 90, 70, 60]
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        {[{ label: 'Revenue', val: '₹48K' }, { label: 'Orders', val: '1,240' }, { label: 'Users', val: '3,580' }].map(s => (
+          <div key={s.label} className="flex-1 bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+            <p className={`text-xl font-bold ${c.dot.replace('bg-', 'text-')}`}>{s.val}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-3">Weekly Revenue</p>
+        <div className="flex items-end gap-1 h-16">
+          {bars.map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div className={`w-full rounded-sm ${c.bar} opacity-80`} style={{ height: `${h}%` }} />
+              <span className="text-[9px] text-gray-400">{days[i]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Top Medicines</p>
+        {[{ name: 'Paracetamol 500mg', sold: 340 }, { name: 'Cough Syrup', sold: 210 }, { name: 'Vitamin D3', sold: 185 }].map((m, i) => (
+          <div key={m.name} className="flex items-center justify-between py-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-400 font-mono w-4">#{i + 1}</span>
+              <span className="text-xs text-gray-700">{m.name}</span>
+            </div>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.badge}`}>{m.sold} sold</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RolePreviews() {
+  const [active, setActive] = useState(0)
+  const role = ROLE_TABS[active]
+  const c = COLOR_MAP[role.color]
+
+  return (
+    <section className="py-20 bg-slate-50">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-10">
+          <p className="text-teal-600 text-sm font-semibold tracking-widest uppercase mb-3">Built for Every Role</p>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            One platform, five experiences
+          </h2>
+          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+            Each role gets its own purpose-built dashboard. Click a role below to see its pipeline in action.
+          </p>
+        </div>
+
+        {/* Role tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {ROLE_TABS.map((r, i) => {
+            const Icon = r.icon
+            const cc = COLOR_MAP[r.color]
+            return (
+              <button
+                key={r.id}
+                onClick={() => setActive(i)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                  active === i ? cc.tab + ' shadow-md scale-105 border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                }`}
+              >
+                <Icon size={15} />
+                {r.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Content */}
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+          {/* Left — features */}
+          <div>
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-5 ${c.badge}`}>
+              <role.icon size={13} />
+              {role.label} Portal
+            </div>
+            <h3 className="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">{role.tagline}</h3>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              A dedicated dashboard built around exactly what the {role.label.toLowerCase()} needs — no clutter, no irrelevant controls.
+            </p>
+            <div className="space-y-3">
+              {role.features.map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-start gap-3">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${c.badge}`}>
+                    <Icon size={13} />
+                  </div>
+                  <p className="text-gray-700 text-sm leading-snug pt-1">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — mock dashboard */}
+          <div className={`bg-slate-100 rounded-2xl p-4 ring-1 ${c.ring}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`w-2.5 h-2.5 rounded-full ${c.dot}`} />
+              <span className="text-xs font-semibold text-gray-600">{role.label} Dashboard</span>
+            </div>
+            {active === 0 && <PatientPreview c={c} />}
+            {active === 1 && <DoctorPreview c={c} />}
+            {active === 2 && <HospitalPreview c={c} />}
+            {active === 3 && <NgoPreview c={c} />}
+            {active === 4 && <AdminPreview c={c} />}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ── Navbar ────────────────────────────────────────────────────────────────
 function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -70,10 +420,9 @@ function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled ? 'bg-white/90 backdrop-blur-md shadow-soft border-b border-gray-100' : 'bg-transparent'
     }`}>
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-9 w-9 object-contain drop-shadow-sm" />
-          <span className="font-display font-bold text-gray-900 text-lg tracking-tight">
+      <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
+        <div className="flex items-center">
+          <span className="font-display font-bold text-gray-900 text-base tracking-tight">
             Sentinel<span className="text-teal-600">Rx</span> AI
           </span>
         </div>
@@ -100,10 +449,9 @@ function Hero() {
 
       <div className="relative max-w-5xl mx-auto px-6 text-center">
         <div
-          className="inline-flex items-center gap-4 mb-8 opacity-0 animate-hero-title"
+          className="mb-8 opacity-0 animate-hero-title"
           style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}
         >
-          <img src="/sentinelrx-logo.png" alt="SentinelRx" className="h-16 w-16 md:h-20 md:w-20 object-contain drop-shadow-xl" />
           <h1 className="font-display text-5xl md:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight">
             Sentinel<span className="text-teal-600">Rx</span> AI
           </h1>
@@ -342,6 +690,7 @@ export default function Landing() {
       <Navbar />
       <Hero />
       <Features />
+      <RolePreviews />
       <HowItWorks />
       <ContactSection />
       <CTA />
