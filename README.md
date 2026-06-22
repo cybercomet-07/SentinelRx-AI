@@ -627,9 +627,3 @@ For questions or issues:
 ## 📄 License
 
 This project is part of a hackathon submission. Check repository for license details.
-
----
-
-**Built with ❤️ by Team SentinelRx**
-
-*Making healthcare accessible through AI-powered technology*
