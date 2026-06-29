@@ -624,18 +624,3 @@ Based on current codebase structure, natural next steps:
 | `PROJECT_OVERVIEW.md` | Feature checklist, API routes |
 | `DEPLOYMENT.md` | Production deployment steps |
 
----
-
-## 🤝 Contributing to Architecture
-
-When adding new features:
-1. **New role?** → Add to `UserRole` enum, create router under `endpoints/`
-2. **New table?** → Create model, generate Alembic migration
-3. **New API?** → Add service layer, add tests
-4. **New page?** → Add to `frontend/src/pages/{role}/`, add route in `router.jsx`
-
-Always update this document when making architectural changes.
-
----
-
-**Architecture designed for:** Scalability, maintainability, and multi-role flexibility.
